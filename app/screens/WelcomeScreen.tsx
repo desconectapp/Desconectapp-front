@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { FC } from "react"
+import { FC, useEffect, useState } from "react"
 import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
 import { Text, Screen } from "@/components"
 import { isRTL } from "@/i18n"
@@ -7,6 +7,10 @@ import { AppStackScreenProps } from "../navigators"
 import { $styles, type ThemedStyle } from "@/theme"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
+
+import { userService } from "../services/users"
+import { useCatFact } from "@/hooks/Users"
+
 
 const welcomeLogo = require("../../assets/images/logo.png")
 const welcomeFace = require("../../assets/images/welcome-face.png")
@@ -18,23 +22,14 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
 
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
 
+  const {data: catFact} = useCatFact()
+
   return (
     <Screen preset="fixed" contentContainerStyle={$styles.flex1}>
       <View style={themed($topContainer)}>
-        <Image style={themed($welcomeLogo)} source={welcomeLogo} resizeMode="contain" />
-        <Text
-          testID="welcome-heading"
-          style={themed($welcomeHeading)}
-          preset="heading"
-        >HOLA DESCONECTAPP </Text>
+        <Image style={themed($welcomeLogo)} source={welcomeLogo} resizeMode="contain" />      
         <Text tx="welcomeScreen:exciting" preset="subheading" />
-        <Text> HOLAAAA</Text>
-        <Image
-          style={$welcomeFace}
-          source={welcomeFace}
-          resizeMode="contain"
-          tintColor={theme.colors.palette.neutral900}
-        />
+        <Text>Cat fact: {catFact}</Text>
       </View>
 
       <View style={themed([$bottomContainer, $bottomContainerInsets])}>

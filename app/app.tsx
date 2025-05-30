@@ -30,6 +30,9 @@ import { customFontsToLoad } from "./theme"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { loadDateFnsLocale } from "./utils/formatDate"
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+
+
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
 // Web linking configuration
@@ -58,6 +61,9 @@ const config = {
  * @param {AppProps} props - The props for the `App` component.
  * @returns {JSX.Element} The rendered `App` component.
  */
+
+const queryClient = new QueryClient()
+
 export function App() {
   const {
     initialNavigationState,
@@ -104,6 +110,7 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
+  <QueryClientProvider client={queryClient}>
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <KeyboardProvider>
         <AppNavigator
@@ -113,5 +120,7 @@ export function App() {
         />
       </KeyboardProvider>
     </SafeAreaProvider>
+  </QueryClientProvider>
+
   )
 }
