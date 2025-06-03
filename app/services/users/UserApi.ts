@@ -10,4 +10,15 @@ export const userService = {
     console.log("Usuarios obtenidos:", response.data)
     return response.data
   },
+
+  signUp: async (data: { name: string; email: string; password: string }): Promise<void> => {
+    const response = await api.apisauce.post<void>("/users", data)
+    if (!response.ok) {
+      throw new Error("Error al crear usuario")
+    }
+    console.log("Usuario creado:", response.data)
+    return response.data
+  },
+
 }
+

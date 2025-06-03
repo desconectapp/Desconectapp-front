@@ -1,12 +1,13 @@
 import { observer } from "mobx-react-lite"
 import { FC, useEffect, useState } from "react"
 import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
-import { Text, Screen } from "@/components"
+import { Text, Screen, Button } from "@/components"
 import { isRTL } from "@/i18n"
 import { AppStackScreenProps } from "../navigators"
 import { $styles, type ThemedStyle } from "@/theme"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useNavigation } from "@react-navigation/native"
 
 import { userService } from "../services/users"
 import { useUsers } from "@/hooks/Users"
@@ -21,13 +22,14 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
   const { themed, theme } = useAppTheme()
 
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
+  const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
 
   const {data: users} = useUsers()
 
   return (
     <Screen preset="fixed" contentContainerStyle={$styles.flex1}>
       <View style={themed($topContainer)}>
-        <Image style={themed($welcomeLogo)} source={welcomeLogo} resizeMode="contain" />      
+        <Button text="Crear cuenta" onPress={() => navigation.navigate("SignUpScreen")} />        
         <Text tx="welcomeScreen:exciting" preset="subheading" />
         {users?.map((user, index) => (
           <Text

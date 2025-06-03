@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { userService } from "../services/users"
 
 export const useUsers = () => {
@@ -8,6 +8,17 @@ export const useUsers = () => {
       const response = await userService.getUsers()
       if (!response) throw new Error('Error al cargar usuarios')
       return response
+    },
+  })
+}
+
+export const useSignUp = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<any, Error, any>({
+    mutationFn: (data) => userService.signUp(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] })
     },
   })
 }
