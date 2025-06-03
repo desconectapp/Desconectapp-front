@@ -12,38 +12,19 @@ import { userService } from "../services/users"
 import { useUsers } from "@/hooks/Users"
 
 
-const welcomeLogo = require("../../assets/images/logo.png")
-const welcomeFace = require("../../assets/images/welcome-face.png")
 
-interface WelcomeScreenProps extends AppStackScreenProps<"Welcome"> {}
+// interface SignUpScreenProps extends AppStackScreenProps<> {}
 
-export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeScreen() {
+export const SignUpScreen = observer(function SignUpScreen() {
   const { themed, theme } = useAppTheme()
 
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
 
-  const {data: users} = useUsers()
+  
 
   return (
     <Screen preset="fixed" contentContainerStyle={$styles.flex1}>
-      <View style={themed($topContainer)}>
-        <Image style={themed($welcomeLogo)} source={welcomeLogo} resizeMode="contain" />      
-        <Text tx="welcomeScreen:exciting" preset="subheading" />
-        {users?.map((user, index) => (
-          <Text
-            key={index}
-            size="xl"
-            style={themed($welcomeHeading)}
-          >
-            {user.name} {user.email}
-          </Text>
-        ))}
-          
-      </View>
-
-      <View style={themed([$bottomContainer, $bottomContainerInsets])}>
-        <Text tx="welcomeScreen:postscript" size="md" />
-      </View>
+        asdasd
     </Screen>
   )
 })

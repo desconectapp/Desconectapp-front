@@ -1,12 +1,13 @@
 import { api } from "../api"
-import { catFact } from "./UserApi.types"
+import { UserResponse } from "./UserApi.types"
 
 export const userService = {
-  getUsers: async (): Promise<string> => {
-    const response = await api.apisauce.get<catFact>("/fact")
+  getUsers: async (): Promise<UserResponse[] | undefined> => {
+    const response = await api.apisauce.get<UserResponse[]>("/users")
     if (!response.ok) {
       throw new Error("Error al cargar usuarios")
     }
-    return response.data?.fact ?? "No fact available"
+    console.log("Usuarios obtenidos:", response.data)
+    return response.data
   },
 }
