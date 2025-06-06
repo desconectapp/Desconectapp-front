@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite"
 import { FC, useEffect, useState } from "react"
 import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
-import { Text, Screen, Button } from "@/components"
+import { Text, Screen, Button, AutoImage } from "@/components"
 import { isRTL } from "@/i18n"
 import { AppStackScreenProps } from "../navigators"
 import { $styles, type ThemedStyle } from "@/theme"
@@ -26,64 +26,66 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
 
   const {data: users} = useUsers()
 
-  return (
-    <Screen preset="fixed" contentContainerStyle={$styles.flex1}>
-      <View style={themed($topContainer)}>
-        <Button text="Crear cuenta" onPress={() => navigation.navigate("SignUpScreen")} />        
-        <Text tx="welcomeScreen:exciting" preset="subheading" />
-        {users?.map((user, index) => (
-          <Text
-            key={index}
-            size="xl"
-            style={themed($welcomeHeading)}
-          >
-            {user.name} {user.email}
-          </Text>
-        ))}
-          
-      </View>
+return (
+   <Screen preset="fixed" contentContainerStyle={styles.container}>
+    <View style={styles.logoContainer}>
+        <AutoImage
+        source={{ uri: 'https://media.tenor.com/o656qFKDzeUAAAAM/rick-astley-never-gonna-give-you-up.gif' }}
+        maxWidth={200}
+        maxHeight={100}
+        resizeMode="contain"
+        style={{}}
+      />
+      <Text>(Aca iria el logo xd)</Text>
+    </View>
 
-      <View style={themed([$bottomContainer, $bottomContainerInsets])}>
-        <Text tx="welcomeScreen:postscript" size="md" />
-      </View>
-    </Screen>
-  )
+    <View style={styles.usersContainer}>
+      {users?.map((user, index) => (
+        <Text key={index} style={styles.userText}>
+          {user.name} {user.email}
+        </Text>
+      ))}
+    </View>
+
+    <View style={styles.buttonsContainer}>
+      <Button style={styles.button} onPress={() => navigation.navigate('LoginScreen')}>
+        Ingresar
+      </Button>
+      <Button style={styles.button} onPress={() => navigation.navigate('SignUpScreen')}>
+        Crear cuenta
+      </Button>
+    </View>
+  </Screen>
+)
 })
 
-const $topContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  flexShrink: 1,
-  flexGrow: 1,
-  flexBasis: "57%",
-  justifyContent: "center",
-  paddingHorizontal: spacing.lg,
-})
-
-const $bottomContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  flexShrink: 1,
-  flexGrow: 0,
-  flexBasis: "43%",
-  backgroundColor: colors.palette.neutral100,
-  borderTopLeftRadius: 16,
-  borderTopRightRadius: 16,
-  paddingHorizontal: spacing.lg,
-  justifyContent: "space-around",
-})
-
-const $welcomeLogo: ThemedStyle<ImageStyle> = ({ spacing }) => ({
-  height: 88,
-  width: "100%",
-  marginBottom: spacing.xxl,
-})
-
-const $welcomeFace: ImageStyle = {
-  height: 169,
-  width: 269,
-  position: "absolute",
-  bottom: -47,
-  right: -80,
-  transform: [{ scaleX: isRTL ? -1 : 1 }],
+const styles = {
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    justifyContent: 'space-between',
+  } as ViewStyle,
+    logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',  // para centrar verticalmente
+    marginBottom: 40,
+    height: 500,               // espacio fijo para el logo
+  } as ViewStyle,
+  usersContainer: {
+    flexGrow: 1,
+    justifyContent: 'center' as const,
+    paddingHorizontal: 10,
+  } as ViewStyle,
+  buttonsContainer: {
+    marginBottom: 20,
+  } as ViewStyle,
+  button: {
+    marginVertical: 8,
+  } as ViewStyle,
+  userText: {
+    marginVertical: 8,
+    textAlign: 'center' as const,
+  } as TextStyle,
 }
 
-const $welcomeHeading: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginBottom: spacing.md,
-})

@@ -6,6 +6,7 @@ import {
   StyleProp,
   TextStyle,
   ViewStyle,
+  ActivityIndicator
 } from "react-native"
 import type { ThemedStyle, ThemedStyleArray } from "@/theme"
 import { $styles } from "../theme"
@@ -18,6 +19,7 @@ export interface ButtonAccessoryProps {
   style: StyleProp<any>
   pressableState: PressableStateCallbackType
   disabled?: boolean
+  loading?: boolean
 }
 
 export interface ButtonProps extends PressableProps {
@@ -81,6 +83,10 @@ export interface ButtonProps extends PressableProps {
    * An optional style override for the disabled state
    */
   disabledStyle?: StyleProp<ViewStyle>
+  /**
+   * An optional loading indicator to show when the button is in a loading state.
+   */
+  loading?: boolean
 }
 
 /**
@@ -112,6 +118,7 @@ export function Button(props: ButtonProps) {
     LeftAccessory,
     disabled,
     disabledStyle: $disabledViewStyleOverride,
+    loading = false,
     ...rest
   } = props
 
@@ -149,29 +156,33 @@ export function Button(props: ButtonProps) {
     <Pressable
       style={$viewStyle}
       accessibilityRole="button"
-      accessibilityState={{ disabled: !!disabled }}
+      accessibilityState={{ disabled: !!disabled || loading }}
       {...rest}
-      disabled={disabled}
+      disabled={disabled || loading}
     >
-      {(state) => (
-        <>
-          {!!LeftAccessory && (
-            <LeftAccessory style={$leftAccessoryStyle} pressableState={state} disabled={disabled} />
-          )}
+     {(state) =>
+        loading ? (
+          <ActivityIndicator color="#fff" style={{ zIndex: 2 }} />
+        ) : (
+          <>
+            {!!LeftAccessory && (
+              <LeftAccessory style={$leftAccessoryStyle} pressableState={state} disabled={disabled} />
+            )}
 
-          <Text tx={tx} text={text} txOptions={txOptions} style={$textStyle(state)}>
-            {children}
-          </Text>
+            <Text tx={tx} text={text} txOptions={txOptions} style={$textStyle(state)}>
+              {children}
+            </Text>
 
-          {!!RightAccessory && (
-            <RightAccessory
-              style={$rightAccessoryStyle}
-              pressableState={state}
-              disabled={disabled}
-            />
-          )}
-        </>
-      )}
+            {!!RightAccessory && (
+              <RightAccessory
+                style={$rightAccessoryStyle}
+                pressableState={state}
+                disabled={disabled}
+              />
+            )}
+          </>
+        )
+      }
     </Pressable>
   )
 }

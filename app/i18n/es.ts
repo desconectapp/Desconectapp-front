@@ -1,6 +1,5 @@
-import { Translations } from "./en"
 
-const es: Translations = {
+const es = {
   common: {
     ok: "OK",
     cancel: "Cancelar",
@@ -10,7 +9,7 @@ const es: Translations = {
     postscript:
       "psst — Esto probablemente no es cómo se va a ver tu app. (A menos que tu diseñador te haya enviado estas pantallas, y en ese caso, ¡lánzalas en producción!)",
     readyForLaunch: "Tu app, casi lista para su lanzamiento",
-    exciting: "(¡ohh, esto es emocionante!)",
+    exciting: "Desconectate de celu, contecta con la gente",
   },
   errorScreen: {
     title: "¡Algo salió mal!",
@@ -29,3 +28,4 @@ const es: Translations = {
 }
 
 export default es
+export type Translations = typeof es

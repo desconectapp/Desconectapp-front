@@ -22,3 +22,14 @@ export const useSignUp = () => {
     },
   })
 }
+
+export const useLogin = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<any, Error, any>({
+    mutationFn: (data) => userService.login(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] })
+    },
+  })
+}

@@ -6,18 +6,18 @@ import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm } from "react-hook-form"
 
-import { useSignUp } from "@/hooks/Users"
+import { useLogin } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 
 
-export const SignUpScreen = observer(function SignUpScreen() {
+export const LoginScreen = observer(function LoginScreen() {
   const { themed } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
 
   const [buttonState, setButtonState] = useState<true | false>(false)
 
-  const signUpFunc = useSignUp()
+  const LoginFunc = useLogin()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
@@ -39,12 +39,13 @@ export const SignUpScreen = observer(function SignUpScreen() {
   const onSubmit = (data: any) => {
     setButtonState(true)
     console.log(data)
-    signUpFunc.mutateAsync(data, {
+    LoginFunc.mutateAsync(data, {
       onSuccess: () => {
         setButtonState(false)
-        console.log("Usuario creado exitosamente")
-        showToast(`Bienvenido ${data.name}!`)
-        navigation.navigate("Welcome")
+       // aca guardar token y user info en storage
+       // revisar npm install @react-native-async-storage/async-storage
+
+       // navigation.navigate("Home") (supongo)
       },
       onError: (error) => {
         setButtonState(false)
@@ -54,25 +55,7 @@ export const SignUpScreen = observer(function SignUpScreen() {
   }
   return (
     <Screen preset="scroll" contentContainerStyle={[$container, $bottomContainerInsets]}>
-      <Header title="Crear cuenta" />
-      <TextField
-        label="Nombre"
-        placeholder="Tu nombre"
-        {...register("name", { required: "El nombre es obligatorio" })}
-        onChangeText={(text) => setValue("name", text)}
-        value={watch("name")}
-        helper={errors.name?.message as string}
-        status={errors.name ? "error" : undefined}
-      />
-      <TextField
-        label="Apellido"
-        placeholder="Tu apellido"
-        {...register("surname", { required: "El apellido es obligatorio" })}
-        onChangeText={(text) => setValue("surname", text)}
-        value={watch("surname")}
-        helper={errors.surname?.message as string}
-        status={errors.surname ? "error" : undefined}
-      />
+      <Header title="Ingresar" />      
       <TextField
         label="Email"
         placeholder="Email"
@@ -106,7 +89,7 @@ export const SignUpScreen = observer(function SignUpScreen() {
         status={errors.password ? "error" : undefined}
       />
       <Button
-        text="Registrarse"
+        text="Ingresar"
         onPress={handleSubmit(onSubmit)}
         style={$button}
         loading={buttonState}

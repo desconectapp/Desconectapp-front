@@ -31,7 +31,15 @@ import { KeyboardProvider } from "react-native-keyboard-controller"
 import { loadDateFnsLocale } from "./utils/formatDate"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { createTamagui, TamaguiProvider, View } from "tamagui"
+import { defaultConfig } from "@tamagui/config/v4" // for quick config install this
 
+import { AppToast, ToastRoot } from "./components/Toast"
+import { ToastControls } from "./components/ToastControls"
+import { YStack } from "tamagui"
+import { ToastProvider, ToastViewport } from "@tamagui/toast"
+
+const tamaguiConfig = createTamagui(defaultConfig)
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -110,17 +118,25 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
-  <QueryClientProvider client={queryClient}>
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <KeyboardProvider>
-        <AppNavigator
-          linking={linking}
-          initialState={initialNavigationState}
-          onStateChange={onNavigationStateChange}
-        />
-      </KeyboardProvider>
-    </SafeAreaProvider>
-  </QueryClientProvider>
+  <TamaguiProvider config={tamaguiConfig}>
+  <ToastProvider>
+    <YStack flex={1}>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+          <KeyboardProvider>
+            <AppNavigator
+              linking={linking}
+              initialState={initialNavigationState}
+              onStateChange={onNavigationStateChange}
+            />
+          </KeyboardProvider>
+        </SafeAreaProvider>
+      </QueryClientProvider>
 
+      <ToastViewport bottom={0} left={0} right={0} />
+      <AppToast />
+    </YStack>
+  </ToastProvider>
+</TamaguiProvider>
   )
 }
