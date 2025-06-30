@@ -68,6 +68,7 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
         location: data.location,
         workStatus: data.workStatus,
       })
+      navigation.navigate("PreferencesScreen")
     } catch (error) {
       console.error("Error saving user info:", error)
       showToast("Oops!", "Something went wrong. Please try again.")

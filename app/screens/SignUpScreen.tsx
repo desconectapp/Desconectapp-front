@@ -6,7 +6,7 @@ import type { AppStackScreenProps } from "../navigators"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm } from "react-hook-form"
-import { useLogin } from "@/hooks/Users"
+import { useLogin, useSignUp } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
@@ -23,7 +23,7 @@ export const SignUpScreen = observer(function LoginScreen() {
   const { themed } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [buttonState, setButtonState] = useState<boolean>(false)
-  const LoginFunc = useLogin()
+  const signUp = useSignUp()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
@@ -57,10 +57,10 @@ export const SignUpScreen = observer(function LoginScreen() {
     setButtonState(true)
     console.log(data)
 
-    LoginFunc.mutateAsync(data, {
+    signUp.mutateAsync(data, {
       onSuccess: (response) => {
         setButtonState(false)
-        navigation.navigate("PreferencesScreen")
+        navigation.navigate("MoreInfoScreen")
       },
       onError: (error) => {
         setButtonState(false)
@@ -126,7 +126,6 @@ export const SignUpScreen = observer(function LoginScreen() {
           containerStyle={$fieldContainer}
         />
 
-        {/* Forgot Password Link */}
         <View style={$forgotPasswordContainer}>
           <Text
             preset="formHelper"

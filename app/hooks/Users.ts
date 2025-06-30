@@ -33,3 +33,14 @@ export const useLogin = () => {
     },
   })
 }
+
+export const useProfile = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<any, Error, any>({
+    mutationFn: (data) => userService.createProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] })
+    },
+  })
+}

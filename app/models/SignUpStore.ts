@@ -1,6 +1,6 @@
 import { types } from "mobx-state-tree"
 
-export interface UserInfo {
+export interface ProfileInfo {
   name: string
   age: number
   location: string
@@ -25,7 +25,7 @@ export const SignUpStoreModel = types
     setPreferences(newPreferences: string[]) {
       store.preferences.replace(newPreferences)
     },
-    setUserInfo(data: UserInfo) {
+    setUserInfo(data: ProfileInfo) {
       const userInfo = {
         name: data.name,
         gender: data.gender,

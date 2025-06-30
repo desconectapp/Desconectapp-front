@@ -1,5 +1,5 @@
 import { api } from "../api"
-import { UserResponse } from "./UserApi.types"
+import { CreateProfileData, UserResponse } from "./UserApi.types"
 
 export const userService = {
   getUsers: async (): Promise<UserResponse[] | undefined> => {
@@ -17,6 +17,16 @@ export const userService = {
       throw new Error("Error al crear usuario")
     }
     console.log("Usuario creado:", response.data)
+    return response.data
+  },
+
+  createProfile: async (data: CreateProfileData): Promise<void> => {
+    console.log("Creando perfil con datos:", data)
+    const response = await api.apisauce.post<void>("/users/profile", data)
+    if (!response.ok) {
+      throw new Error("Error al crear perfil")
+    }
+    console.log("Perfil creado:", response.data)
     return response.data
   },
 

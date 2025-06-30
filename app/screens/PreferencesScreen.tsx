@@ -6,6 +6,10 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
 import { useStores } from "@/models"
+import { useProfile, useUsers } from "@/hooks/Users"
+import { useNavigation } from "@react-navigation/native"
+import { AppStackScreenProps } from "@/navigators"
+import { useAppToast } from "@/components/useToast"
 
 const { width } = Dimensions.get("window")
 
@@ -39,6 +43,10 @@ export const PreferencesScreen = observer(() => {
   const { signUpStore } = useStores()
   const { themed } = useAppTheme()
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
+  const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
+  const { showToast } = useAppToast()
+
+  const profile = useProfile()
 
   const togglePreference = (id: string) => {
     setSelectedPreferences((prev) =>
@@ -48,6 +56,24 @@ export const PreferencesScreen = observer(() => {
 
   const handleContinue = () => {
     signUpStore.setPreferences(selectedPreferences)
+
+    profile.mutateAsync(
+      {
+        ...signUpStore.userInfo,
+        preferences: selectedPreferences,
+      },
+      {
+        onSuccess: (response) => {
+          console.log("Profile updated successfully:", response)
+          // Navigate to the next screen or show success message
+          navigation.navigate("Welcome")
+        },
+        onError: (error) => {
+          console.error("Error updating profile:", error)
+          showToast("Creation Failed")
+        },
+      },
+    )
   }
 
   return (
@@ -159,11 +185,13 @@ const $chip: ViewStyle = {
 
 const $chipSelected = (theme: any): ViewStyle => ({
   backgroundColor: theme.colors.tint,
+  borderColor: theme.colors.tint,
+  borderWidth: 2,
 })
 
 const $chipUnselected = (theme: any): ViewStyle => ({
   backgroundColor: theme.colors.backgroundMuted,
-  borderColor: "transparent",
+  borderColor: theme.colors.border,
   borderWidth: 2,
 })
 
