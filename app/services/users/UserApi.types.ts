@@ -23,3 +23,12 @@ export interface CreateProfileData {
   workStatus: string
   preferences: string[]
 }
+
+export interface ProfileData {
+  name: string
+  image: string | null
+  location: string
+  gender: string
+  workStatus: string
+  preferences: string[]
+}

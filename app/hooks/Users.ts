@@ -34,13 +34,24 @@ export const useLogin = () => {
   })
 }
 
-export const useProfile = () => {
+export const useCreateProfile = () => {
   const queryClient = useQueryClient()
 
   return useMutation<any, Error, any>({
     mutationFn: (data) => userService.createProfile(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      queryClient.invalidateQueries({ queryKey: ["profile"] })
+    },
+  })
+}
+
+export const useProfile = () => {
+  return useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const response = await userService.getProfile()
+      if (!response) throw new Error("Error al cargar perfil")
+      return response
     },
   })
 }
