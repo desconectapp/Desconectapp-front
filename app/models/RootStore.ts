@@ -5,7 +5,7 @@ import { SignUpStoreModel } from "./SignUpStore"
   A RootStore model.
   **/
 export const RootStoreModel = types.model("RootStore").props({
-  signUpStore: types.optional(SignUpStoreModel, { preferences: [] }),
+  signUpStore: types.optional(SignUpStoreModel, { preferences: [], userInfo: null }),
 })
 
 /**

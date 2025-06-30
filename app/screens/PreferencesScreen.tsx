@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite"
 import { useState } from "react"
 import { View, ScrollView, TouchableOpacity, Dimensions, ViewStyle, TextStyle } from "react-native"
-import { Screen, Text, Button } from "@/components"
+import { Text, Button } from "@/components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
@@ -105,14 +105,6 @@ export const PreferencesScreen = observer(() => {
       </View>
     </View>
   )
-})
-
-const $screen: ViewStyle = {
-  flex: 1,
-}
-
-const $screenBackground = (theme: any) => ({
-  backgroundColor: theme.colors.background,
 })
 
 const $contentWrapper: ViewStyle = {

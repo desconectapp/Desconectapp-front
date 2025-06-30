@@ -26,6 +26,8 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
 
   const { data: users } = useUsers()
 
+  const { signUpStore } = useStores()
+
   return (
     <Screen preset="fixed" contentContainerStyle={styles.container}>
       <View style={styles.logoContainer}>
@@ -40,6 +42,10 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
         />
         <Text>(Aca iria el logo xd)</Text>
       </View>
+      <Text>
+        {JSON.stringify(signUpStore.userInfo)}
+        {JSON.stringify(signUpStore.preferences)}
+      </Text>
 
       <View style={styles.usersContainer}>
         {users?.map((user, index) => (
@@ -56,7 +62,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
         <Button style={styles.button} onPress={() => navigation.navigate("SignUpScreen")}>
           Crear cuenta
         </Button>
-        <Button style={styles.button} onPress={() => navigation.navigate("PreferencesScreen")}>
+        <Button style={styles.button} onPress={() => navigation.navigate("MoreInfoScreen")}>
           Preferencias
         </Button>
       </View>
