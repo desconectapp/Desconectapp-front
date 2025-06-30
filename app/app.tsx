@@ -23,7 +23,7 @@ import { useEffect, useState } from "react"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
-import { useInitialRootStore } from "./models"
+import { RootStoreProvider, useInitialRootStore } from "./models"
 import { AppNavigator, useNavigationPersistence } from "./navigators"
 import * as storage from "./utils/storage"
 import { customFontsToLoad } from "./theme"
@@ -88,7 +88,7 @@ export function App() {
       .then(() => loadDateFnsLocale())
   }, [])
 
-  const { rehydrated } = useInitialRootStore(() => {
+  const { rootStore, rehydrated } = useInitialRootStore(() => {
     // This runs after the root store has been initialized and rehydrated.
 
     // If your initialization scripts run very fast, it's good to show the splash screen for just a bit longer to prevent flicker.
@@ -124,11 +124,13 @@ export function App() {
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider initialMetrics={initialWindowMetrics}>
               <KeyboardProvider>
-                <AppNavigator
-                  linking={linking}
-                  initialState={initialNavigationState}
-                  onStateChange={onNavigationStateChange}
-                />
+                <RootStoreProvider value={rootStore}>
+                  <AppNavigator
+                    linking={linking}
+                    initialState={initialNavigationState}
+                    onStateChange={onNavigationStateChange}
+                  />
+                </RootStoreProvider>
               </KeyboardProvider>
             </SafeAreaProvider>
           </QueryClientProvider>

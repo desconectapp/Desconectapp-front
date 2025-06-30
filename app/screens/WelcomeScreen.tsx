@@ -11,6 +11,7 @@ import { useNavigation } from "@react-navigation/native"
 
 import { userService } from "../services/users"
 import { useUsers } from "@/hooks/Users"
+import { useStores } from "@/models"
 
 const welcomeLogo = require("../../assets/images/logo.png")
 const welcomeFace = require("../../assets/images/welcome-face.png")

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Dimensions,
 } from "react-native"
+import { useStores } from "app/models"
 
 const { width } = Dimensions.get("window")
 
@@ -38,6 +39,7 @@ const preferences: Preference[] = [
 
 export const PreferencesScreen = () => {
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
+  const { signUpStore } = useStores()
 
   const togglePreference = (preferenceId: string) => {
     setSelectedPreferences((prev) => {
@@ -50,7 +52,7 @@ export const PreferencesScreen = () => {
   }
 
   const handleContinue = () => {
-    console.log("Selected preferences:", selectedPreferences)
+    signUpStore.setPreferences(selectedPreferences)
   }
 
   const renderPreferenceChip = (preference: Preference) => {
