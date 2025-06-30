@@ -1,22 +1,29 @@
 import { observer } from "mobx-react-lite"
 import { useState } from "react"
-import { Screen, Header, TextField, Button } from "@/components"
-import { AppStackScreenProps } from "../navigators"
+import { View, type ViewStyle, type TextStyle, type ImageStyle, Dimensions } from "react-native"
+import { Screen, TextField, Button, Text, AutoImage } from "@/components"
+import type { AppStackScreenProps } from "../navigators"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm } from "react-hook-form"
-
-import { useSignUp } from "@/hooks/Users"
+import { useLogin } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
+import { spacing } from "@/theme"
+import logoImage from "../../assets/images/logo.png"
 
-export const SignUpScreen = observer(function SignUpScreen() {
+const { width } = Dimensions.get("window")
+
+interface SignUpFormData {
+  email: string
+  password: string
+}
+
+export const SignUpScreen = observer(function LoginScreen() {
   const { themed } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-
-  const [buttonState, setButtonState] = useState<true | false>(false)
-
-  const signUpFunc = useSignUp()
+  const [buttonState, setButtonState] = useState<boolean>(false)
+  const LoginFunc = useLogin()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
@@ -26,94 +33,225 @@ export const SignUpScreen = observer(function SignUpScreen() {
     setValue,
     formState: { errors },
     watch,
-  } = useForm({
+  } = useForm<SignUpFormData>({
     defaultValues: {
-      name: "NombrePorDefecto",
-      surname: "ApellidoPorDefecto",
-      email: "MailPorDefecto@gmail.com",
+      email: "user@example.com",
       password: "123456",
     },
   })
 
-  const onSubmit = (data: any) => {
+  const getErrorMessage = (error: any) => {
+    const errorMessages = {
+      invalid_credentials: "Oops! Those credentials don't match our records",
+      network_error: "Connection hiccup! Check your internet and try again",
+      server_error: "Our servers are taking a quick break. Try again in a moment",
+      validation_error: "Please double-check your information",
+      account_locked: "Account temporarily locked for security. Contact support",
+      email_not_verified: "Please verify your email before logging in",
+    }
+
+    return errorMessages[error?.code] || "Unexpected Error. Try again later"
+  }
+
+  const onSubmit = (data: SignUpFormData) => {
     setButtonState(true)
     console.log(data)
-    signUpFunc.mutateAsync(data, {
-      onSuccess: () => {
+
+    LoginFunc.mutateAsync(data, {
+      onSuccess: (response) => {
         setButtonState(false)
-        console.log("Usuario creado exitosamente")
-        showToast(`Bienvenido ${data.name}!`)
-        navigation.navigate("Welcome")
+        navigation.navigate("PreferencesScreen")
       },
       onError: (error) => {
         setButtonState(false)
-        showToast("Error al crear usuario", "Por favor, intenta nuevamente.")
+        const friendlyMessage = getErrorMessage(error)
+        showToast("Login Failed", friendlyMessage)
       },
     })
   }
+
   return (
-    <Screen preset="scroll" contentContainerStyle={[$container, $bottomContainerInsets]}>
-      <Header title="Crear cuenta" />
-      <TextField
-        label="Nombre"
-        placeholder="Tu nombre"
-        {...register("name", { required: "El nombre es obligatorio" })}
-        onChangeText={(text) => setValue("name", text)}
-        value={watch("name")}
-        helper={errors.name?.message as string}
-        status={errors.name ? "error" : undefined}
-      />
-      <TextField
-        label="Apellido"
-        placeholder="Tu apellido"
-        {...register("surname", { required: "El apellido es obligatorio" })}
-        onChangeText={(text) => setValue("surname", text)}
-        value={watch("surname")}
-        helper={errors.surname?.message as string}
-        status={errors.surname ? "error" : undefined}
-      />
-      <TextField
-        label="Email"
-        placeholder="Email"
-        {...register("email", {
-          required: "El email es obligatorio",
-          pattern: {
-            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-            message: "Email inválido",
-          },
-        })}
-        onChangeText={(text) => setValue("email", text)}
-        value={watch("email")}
-        keyboardType="email-address"
-        helper={errors.email?.message as string}
-        status={errors.email ? "error" : undefined}
-      />
-      <TextField
-        label="Contraseña"
-        placeholder="••••••••"
-        {...register("password", {
-          required: "La contraseña es obligatoria",
-          minLength: {
-            value: 6,
-            message: "La contraseña debe tener al menos 6 caracteres",
-          },
-        })}
-        value={watch("password")}
-        onChangeText={(text) => setValue("password", text)}
-        secureTextEntry
-        helper={errors.password?.message as string}
-        status={errors.password ? "error" : undefined}
-      />
-      <Button
-        text="Registrarse"
-        onPress={handleSubmit(onSubmit)}
-        style={$button}
-        loading={buttonState}
-      />
+    <Screen
+      preset="scroll"
+      contentContainerStyle={[$container, $bottomContainerInsets]}
+      backgroundColor={themed($screenBackground)}
+    >
+      <View style={$logoContainer}>
+        <AutoImage source={logoImage} style={$logo} resizeMode="contain" />
+        <Text preset="heading" style={themed($welcomeText)}>
+          Join DesconectApp
+        </Text>
+        <Text preset="subheading" style={themed($subtitleText)}>
+          Create your Account
+        </Text>
+      </View>
+
+      <View style={$formContainer}>
+        <TextField
+          label="Email Address"
+          placeholder="Enter your email"
+          {...register("email", {
+            required: "We need your email to sign you in",
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: "Please enter a valid email address",
+            },
+          })}
+          onChangeText={(text) => setValue("email", text)}
+          value={watch("email")}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          helper={errors.email?.message}
+          status={errors.email ? "error" : undefined}
+          containerStyle={$fieldContainer}
+        />
+
+        <TextField
+          label="Password"
+          placeholder="Enter your password"
+          {...register("password", {
+            required: "Password is required to access your account",
+            minLength: {
+              value: 6,
+              message: "Password should be at least 6 characters long",
+            },
+          })}
+          value={watch("password")}
+          onChangeText={(text) => setValue("password", text)}
+          secureTextEntry
+          autoComplete="password"
+          helper={errors.password?.message}
+          status={errors.password ? "error" : undefined}
+          containerStyle={$fieldContainer}
+        />
+
+        {/* Forgot Password Link */}
+        <View style={$forgotPasswordContainer}>
+          <Text
+            preset="formHelper"
+            style={themed($forgotPasswordText)}
+            onPress={() => {
+              showToast("Coming Soon", "WORK IN PROGRESS XD")
+            }}
+          >
+            Forgot your password?
+          </Text>
+        </View>
+
+        <Button
+          text={buttonState ? "Signing Up..." : "Sign Up"}
+          onPress={handleSubmit(onSubmit)}
+          style={themed($loginButton)}
+          textStyle={themed($loginButtonText)}
+          loading={buttonState}
+          disabled={buttonState}
+        />
+
+        <View style={$signUpContainer}>
+          <Text preset="formHelper" style={themed($signUpText)}>
+            Already have an account?{" "}
+            <Text
+              preset="formHelper"
+              style={themed($signUpLink)}
+              onPress={() => {
+                navigation.navigate("LoginScreen")
+              }}
+            >
+              Log In
+            </Text>
+          </Text>
+        </View>
+      </View>
     </Screen>
   )
 })
 
-const $container = { padding: 20 }
+const $container: ViewStyle = {
+  paddingHorizontal: spacing.lg,
+  paddingTop: spacing.xl,
+}
 
-const $button = { marginTop: 24 }
+const $screenBackground = (theme: any) => ({
+  backgroundColor: theme.colors.background,
+})
+
+const $logoContainer: ViewStyle = {
+  alignItems: "center",
+  marginBottom: spacing.xxl,
+  paddingTop: spacing.xl,
+}
+
+const $logo: ImageStyle = {
+  width: width * 0.3,
+  height: width * 0.3,
+  marginBottom: spacing.md,
+}
+
+const $welcomeText = (theme: any): TextStyle => ({
+  color: theme.colors.text,
+  marginBottom: spacing.xs,
+  textAlign: "center",
+})
+
+const $subtitleText = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  textAlign: "center",
+  opacity: 0.8,
+})
+
+const $formContainer: ViewStyle = {
+  flex: 1,
+}
+
+const $fieldContainer: ViewStyle = {
+  marginBottom: spacing.md,
+}
+
+const $forgotPasswordContainer: ViewStyle = {
+  alignItems: "flex-end",
+  marginBottom: spacing.lg,
+  marginTop: -spacing.xs,
+}
+
+const $forgotPasswordText = (theme: any): TextStyle => ({
+  color: theme.colors.tint,
+  textDecorationLine: "underline",
+})
+
+const $loginButton = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.tint,
+  borderRadius: spacing.md,
+  marginBottom: spacing.lg,
+  minHeight: 56,
+  shadowColor: theme.colors.tint,
+  shadowOffset: {
+    width: 0,
+    height: 4,
+  },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+  elevation: 8,
+})
+
+const $loginButtonText = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontWeight: "600",
+  fontSize: 16,
+})
+
+const $signUpContainer: ViewStyle = {
+  alignItems: "center",
+  paddingTop: spacing.md,
+}
+
+const $signUpText = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  textAlign: "center",
+})
+
+const $signUpLink = (theme: any): TextStyle => ({
+  color: theme.colors.tint,
+  fontWeight: "600",
+  textDecorationLine: "underline",
+})
