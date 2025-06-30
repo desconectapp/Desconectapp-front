@@ -5,10 +5,10 @@
  *
  * https://reactnative.dev/docs/security#storing-sensitive-info
  */
-import { Platform } from 'react-native'
+import { Platform } from "react-native"
 
-const isAndroid = Platform.OS === 'android'
+const isAndroid = Platform.OS === "android"
 
 export default {
-  API_URL: isAndroid ? 'http://10.0.2.2:8080' : 'http://localhost:8080',
+  API_URL: isAndroid ? "http://10.0.2.2:8080" : "http://localhost:8080",
 }

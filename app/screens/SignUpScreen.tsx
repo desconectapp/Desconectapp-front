@@ -10,7 +10,6 @@ import { useSignUp } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 
-
 export const SignUpScreen = observer(function SignUpScreen() {
   const { themed } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
@@ -48,7 +47,7 @@ export const SignUpScreen = observer(function SignUpScreen() {
       },
       onError: (error) => {
         setButtonState(false)
-        showToast("Error al crear usuario", "Por favor, intenta nuevamente.")        
+        showToast("Error al crear usuario", "Por favor, intenta nuevamente.")
       },
     })
   }

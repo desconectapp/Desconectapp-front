@@ -1,4 +1,4 @@
-import {Translations} from "./es"
+import { Translations } from "./es"
 
 const en: Translations = {
   common: {

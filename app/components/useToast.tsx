@@ -1,4 +1,4 @@
-import { useToastController } from '@tamagui/toast'
+import { useToastController } from "@tamagui/toast"
 
 export const useAppToast = () => {
   const toast = useToastController()

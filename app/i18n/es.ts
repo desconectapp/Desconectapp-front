@@ -1,4 +1,3 @@
-
 const es = {
   common: {
     ok: "OK",

@@ -1,5 +1,5 @@
-import { Toast, ToastProvider, ToastViewport, useToastState } from '@tamagui/toast'
-import { YStack } from 'tamagui'
+import { Toast, ToastProvider, ToastViewport, useToastState } from "@tamagui/toast"
+import { YStack } from "tamagui"
 
 export const AppToast = () => {
   const currentToast = useToastState()
@@ -20,9 +20,7 @@ export const AppToast = () => {
     >
       <YStack>
         <Toast.Title>{currentToast.title}</Toast.Title>
-        {!!currentToast.message && (
-          <Toast.Description>{currentToast.message}</Toast.Description>
-        )}
+        {!!currentToast.message && <Toast.Description>{currentToast.message}</Toast.Description>}
       </YStack>
     </Toast>
   )
@@ -35,4 +33,3 @@ export const ToastRoot = ({ children }: { children: React.ReactNode }) => (
     <AppToast />
   </ToastProvider>
 )
-

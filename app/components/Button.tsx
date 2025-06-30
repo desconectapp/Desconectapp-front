@@ -6,7 +6,7 @@ import {
   StyleProp,
   TextStyle,
   ViewStyle,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native"
 import type { ThemedStyle, ThemedStyleArray } from "@/theme"
 import { $styles } from "../theme"
@@ -160,13 +160,17 @@ export function Button(props: ButtonProps) {
       {...rest}
       disabled={disabled || loading}
     >
-     {(state) =>
+      {(state) =>
         loading ? (
           <ActivityIndicator color="#fff" style={{ zIndex: 2 }} />
         ) : (
           <>
             {!!LeftAccessory && (
-              <LeftAccessory style={$leftAccessoryStyle} pressableState={state} disabled={disabled} />
+              <LeftAccessory
+                style={$leftAccessoryStyle}
+                pressableState={state}
+                disabled={disabled}
+              />
             )}
 
             <Text tx={tx} text={text} txOptions={txOptions} style={$textStyle(state)}>

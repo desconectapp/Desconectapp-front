@@ -118,25 +118,25 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
-  <TamaguiProvider config={tamaguiConfig}>
-  <ToastProvider>
-    <YStack flex={1}>
-      <QueryClientProvider client={queryClient}>
-        <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-          <KeyboardProvider>
-            <AppNavigator
-              linking={linking}
-              initialState={initialNavigationState}
-              onStateChange={onNavigationStateChange}
-            />
-          </KeyboardProvider>
-        </SafeAreaProvider>
-      </QueryClientProvider>
+    <TamaguiProvider config={tamaguiConfig}>
+      <ToastProvider>
+        <YStack flex={1}>
+          <QueryClientProvider client={queryClient}>
+            <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+              <KeyboardProvider>
+                <AppNavigator
+                  linking={linking}
+                  initialState={initialNavigationState}
+                  onStateChange={onNavigationStateChange}
+                />
+              </KeyboardProvider>
+            </SafeAreaProvider>
+          </QueryClientProvider>
 
-      <ToastViewport bottom={0} left={0} right={0} />
-      <AppToast />
-    </YStack>
-  </ToastProvider>
-</TamaguiProvider>
+          <ToastViewport bottom={0} left={0} right={0} />
+          <AppToast />
+        </YStack>
+      </ToastProvider>
+    </TamaguiProvider>
   )
 }

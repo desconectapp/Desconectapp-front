@@ -27,7 +27,5 @@ export const userService = {
     }
     console.log("Usuario autenticado:", response.data)
     return response.data
-  }
-
+  },
 }
-

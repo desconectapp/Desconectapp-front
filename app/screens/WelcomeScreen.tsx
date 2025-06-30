@@ -12,7 +12,6 @@ import { useNavigation } from "@react-navigation/native"
 import { userService } from "../services/users"
 import { useUsers } from "@/hooks/Users"
 
-
 const welcomeLogo = require("../../assets/images/logo.png")
 const welcomeFace = require("../../assets/images/welcome-face.png")
 
@@ -24,39 +23,44 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
 
-  const {data: users} = useUsers()
+  const { data: users } = useUsers()
 
-return (
-   <Screen preset="fixed" contentContainerStyle={styles.container}>
-    <View style={styles.logoContainer}>
+  return (
+    <Screen preset="fixed" contentContainerStyle={styles.container}>
+      <View style={styles.logoContainer}>
         <AutoImage
-        source={{ uri: 'https://media.tenor.com/o656qFKDzeUAAAAM/rick-astley-never-gonna-give-you-up.gif' }}
-        maxWidth={200}
-        maxHeight={100}
-        resizeMode="contain"
-        style={{}}
-      />
-      <Text>(Aca iria el logo xd)</Text>
-    </View>
+          source={{
+            uri: "https://media.tenor.com/o656qFKDzeUAAAAM/rick-astley-never-gonna-give-you-up.gif",
+          }}
+          maxWidth={200}
+          maxHeight={100}
+          resizeMode="contain"
+          style={{}}
+        />
+        <Text>(Aca iria el logo xd)</Text>
+      </View>
 
-    <View style={styles.usersContainer}>
-      {users?.map((user, index) => (
-        <Text key={index} style={styles.userText}>
-          {user.name} {user.email}
-        </Text>
-      ))}
-    </View>
+      <View style={styles.usersContainer}>
+        {users?.map((user, index) => (
+          <Text key={index} style={styles.userText}>
+            {user.name} {user.email}
+          </Text>
+        ))}
+      </View>
 
-    <View style={styles.buttonsContainer}>
-      <Button style={styles.button} onPress={() => navigation.navigate('LoginScreen')}>
-        Ingresar
-      </Button>
-      <Button style={styles.button} onPress={() => navigation.navigate('SignUpScreen')}>
-        Crear cuenta
-      </Button>
-    </View>
-  </Screen>
-)
+      <View style={styles.buttonsContainer}>
+        <Button style={styles.button} onPress={() => navigation.navigate("LoginScreen")}>
+          Ingresar
+        </Button>
+        <Button style={styles.button} onPress={() => navigation.navigate("SignUpScreen")}>
+          Crear cuenta
+        </Button>
+        <Button style={styles.button} onPress={() => navigation.navigate("PreferencesScreen")}>
+          Preferencias
+        </Button>
+      </View>
+    </Screen>
+  )
 })
 
 const styles = {
@@ -64,17 +68,17 @@ const styles = {
     flex: 1,
     paddingHorizontal: 20,
     paddingVertical: 40,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   } as ViewStyle,
-    logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',  // para centrar verticalmente
+  logoContainer: {
+    alignItems: "center",
+    justifyContent: "center", // para centrar verticalmente
     marginBottom: 40,
-    height: 500,               // espacio fijo para el logo
+    height: 500, // espacio fijo para el logo
   } as ViewStyle,
   usersContainer: {
     flexGrow: 1,
-    justifyContent: 'center' as const,
+    justifyContent: "center" as const,
     paddingHorizontal: 10,
   } as ViewStyle,
   buttonsContainer: {
@@ -85,7 +89,6 @@ const styles = {
   } as ViewStyle,
   userText: {
     marginVertical: 8,
-    textAlign: 'center' as const,
+    textAlign: "center" as const,
   } as TextStyle,
 }
-

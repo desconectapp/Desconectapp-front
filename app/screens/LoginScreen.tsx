@@ -10,7 +10,6 @@ import { useLogin } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 
-
 export const LoginScreen = observer(function LoginScreen() {
   const { themed } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
@@ -42,20 +41,20 @@ export const LoginScreen = observer(function LoginScreen() {
     LoginFunc.mutateAsync(data, {
       onSuccess: () => {
         setButtonState(false)
-       // aca guardar token y user info en storage
-       // revisar npm install @react-native-async-storage/async-storage
+        // aca guardar token y user info en storage
+        // revisar npm install @react-native-async-storage/async-storage
 
-       // navigation.navigate("Home") (supongo)
+        // navigation.navigate("Home") (supongo)
       },
       onError: (error) => {
         setButtonState(false)
-        showToast("Error al crear usuario", "Por favor, intenta nuevamente.")        
+        showToast("Error al crear usuario", "Por favor, intenta nuevamente.")
       },
     })
   }
   return (
     <Screen preset="scroll" contentContainerStyle={[$container, $bottomContainerInsets]}>
-      <Header title="Ingresar" />      
+      <Header title="Ingresar" />
       <TextField
         label="Email"
         placeholder="Email"

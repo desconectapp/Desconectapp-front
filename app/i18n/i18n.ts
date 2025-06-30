@@ -12,7 +12,7 @@ const fallbackLocale = "es-US"
 
 const systemLocales = Localization.getLocales()
 
-const resources = { en, es}
+const resources = { en, es }
 const supportedTags = Object.keys(resources)
 
 // Checks to see if the device locale matches any of the supported locales
