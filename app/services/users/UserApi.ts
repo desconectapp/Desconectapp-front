@@ -1,5 +1,5 @@
 import { api } from "../api"
-import { CreateProfileData, UserResponse } from "./UserApi.types"
+import { CreateProfileData, Preference, UserResponse } from "./UserApi.types"
 
 export const userService = {
   getUsers: async (): Promise<UserResponse[] | undefined> => {
@@ -28,6 +28,36 @@ export const userService = {
     }
     console.log("Perfil creado:", response.data)
     return response.data
+  },
+
+  getPreferences: async (): Promise<Preference[] | undefined> => {
+    // const response = await api.apisauce.get<string[]>("/users/preferences")
+    // if (!response.ok) {
+    //   throw new Error("Error al cargar preferencias")
+    // }
+    // console.log("Preferencias obtenidas:", response.data)
+    // return response.data
+
+    // dejo mockeado
+    return [
+      { id: "chess", label: "Chess", icon: "♟️" },
+      { id: "football", label: "Football", icon: "⚽" },
+      { id: "basketball", label: "Basketball", icon: "🏀" },
+      { id: "tennis", label: "Tennis", icon: "🎾" },
+      { id: "swimming", label: "Swimming", icon: "🏊" },
+      { id: "running", label: "Running", icon: "🏃" },
+      { id: "cycling", label: "Cycling", icon: "🚴" },
+      { id: "yoga", label: "Yoga", icon: "🧘" },
+      { id: "hiking", label: "Hiking", icon: "🥾" },
+      { id: "dancing", label: "Dancing", icon: "💃" },
+      { id: "music", label: "Music", icon: "🎵" },
+      { id: "reading", label: "Reading", icon: "📚" },
+      { id: "cooking", label: "Cooking", icon: "👨‍🍳" },
+      { id: "photography", label: "Photography", icon: "📸" },
+      { id: "gaming", label: "Gaming", icon: "🎮" },
+      { id: "travel", label: "Travel", icon: "✈️" },
+      { id: "art", label: "Art", icon: "🎨" },
+    ]
   },
 
   login: async (data: { email: string; password: string }): Promise<void> => {

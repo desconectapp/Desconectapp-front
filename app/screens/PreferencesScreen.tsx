@@ -6,37 +6,12 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
 import { useStores } from "@/models"
-import { useProfile, useUsers } from "@/hooks/Users"
+import { usePreferences, useProfile } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { useAppToast } from "@/components/useToast"
 
 const { width } = Dimensions.get("window")
-
-interface Preference {
-  id: string
-  label: string
-  emoji: string
-}
-
-const preferences: Preference[] = [
-  { id: "soccer", label: "Soccer", emoji: "⚽" },
-  { id: "basketball", label: "Basketball", emoji: "🏀" },
-  { id: "tennis", label: "Tennis", emoji: "🎾" },
-  { id: "swimming", label: "Swimming", emoji: "🏊" },
-  { id: "running", label: "Running", emoji: "🏃" },
-  { id: "cycling", label: "Cycling", emoji: "🚴" },
-  { id: "yoga", label: "Yoga", emoji: "🧘" },
-  { id: "hiking", label: "Hiking", emoji: "🥾" },
-  { id: "dancing", label: "Dancing", emoji: "💃" },
-  { id: "music", label: "Music", emoji: "🎵" },
-  { id: "reading", label: "Reading", emoji: "📚" },
-  { id: "cooking", label: "Cooking", emoji: "👨‍🍳" },
-  { id: "photography", label: "Photography", emoji: "📸" },
-  { id: "gaming", label: "Gaming", emoji: "🎮" },
-  { id: "travel", label: "Travel", emoji: "✈️" },
-  { id: "art", label: "Art", emoji: "🎨" },
-]
 
 export const PreferencesScreen = observer(() => {
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
@@ -46,7 +21,8 @@ export const PreferencesScreen = observer(() => {
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
-  const profile = useProfile()
+  const { data: preferences, isLoading, isError } = usePreferences()
+  const { mutateAsync: profileMutateAsync } = useProfile()
 
   const togglePreference = (id: string) => {
     setSelectedPreferences((prev) =>
@@ -55,9 +31,7 @@ export const PreferencesScreen = observer(() => {
   }
 
   const handleContinue = () => {
-    signUpStore.setPreferences(selectedPreferences)
-
-    profile.mutateAsync(
+    profileMutateAsync(
       {
         ...signUpStore.userInfo,
         preferences: selectedPreferences,
@@ -65,7 +39,7 @@ export const PreferencesScreen = observer(() => {
       {
         onSuccess: (response) => {
           console.log("Profile updated successfully:", response)
-          // Navigate to the next screen or show success message
+          signUpStore.setPreferences(selectedPreferences)
           navigation.navigate("Welcome")
         },
         onError: (error) => {
@@ -93,21 +67,25 @@ export const PreferencesScreen = observer(() => {
         </View>
 
         <View style={$chipsContainer}>
-          {preferences.map((pref) => {
-            const selected = selectedPreferences.includes(pref.id)
-            return (
-              <TouchableOpacity
-                key={pref.id}
-                onPress={() => togglePreference(pref.id)}
-                style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
-              >
-                <Text style={$emoji}>{pref.emoji}</Text>
-                <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>
-                  {pref.label}
-                </Text>
-              </TouchableOpacity>
-            )
-          })}
+          {isError && <Text style={themed($subtitle)}>Error loading preferences</Text>}
+          {isLoading && "Loading preferences..."}
+          {preferences &&
+            preferences.length > 0 &&
+            preferences.map((pref) => {
+              const selected = selectedPreferences.includes(pref.id)
+              return (
+                <TouchableOpacity
+                  key={pref.id}
+                  onPress={() => togglePreference(pref.id)}
+                  style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
+                >
+                  <Text style={$emoji}>{pref.icon}</Text>
+                  <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>
+                    {pref.label}
+                  </Text>
+                </TouchableOpacity>
+              )
+            })}
         </View>
 
         <View style={$footer}>

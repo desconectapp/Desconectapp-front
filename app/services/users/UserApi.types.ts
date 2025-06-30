@@ -9,6 +9,12 @@ export interface UserResponse {
   email: string
 }
 
+export interface Preference {
+  id: string
+  label: string
+  icon: string
+}
+
 export interface CreateProfileData {
   name: string
   age: number

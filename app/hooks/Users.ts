@@ -44,3 +44,14 @@ export const useProfile = () => {
     },
   })
 }
+
+export const usePreferences = () => {
+  return useQuery({
+    queryKey: ["preferences"],
+    queryFn: async () => {
+      const response = await userService.getPreferences()
+      if (!response) throw new Error("Error al cargar preferencias")
+      return response
+    },
+  })
+}

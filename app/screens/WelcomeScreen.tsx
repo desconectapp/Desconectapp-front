@@ -62,7 +62,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = observer(function WelcomeSc
         <Button style={styles.button} onPress={() => navigation.navigate("SignUpScreen")}>
           Crear cuenta
         </Button>
-        <Button style={styles.button} onPress={() => navigation.navigate("MoreInfoScreen")}>
+        <Button style={styles.button} onPress={() => navigation.navigate("PreferencesScreen")}>
           Preferencias
         </Button>
       </View>
