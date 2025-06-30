@@ -88,7 +88,7 @@ export const SignUpScreen = observer(function LoginScreen() {
 
       <View style={$formContainer}>
         <TextField
-          label="Email Address"
+          label="Email"
           placeholder="Enter your email"
           {...register("email", {
             required: "We need your email to sign you in",

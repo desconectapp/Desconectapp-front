@@ -1,14 +1,11 @@
-import { useState, useEffect } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-  Dimensions,
-} from "react-native"
-import { useStores } from "app/models"
+import { observer } from "mobx-react-lite"
+import { useState } from "react"
+import { View, ScrollView, TouchableOpacity, Dimensions, ViewStyle, TextStyle } from "react-native"
+import { Screen, Text, Button } from "@/components"
+import { useAppTheme } from "@/utils/useAppTheme"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { spacing } from "@/theme"
+import { useStores } from "@/models"
 
 const { width } = Dimensions.get("window")
 
@@ -37,189 +34,198 @@ const preferences: Preference[] = [
   { id: "art", label: "Art", emoji: "🎨" },
 ]
 
-export const PreferencesScreen = () => {
+export const PreferencesScreen = observer(() => {
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
   const { signUpStore } = useStores()
+  const { themed } = useAppTheme()
+  const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
 
-  const togglePreference = (preferenceId: string) => {
-    setSelectedPreferences((prev) => {
-      if (prev.includes(preferenceId)) {
-        return prev.filter((id) => id !== preferenceId)
-      } else {
-        return [...prev, preferenceId]
-      }
-    })
+  const togglePreference = (id: string) => {
+    setSelectedPreferences((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    )
   }
 
   const handleContinue = () => {
     signUpStore.setPreferences(selectedPreferences)
   }
 
-  const renderPreferenceChip = (preference: Preference) => {
-    const isSelected = selectedPreferences.includes(preference.id)
-
-    return (
-      <TouchableOpacity
-        key={preference.id}
-        style={[styles.chip, isSelected && styles.chipSelected]}
-        onPress={() => togglePreference(preference.id)}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.emoji}>{preference.emoji}</Text>
-        <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-          {preference.label}
-        </Text>
-      </TouchableOpacity>
-    )
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={$contentWrapper}>
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        style={$scroll}
+        contentContainerStyle={$scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>What are you into?</Text>
-          <Text style={styles.subtitle}>
+        <View style={$header}>
+          <Text preset="heading" style={themed($title)}>
+            What are you into?
+          </Text>
+          <Text preset="subheading" style={themed($subtitle)}>
             Choose your interests and hobbies. You can select multiple options.
           </Text>
         </View>
 
-        <View style={styles.chipsContainer}>{preferences.map(renderPreferenceChip)}</View>
+        <View style={$chipsContainer}>
+          {preferences.map((pref) => {
+            const selected = selectedPreferences.includes(pref.id)
+            return (
+              <TouchableOpacity
+                key={pref.id}
+                onPress={() => togglePreference(pref.id)}
+                style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
+              >
+                <Text style={$emoji}>{pref.emoji}</Text>
+                <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>
+                  {pref.label}
+                </Text>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.selectedCount}>{selectedPreferences.length} selected</Text>
+        <View style={$footer}>
+          <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
         </View>
       </ScrollView>
 
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            selectedPreferences.length === 0 && styles.continueButtonDisabled,
-          ]}
+      <View style={[$bottomBar, $bottomInsets]}>
+        <Button
+          text="Continue"
           onPress={handleContinue}
           disabled={selectedPreferences.length === 0}
-          activeOpacity={0.8}
-        >
-          <Text
-            style={[
-              styles.continueButtonText,
-              selectedPreferences.length === 0 && styles.continueButtonTextDisabled,
-            ]}
-          >
-            Continue
-          </Text>
-        </TouchableOpacity>
+          style={[
+            themed($continueButton),
+            selectedPreferences.length === 0 && themed($continueButtonDisabled),
+          ]}
+          textStyle={themed(
+            selectedPreferences.length === 0 ? $continueButtonTextDisabled : $continueButtonText,
+          )}
+        />
       </View>
-    </SafeAreaView>
+    </View>
   )
+})
+
+const $screen: ViewStyle = {
+  flex: 1,
 }
 
-const styles = StyleSheet.create({
-  bottomContainer: {
-    backgroundColor: "#FFFFFF",
-    borderTopColor: "#E5E5E5",
-    borderTopWidth: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-  },
-  chip: {
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    borderColor: "transparent",
-    borderRadius: 25,
-    borderWidth: 2,
-    justifyContent: "center",
-    marginBottom: 12,
-    maxWidth: (width - 60) / 2,
-    minWidth: (width - 60) / 2,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  chipSelected: {
-    backgroundColor: "#007AFF",
-    borderColor: "#0056CC",
-  },
-  chipText: {
-    color: "#333333",
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 0,
-    padding: 0,
-  },
-  chipTextSelected: {
-    color: "#FFFFFF",
-  },
-  chipsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-  },
-  container: {
-    backgroundColor: "#FFFFFF",
-    flex: 1,
-    marginTop: 25,
-  },
-  continueButton: {
-    alignItems: "center",
-    backgroundColor: "#007AFF",
-    borderRadius: 12,
-    justifyContent: "center",
-    paddingVertical: 16,
-  },
-  continueButtonDisabled: {
-    backgroundColor: "#E5E5E5",
-  },
-  continueButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  continueButtonTextDisabled: {
-    color: "#999999",
-  },
-  emoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  footer: {
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingTop: 20,
-  },
-  header: {
-    alignItems: "center",
-    paddingBottom: 32,
-    paddingHorizontal: 24,
-    paddingTop: 20,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  selectedCount: {
-    color: "#666666",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  subtitle: {
-    color: "#666666",
-    fontSize: 16,
-    lineHeight: 22,
-    paddingHorizontal: 20,
-    textAlign: "center",
-  },
-  title: {
-    color: "#1A1A1A",
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textAlign: "center",
-  },
+const $screenBackground = (theme: any) => ({
+  backgroundColor: theme.colors.background,
+})
+
+const $contentWrapper: ViewStyle = {
+  flex: 1,
+}
+
+const $scroll: ViewStyle = {
+  flex: 1,
+}
+
+const $scrollContent: ViewStyle = {
+  paddingHorizontal: spacing.lg,
+  paddingTop: spacing.lg,
+  paddingBottom: spacing.xxl,
+}
+
+const $header: ViewStyle = {
+  alignItems: "center",
+  marginBottom: spacing.lg,
+}
+
+const $title = (theme: any): TextStyle => ({
+  color: theme.colors.text,
+  fontSize: 28,
+  fontWeight: "bold",
+  marginBottom: spacing.sm,
+  textAlign: "center",
+})
+
+const $subtitle = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  textAlign: "center",
+  fontSize: 16,
+  lineHeight: 22,
+})
+
+const $chipsContainer: ViewStyle = {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  marginBottom: spacing.lg,
+}
+
+const $chip: ViewStyle = {
+  borderRadius: 25,
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  marginBottom: spacing.md,
+  width: (width - spacing.lg * 3) / 2,
+  alignItems: "center",
+}
+
+const $chipSelected = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.tint,
+})
+
+const $chipUnselected = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.backgroundMuted,
+  borderColor: "transparent",
+  borderWidth: 2,
+})
+
+const $chipTextSelected = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontWeight: "600",
+})
+
+const $chipTextUnselected = (theme: any): TextStyle => ({
+  color: theme.colors.text,
+  fontWeight: "600",
+})
+
+const $emoji: TextStyle = {
+  fontSize: 26,
+  lineHeight: 32,
+  marginBottom: 4,
+}
+
+const $footer: ViewStyle = {
+  alignItems: "center",
+  marginBottom: spacing.lg,
+}
+
+const $selectedCount = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  fontSize: 14,
+  fontWeight: "500",
+})
+
+const $bottomBar: ViewStyle = {
+  paddingHorizontal: spacing.lg,
+  paddingVertical: spacing.md,
+}
+
+const $continueButton = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.tint,
+  borderRadius: spacing.md,
+  minHeight: 56,
+  justifyContent: "center",
+})
+
+const $continueButtonDisabled = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.backgroundMuted,
+})
+
+const $continueButtonText = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontWeight: "600",
+  fontSize: 16,
+})
+
+const $continueButtonTextDisabled = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  fontSize: 16,
+  fontWeight: "600",
 })

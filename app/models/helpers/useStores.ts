@@ -15,7 +15,7 @@ import { setupRootStore } from "./setupRootStore"
  * instantiating it, although that should be rare.
  */
 const _rootStore = RootStoreModel.create({
-  signUpStore: {preferences: []},
+  signUpStore: { preferences: [] },
 })
 
 /**
