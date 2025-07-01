@@ -9,7 +9,6 @@ import {
   type ImageStyle,
   TouchableOpacity,
   Image,
-  Alert,
   Dimensions,
 } from "react-native"
 import { Screen, TextField, Button, Text } from "@/components"
@@ -18,7 +17,9 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm, Controller } from "react-hook-form"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import * as ImagePicker from "expo-image-picker"
+import useImagePicker from "@/hooks/Image"
+import { useNavigation } from "@react-navigation/native"
+import { AppStackScreenProps } from "@/navigators"
 
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 
@@ -35,9 +36,9 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState<boolean>(false)
-  const [profileImage, setProfileImage] = useState<string | null>(null)
-  // const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
+  const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
+  const { profileImage, handleImagePicker } = useImagePicker()
 
   const {
     control,
@@ -51,54 +52,6 @@ export const ProfileScreen = observer(function ProfileScreen() {
       workStatus: "full-time",
     },
   })
-
-  const handleImagePicker = async () => {
-    Alert.alert("Update Profile Picture", "Choose an option", [
-      { text: "Camera", onPress: openCamera },
-      { text: "Gallery", onPress: openGallery },
-      { text: "Cancel", style: "cancel" },
-    ])
-  }
-
-  const openCamera = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync()
-    if (!permission.granted) {
-      showToast("Permission Denied", "Camera access is required")
-      return
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      allowsEditing: true,
-      aspect: [1, 1],
-    })
-
-    handleImageResponse(result)
-  }
-
-  const openGallery = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (!permission.granted) {
-      showToast("Permission Denied", "Media library access is required")
-      return
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-      allowsEditing: true,
-      aspect: [1, 1],
-    })
-
-    handleImageResponse(result)
-  }
-
-  const handleImageResponse = (result: ImagePicker.ImagePickerResult) => {
-    if (!result.canceled && result.assets.length > 0) {
-      setProfileImage(result.assets[0].uri)
-    }
-  }
 
   const onCancel = () => {
     reset()
