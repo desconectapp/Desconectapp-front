@@ -1,5 +1,3 @@
-"use client"
-
 import { observer } from "mobx-react-lite"
 import { useState } from "react"
 import {
@@ -20,6 +18,7 @@ import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
+import { useEditProfile, useProfile } from "@/hooks/Users"
 
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 
@@ -38,7 +37,10 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
+
+  const { data: profile } = useProfile()
   const { profileImage, handleImagePicker } = useImagePicker()
+  const { mutateAsync: editProfileMutateAsync } = useEditProfile()
 
   const {
     control,
@@ -47,11 +49,29 @@ export const ProfileScreen = observer(function ProfileScreen() {
     formState: { errors, isDirty },
   } = useForm<ProfileFormData>({
     defaultValues: {
-      name: "John Doe",
-      location: "New York, USA",
-      workStatus: "full-time",
+      name: profile?.name || "",
+      location: profile?.location || "",
     },
   })
+
+  const onSubmit = async (data: ProfileFormData) => {
+    console.log(profileImage)
+    setIsSaving(true)
+    try {
+      await editProfileMutateAsync({
+        ...data,
+        image: profileImage,
+      })
+      showToast("Profile Updated", "Your profile has been successfully updated")
+      setIsEditing(false)
+      reset(data)
+    } catch (error) {
+      console.error("Error updating profile:", error)
+      showToast("Update Failed", "There was an error updating your profile")
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const onCancel = () => {
     reset()
@@ -171,13 +191,11 @@ export const ProfileScreen = observer(function ProfileScreen() {
           <View style={$buttonContainer}>
             <Button
               text={isSaving ? "Saving..." : "Save Changes"}
-              onPress={handleSubmit(() => {
-                console.log("Profile data submitted")
-              })}
+              onPress={handleSubmit(onSubmit)}
               style={themed($saveButton)}
               textStyle={themed($saveButtonText)}
               loading={isSaving}
-              disabled={isSaving || !isDirty}
+              disabled={isSaving || (!isDirty && profileImage === null)}
             />
 
             <TouchableOpacity

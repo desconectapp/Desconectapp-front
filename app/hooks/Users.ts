@@ -45,6 +45,17 @@ export const useCreateProfile = () => {
   })
 }
 
+export const useEditProfile = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<any, Error, any>({
+    mutationFn: (data) => userService.editProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] })
+    },
+  })
+}
+
 export const useProfile = () => {
   return useQuery({
     queryKey: ["profile"],
