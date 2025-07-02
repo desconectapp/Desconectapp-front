@@ -107,6 +107,19 @@ export const SignUpScreen = observer(() => {
         forgotPassword={true}
         isSubmitting={loading}
       />
+      <View style={$logoContainer}>
+        <Text
+          preset="subheading"
+          style={themed({
+            color: "gray",
+            textAlign: "center",
+            opacity: 0.9,
+          })}
+          onPress={() => navigation.navigate("LoginScreen")}
+        >
+          Already have an account? Sign In
+        </Text>
+      </View>
     </Screen>
   )
 })

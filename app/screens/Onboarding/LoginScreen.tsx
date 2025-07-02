@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite"
 import { useState } from "react"
-import { Screen, Header, TextField, Button } from "@/components"
+import { Screen, Text, AutoImage } from "@/components"
 import { AppStackScreenProps } from "../../navigators"
 import { useSafeAreaInsetsStyle } from "../../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -9,94 +9,126 @@ import { useForm } from "react-hook-form"
 import { useLogin } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
+import { AuthForm } from "@/components/Custom/AuthForm"
+import { Dimensions, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
+import { spacing } from "@/theme"
+import logoImage from "../../../assets/images/logo.png"
 
-export const LoginScreen = observer(function LoginScreen() {
+const { width } = Dimensions.get("window")
+
+export const LoginScreen = observer(() => {
   const { themed } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-
-  const [buttonState, setButtonState] = useState<true | false>(false)
+  const [loading, setLoading] = useState<boolean>(false)
 
   const LoginFunc = useLogin()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-    watch,
-  } = useForm({
+  const form = useForm({
     defaultValues: {
-      name: "NombrePorDefecto",
-      surname: "ApellidoPorDefecto",
-      email: "MailPorDefecto@gmail.com",
-      password: "123456",
+      email: "",
+      password: "",
     },
   })
 
   const onSubmit = (data: any) => {
-    setButtonState(true)
+    setLoading(true)
     console.log(data)
     LoginFunc.mutateAsync(data, {
       onSuccess: () => {
-        setButtonState(false)
+        setLoading(false)
         // aca guardar token y user info en storage
         // revisar npm install @react-native-async-storage/async-storage
 
         // navigation.navigate("Home") (supongo)
       },
       onError: (error) => {
-        setButtonState(false)
+        setLoading(false)
         showToast("Error al crear usuario", "Por favor, intenta nuevamente.")
       },
     })
   }
   return (
     <Screen preset="scroll" contentContainerStyle={[$container, $bottomContainerInsets]}>
-      <Header title="Ingresar" />
-      <TextField
-        label="Email"
-        placeholder="Email"
-        {...register("email", {
-          required: "El email es obligatorio",
-          pattern: {
-            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-            message: "Email inválido",
+      <View style={$logoContainer}>
+        <AutoImage source={logoImage} style={$logo} resizeMode="contain" />
+        <Text preset="heading" style={themed($welcomeText)}>
+          Welcome Back
+        </Text>
+        <Text preset="subheading" style={themed($subtitleText)}>
+          Enter your credentials to continue
+        </Text>
+      </View>
+      <AuthForm
+        form={form}
+        fields={[
+          {
+            name: "email",
+            label: "Email",
+            placeholder: "example@mail.com",
+            rules: {
+              required: "Email is required",
+              pattern: {
+                value: /^\S+@\S+$/i,
+                message: "Invalid email",
+              },
+            },
           },
-        })}
-        onChangeText={(text) => setValue("email", text)}
-        value={watch("email")}
-        keyboardType="email-address"
-        helper={errors.email?.message as string}
-        status={errors.email ? "error" : undefined}
-      />
-      <TextField
-        label="Contraseña"
-        placeholder="••••••••"
-        {...register("password", {
-          required: "La contraseña es obligatoria",
-          minLength: {
-            value: 6,
-            message: "La contraseña debe tener al menos 6 caracteres",
+          {
+            name: "password",
+            label: "Password",
+            placeholder: "••••••••",
+            rules: { required: "Password is required" },
           },
-        })}
-        value={watch("password")}
-        onChangeText={(text) => setValue("password", text)}
-        secureTextEntry
-        helper={errors.password?.message as string}
-        status={errors.password ? "error" : undefined}
+        ]}
+        submitText="Login"
+        onSubmit={onSubmit}
+        forgotPassword={false}
+        isSubmitting={loading}
       />
-      <Button
-        text="Ingresar"
-        onPress={handleSubmit(onSubmit)}
-        style={$button}
-        loading={buttonState}
-      />
+      <View style={$logoContainer}>
+        <Text
+          preset="subheading"
+          style={themed({
+            color: "gray",
+            textAlign: "center",
+            opacity: 0.9,
+          })}
+          onPress={() => navigation.navigate("SignUpScreen")}
+        >
+          Don&apos;t have an account? Sign Up
+        </Text>
+      </View>
     </Screen>
   )
 })
 
-const $container = { padding: 20 }
+const $container: ViewStyle = {
+  paddingHorizontal: spacing.lg,
+  paddingTop: spacing.xl,
+}
 
-const $button = { marginTop: 24 }
+const $logoContainer: ViewStyle = {
+  alignItems: "center",
+  marginBottom: spacing.xxl,
+  paddingTop: spacing.xl,
+}
+
+const $subtitleText = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  textAlign: "center",
+  opacity: 0.8,
+})
+
+const $logo: ImageStyle = {
+  width: width * 0.3,
+  height: width * 0.3,
+  marginBottom: spacing.md,
+}
+
+const $welcomeText = (theme: any): TextStyle => ({
+  color: theme.colors.text,
+  marginBottom: spacing.xs,
+  textAlign: "center",
+})
