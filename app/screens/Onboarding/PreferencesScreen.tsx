@@ -6,7 +6,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
 import { useStores } from "@/models"
-import { usePreferences, useProfile } from "@/hooks/Users"
+import { useEditProfile, usePreferences, useProfile } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { useAppToast } from "@/components/useToast"
@@ -18,11 +18,11 @@ export const PreferencesScreen = observer(() => {
   const { signUpStore } = useStores()
   const { themed } = useAppTheme()
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
+  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
   const { showToast } = useAppToast()
 
   const { data: preferences, isLoading, isError } = usePreferences()
-  const { mutateAsync: profileMutateAsync } = useProfile()
+  const editProfileFunc = useEditProfile()
 
   const togglePreference = (id: string) => {
     setSelectedPreferences((prev) =>
@@ -30,8 +30,8 @@ export const PreferencesScreen = observer(() => {
     )
   }
 
-  const handleContinue = () => {
-    profileMutateAsync(
+  const handleContinue = async () => {
+    await editProfileFunc.mutateAsync(
       {
         ...signUpStore.userInfo,
         preferences: selectedPreferences,
@@ -40,11 +40,12 @@ export const PreferencesScreen = observer(() => {
         onSuccess: (response) => {
           console.log("Profile updated successfully:", response)
           signUpStore.setPreferences(selectedPreferences)
-          navigation.navigate("Welcome")
+          navigation.navigate("Main", { screen: "Tabs", })
         },
         onError: (error) => {
           console.error("Error updating profile:", error)
-          showToast("Creation Failed")
+          // showToast("Creation Failed")
+          navigation.navigate("Main", { screen: "Tabs", })
         },
       },
     )
@@ -68,7 +69,8 @@ export const PreferencesScreen = observer(() => {
 
         <View style={$chipsContainer}>
           {isError && <Text style={themed($subtitle)}>Error loading preferences</Text>}
-          {isLoading && "Loading preferences..."}
+          {isLoading && <Text style={themed($subtitle)}>Loading preferences...</Text>}
+
           {preferences &&
             preferences.length > 0 &&
             preferences.map((pref) => {

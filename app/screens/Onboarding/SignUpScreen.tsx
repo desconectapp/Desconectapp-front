@@ -2,15 +2,15 @@ import { observer } from "mobx-react-lite"
 import { useState } from "react"
 import { View, type ViewStyle, type TextStyle, type ImageStyle, Dimensions } from "react-native"
 import { Screen, TextField, Button, Text, AutoImage } from "@/components"
-import type { AppStackScreenProps } from "../navigators"
-import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
+import type { AppStackScreenProps } from "../../navigators"
+import { useSafeAreaInsetsStyle } from "../../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm } from "react-hook-form"
 import { useLogin, useSignUp } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import logoImage from "../../assets/images/logo.png"
+import logoImage from "../../../assets/images/logo.png"
 
 const { width } = Dimensions.get("window")
 
@@ -50,7 +50,7 @@ export const SignUpScreen = observer(function LoginScreen() {
       email_not_verified: "Please verify your email before logging in",
     }
 
-    return errorMessages[error?.code] || "Unexpected Error. Try again later"
+    return errorMessages[error?.code as keyof typeof errorMessages] || "Unexpected Error. Try again later"
   }
 
   const onSubmit = (data: SignUpFormData) => {
@@ -74,7 +74,7 @@ export const SignUpScreen = observer(function LoginScreen() {
     <Screen
       preset="scroll"
       contentContainerStyle={[$container, $bottomContainerInsets]}
-      backgroundColor={themed($screenBackground)}
+      backgroundColor={themed($screenBackground).backgroundColor}
     >
       <View style={$logoContainer}>
         <AutoImage source={logoImage} style={$logo} resizeMode="contain" />
@@ -85,7 +85,6 @@ export const SignUpScreen = observer(function LoginScreen() {
           Create your Account
         </Text>
       </View>
-
       <View style={$formContainer}>
         <TextField
           label="Email"

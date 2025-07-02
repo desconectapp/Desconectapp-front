@@ -2,8 +2,8 @@ import { observer } from "mobx-react-lite"
 import { useState } from "react"
 import { View, type ViewStyle, type TextStyle, TouchableOpacity } from "react-native"
 import { Screen, TextField, Button, Text } from "@/components"
-import type { AppStackScreenProps } from "../navigators"
-import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
+import type { AppStackScreenProps } from "../../navigators"
+import { useSafeAreaInsetsStyle } from "../../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm, Controller } from "react-hook-form"
 import { useNavigation } from "@react-navigation/native"
@@ -68,7 +68,7 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
         location: data.location,
         workStatus: data.workStatus,
       })
-      navigation.navigate("PreferencesScreen")
+      navigation.navigate("Main", { screen: "PreferencesScreen" })
     } catch (error) {
       console.error("Error saving user info:", error)
       showToast("Oops!", "Something went wrong. Please try again.")
@@ -113,7 +113,7 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
     <Screen
       preset="scroll"
       contentContainerStyle={[$container, $bottomContainerInsets]}
-      backgroundColor={themed($screenBackground)}
+      backgroundColor={themed($screenBackground).backgroundColor}
     >
       <View style={$headerContainer}>
         <Text preset="heading" style={themed($titleText)}>

@@ -1,8 +1,8 @@
 import { observer } from "mobx-react-lite"
 import { useState } from "react"
 import { Screen, Header, TextField, Button } from "@/components"
-import { AppStackScreenProps } from "../navigators"
-import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
+import { AppStackScreenProps } from "../../navigators"
+import { useSafeAreaInsetsStyle } from "../../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm } from "react-hook-form"
 
