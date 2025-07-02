@@ -3,12 +3,11 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { TouchableOpacity } from "react-native";
-import { View } from "tamagui";
+import Ionicons from "@expo/vector-icons/Ionicons"
+import { TouchableOpacity } from "react-native"
+import { View } from "tamagui"
 import { Animated, Pressable } from "react-native"
 import { useRef } from "react"
-
 
 export type MainTabParamList = {
   HomeScreen: undefined
@@ -25,7 +24,6 @@ export type MainStackParamList = {
 const Tab = createBottomTabNavigator<MainTabParamList>()
 const Stack = createNativeStackNavigator<MainStackParamList>()
 
-
 const CustomTabBarButton = ({ children, onPress }: any) => {
   const scaleAnim = useRef(new Animated.Value(1)).current
 
@@ -37,7 +35,7 @@ const CustomTabBarButton = ({ children, onPress }: any) => {
     Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start()
   }
 
- return (
+  return (
     <Pressable
       onPress={onPress}
       style={{
@@ -63,7 +61,6 @@ const CustomTabBarButton = ({ children, onPress }: any) => {
   )
 }
 
-
 function TabNavigator() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
@@ -76,16 +73,14 @@ function TabNavigator() {
         }}
       />
       <Tab.Screen
-    name="SearchScreen"
-    component={SearchScreen}
-    options={{
-      tabBarIcon: ({ color, size }) => (
-        <AntDesign name="find" size={28} color="#fff" />
-      ),
-      tabBarLabel: "",
-      tabBarButton: (props) => <CustomTabBarButton {...props} />,
-    }}
-  />
+        name="SearchScreen"
+        component={SearchScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <AntDesign name="find" size={28} color="#fff" />,
+          tabBarLabel: "",
+          tabBarButton: (props) => <CustomTabBarButton {...props} />,
+        }}
+      />
       <Tab.Screen
         name="ProfileScreen"
         component={ProfileScreen}
@@ -95,7 +90,6 @@ function TabNavigator() {
           tabBarStyle: { display: "flex" }, // Asegura que el tab bar esté visible
         }}
       />
-     
     </Tab.Navigator>
   )
 }

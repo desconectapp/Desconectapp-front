@@ -28,10 +28,7 @@ export function SearchScreen() {
 
       <View style={styles.form}>
         <Text text="Actividad" />
-        <Picker
-          selectedValue={activity}
-          onValueChange={(value:any) => setActivity(value)}
-        >
+        <Picker selectedValue={activity} onValueChange={(value: any) => setActivity(value)}>
           <Picker.Item label="Seleccioná una actividad" value="" />
           <Picker.Item label="Fútbol" value="Fútbol" />
           <Picker.Item label="Yoga" value="Yoga" />
@@ -53,15 +50,17 @@ export function SearchScreen() {
 
         <Text text="Horario disponible" />
         <Button
-          text={`Desde: ${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+          text={`Desde: ${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
           onPress={() => setShowStartTime(true)}
         />
         <Button
-          text={`Hasta: ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+          text={`Hasta: ${endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
           onPress={() => setShowEndTime(true)}
         />
-      
-        <Button text="Buscar" style={styles.button}
+
+        <Button
+          text="Buscar"
+          style={styles.button}
           onPress={() => {
             navigator.navigate("ProfileScreen")
           }}

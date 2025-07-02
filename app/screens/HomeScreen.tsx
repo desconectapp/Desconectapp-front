@@ -25,8 +25,13 @@ const mockSugerencias = [
 ]
 
 export const HomeScreen = observer(function HomeScreen() {
- const renderItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.card} onPress={() => { /* ir al chat */ }}>
+  const renderItem = ({ item }: any) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => {
+        /* ir al chat */
+      }}
+    >
       <View style={styles.avatar}>
         <Ionicons name="chatbubbles-outline" size={24} color="#fff" />
       </View>
@@ -47,22 +52,18 @@ export const HomeScreen = observer(function HomeScreen() {
         contentContainerStyle={{ gap: 12 }}
       />
 
-      <Text
-        text="Sugerencias"
-        preset="heading"
-        style={$subtitle}
-      >Quizas tamibien te interese...</Text>
+      <Text text="Sugerencias" preset="heading" style={$subtitle}>
+        Quizas tamibien te interese...
+      </Text>
       <FlatList
         data={mockSugerencias}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ gap: 12 }}
       />
-
     </Screen>
   )
 })
-
 
 const $container = { padding: 20 }
 const $heading = { marginBottom: 16 }

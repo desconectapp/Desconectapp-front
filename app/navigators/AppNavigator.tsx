@@ -36,25 +36,27 @@ const AppStack = observer(function AppStack() {
       screenOptions={{
         headerShown: false,
         navigationBarColor: colors.background,
-        contentStyle: { backgroundColor: colors.background, paddingTop: 20},
+        contentStyle: { backgroundColor: colors.background, paddingTop: 20 },
       }}
     >
-      {/* Onboarding sin navbar */}      
+      {/* Onboarding sin navbar */}
       {/* <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} /> */}
       <Stack.Screen name="SignUpScreen" component={Screens.SignUpScreen} />
       <Stack.Screen name="MoreInfoScreen" component={Screens.MoreInfoScreen} />
       <Stack.Screen name="LoginScreen" component={Screens.LoginScreen} />
-      
+
       {/* Main con navbar */}
       <Stack.Screen name="Main" component={MainNavigator} />
     </Stack.Navigator>
   )
 })
 
-export interface NavigationProps extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
+export interface NavigationProps
+  extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
 
 export const AppNavigator = observer(function AppNavigator(props: NavigationProps) {
-  const { themeScheme, navigationTheme, setThemeContextOverride, ThemeProvider } = useThemeProvider()
+  const { themeScheme, navigationTheme, setThemeContextOverride, ThemeProvider } =
+    useThemeProvider()
 
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 

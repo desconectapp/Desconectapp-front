@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { userService } from "../services/users"
+import { activitiesService } from "../services/activities"
 
 export const useUsers = () => {
   return useQuery({
@@ -67,11 +68,11 @@ export const useProfile = () => {
   })
 }
 
-export const usePreferences = () => {
+export const useActivities = (limit: number = 10, offset: number = 0) => {
   return useQuery({
-    queryKey: ["preferences"],
+    queryKey: ["activities", limit, offset],
     queryFn: async () => {
-      const response = await userService.getPreferences()
+      const response = await activitiesService.getActivities(limit, offset)
       if (!response) throw new Error("Error al cargar preferencias")
       return response
     },
