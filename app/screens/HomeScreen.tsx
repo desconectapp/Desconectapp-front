@@ -25,11 +25,13 @@ const mockSugerencias = [
 ]
 
 export const HomeScreen = observer(function HomeScreen() {
+  const navigation = useNavigation<AppStackScreenProps<"HomeScreen">["navigation"]>()
+
   const renderItem = ({ item }: any) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => {
-        /* ir al chat */
+        navigation.navigate("GroupScreen", { groupId: item.id })
       }}
     >
       <View style={styles.avatar}>
@@ -70,35 +72,35 @@ const $heading = { marginBottom: 16 }
 const $subtitle = { marginBottom: 8 }
 
 const styles = StyleSheet.create({
+  avatar: {
+    alignItems: "center",
+    backgroundColor: "#4c8bf5",
+    borderRadius: 24,
+    height: 48,
+    justifyContent: "center",
+    marginRight: 16,
+    width: 48,
+  },
   card: {
-    flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
     borderRadius: 16,
+    elevation: 3,
+    flexDirection: "row",
     padding: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
-  },
-  avatar: {
-    backgroundColor: "#4c8bf5",
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  name: {
-    marginBottom: 4,
-    fontWeight: "600",
   },
   message: {
     color: "#555",
+  },
+  name: {
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  textContainer: {
+    flex: 1,
   },
 })

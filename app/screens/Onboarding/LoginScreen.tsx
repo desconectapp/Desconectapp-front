@@ -27,8 +27,8 @@ export const LoginScreen = observer(() => {
 
   const form = useForm({
     defaultValues: {
-      email: "",
-      password: "",
+      email: "a@a.com",
+      password: "123",
     },
   })
 
@@ -41,7 +41,7 @@ export const LoginScreen = observer(() => {
         // aca guardar token y user info en storage
         // revisar npm install @react-native-async-storage/async-storage
 
-        // navigation.navigate("Home") (supongo)
+        navigation.navigate("Main", { screen: "Tabs" })
       },
       onError: (error) => {
         setLoading(false)

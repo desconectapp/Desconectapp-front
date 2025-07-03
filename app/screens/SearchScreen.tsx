@@ -28,13 +28,6 @@ export function SearchScreen() {
 
       <View style={styles.form}>
         <Text text="Actividad" />
-        <Picker selectedValue={activity} onValueChange={(value: any) => setActivity(value)}>
-          <Picker.Item label="Seleccioná una actividad" value="" />
-          <Picker.Item label="Fútbol" value="Fútbol" />
-          <Picker.Item label="Yoga" value="Yoga" />
-          <Picker.Item label="Gimnasio" value="Gimnasio" />
-          <Picker.Item label="Otra..." value="Otra" />
-        </Picker>
 
         {activity === "Otra" && (
           <TextField

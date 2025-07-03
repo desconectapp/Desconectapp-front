@@ -1,7 +1,7 @@
 // MainNavigator.tsx
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen } from "@/screens"
+import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, GroupScreen } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
@@ -19,6 +19,7 @@ export type MainStackParamList = {
   Tabs: undefined
   PreferencesScreen: undefined
   SearchScreen: undefined
+  GroupScreen: { groupId: string }
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -103,6 +104,7 @@ export function MainNavigator() {
     >
       <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="PreferencesScreen" component={PreferencesScreen} />
+      <Stack.Screen name="GroupScreen" component={GroupScreen} options={{ headerShown: false }} />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
   )
