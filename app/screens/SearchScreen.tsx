@@ -3,11 +3,13 @@ import { Screen } from "../components/Screen"
 import { Text } from "../components/Text"
 import { TextField } from "../components/TextField"
 import { Button } from "../components/Button"
-import { View, StyleSheet, Platform } from "react-native"
+import { View, StyleSheet, Platform, TouchableOpacity, Modal } from "react-native"
 import { Picker } from "@react-native-picker/picker"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
+import { useActivities } from "@/hooks/Users"
+import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
 
 export function SearchScreen() {
   const [activity, setActivity] = useState("")
@@ -18,6 +20,12 @@ export function SearchScreen() {
   const [endTime, setEndTime] = useState(new Date())
   const { themed } = useAppTheme()
   const navigator = useNavigation<AppStackScreenProps<"ProfileScreen">["navigation"]>()
+
+  const { data: activities, isLoading: loadingActivities, error } = useActivities()
+
+  const [showForm, setShowForm] = useState(false)
+  const [selectedPreferences, setSelectedPreferences] = useState<any[]>([])
+
   return (
     <Screen
       preset="scroll"
@@ -27,16 +35,17 @@ export function SearchScreen() {
       <Text preset="heading" text="Búsqueda" style={$heading} />
 
       <View style={styles.form}>
-        <Text text="Actividad" />
+        <Text text="Actividad" style={{ color: themed("primary") }} />
 
-        {activity === "Otra" && (
-          <TextField
-            label="Otra actividad"
-            placeholder="Especificá la actividad"
-            value={customActivity}
-            onChangeText={setCustomActivity}
-          />
-        )}
+        <Button text="Seleccionar actividad" onPress={() => {setShowForm(true)}} />
+        {selectedPreferences.length > 0 &&
+          selectedPreferences.map((pref) => (
+            <Text
+              key={pref.id}
+              text={`${pref.id} ${pref.activity}`}
+              style={{ color: themed("text") }}
+            />
+          ))}
 
         <Text text="Ubicación" />
         <Button text="Seleccionar en mapa" onPress={() => {}} />
@@ -59,6 +68,23 @@ export function SearchScreen() {
           }}
         />
       </View>
+
+      <Modal
+        visible={showForm}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowForm(false)}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.content}>
+            <ActivitiesForm
+              selectedPreferences={selectedPreferences}
+              setSelectedPreferences={setSelectedPreferences}
+            />
+            <Button text="Cerrar" onPress={() => setShowForm(false)} />
+          </View>
+        </View>
+      </Modal>
     </Screen>
   )
 }
@@ -77,3 +103,18 @@ const $container = { padding: 20 }
 const $bottomContainerInsets = {}
 const $screenBackground = "background"
 const $heading = { marginBottom: 16 }
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "#00000088",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  content: {
+    width: "90%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+  },
+})

@@ -1,43 +1,37 @@
-import { observer } from "mobx-react-lite"
-import { useEffect, useState } from "react"
 import {
-  View,
-  TouchableOpacity,
   Dimensions,
   FlatList,
-  ViewStyle,
-  TextStyle,
   ListRenderItem,
+  TextStyle,
+  TouchableOpacity,
+  ViewStyle,
 } from "react-native"
-import { Text, Button } from "@/components"
+import { View } from "tamagui"
+import { Text } from "../Text"
+import { useActivities } from "@/hooks/Users"
+import { useEffect, useState } from "react"
 import { useAppTheme } from "@/utils/useAppTheme"
-import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
-import { useStores } from "@/models"
-import { useEditProfile, useActivities } from "@/hooks/Users"
-import { useNavigation } from "@react-navigation/native"
-import { AppStackScreenProps } from "@/navigators"
-import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
+import { emojiMapper } from "@/utils/utils"
 
 const { width } = Dimensions.get("window")
 
-export const PreferencesScreen = observer(() => {
-    {/* TODO: esto esta masomenos pasado a ActivitiesForm para reutilizar */}
+interface ActivitiesFormProps {
+  selectedPreferences?: any[]
+  setSelectedPreferences?: React.Dispatch<React.SetStateAction<any[]>>
+}
 
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
+export function ActivitiesForm({
+  selectedPreferences = [],
+  setSelectedPreferences = () => {},
+}: ActivitiesFormProps) {
+  const limit = 10
   const [allPreferences, setAllPreferences] = useState<any[]>([])
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
-
-  const limit = 10
-  const { signUpStore } = useStores()
   const { themed } = useAppTheme()
-  const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
 
   const { data, isLoading, isError, isFetching } = useActivities(limit, offset)
-  const editProfileFunc = useEditProfile()
-
   useEffect(() => {
     if (data && data.length > 0) {
       setAllPreferences((prev) => [...prev, ...data])
@@ -49,30 +43,6 @@ export const PreferencesScreen = observer(() => {
     }
   }, [data])
 
-  const togglePreference = (id: string) => {
-    setSelectedPreferences((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
-    )
-  }
-
-  const handleContinue = async () => {
-    await editProfileFunc.mutateAsync(
-      {
-        ...signUpStore.userInfo,
-        preferences: selectedPreferences,
-      },
-      {
-        onSuccess: () => {
-          signUpStore.setPreferences(selectedPreferences)
-          navigation.navigate("Main", { screen: "Tabs" })
-        },
-        onError: (error) => {
-          console.error("Error updating profile:", error)
-          navigation.navigate("Main", { screen: "Tabs" })
-        },
-      },
-    )
-  }
 
   const loadMore = () => {
     if (!isFetching && !isLoading && hasMore) {
@@ -81,64 +51,58 @@ export const PreferencesScreen = observer(() => {
   }
 
   const renderItem: ListRenderItem<any> = ({ item }) => {
-    const selected = selectedPreferences.includes(item.id)
+    const selected = selectedPreferences.some((p) => p.id === item.id)
     return (
       <TouchableOpacity
-        key={item.id}
-        onPress={() => togglePreference(item.id)}
+        onPress={() => 
+       {
+        setSelectedPreferences((prev) => {
+      const exists = prev.some((p) => p.id === item.id)
+      if (exists) {
+        return prev.filter((p) => p.id !== item.id)
+      } else {
+        return [...prev, item]
+      }
+    })}
+
+
+        }
         style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
       >
-        <Text style={$emoji}>{item.emoji}</Text>
-        <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>{item.name}</Text>
+        <Text>{emojiMapper(item.activity)}{item.activity}</Text>
       </TouchableOpacity>
     )
   }
 
   return (
-    <View style={$contentWrapper}>
-      <FlatList
-        data={allPreferences}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={$listContent}
-        columnWrapperStyle={$row}
-        ListHeaderComponent={
-          <View style={$header}>
-            <Text preset="heading" style={themed($title)}>
-              What are you into?
-            </Text>
-            <Text preset="subheading" style={themed($subtitle)}>
-              Choose your interests and hobbies. You can select multiple options.
-            </Text>
-          </View>
-        }
-        ListFooterComponent={
-          <View style={$footer}>
-            <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
-            {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
-          </View>
-        }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.6}
-      />
-      <View style={[$bottomBar, $bottomInsets]}>
-        <Button
-          text="Continue"
-          onPress={handleContinue}
-          disabled={selectedPreferences.length === 0}
-          style={[
-            themed($continueButton),
-            selectedPreferences.length === 0 && themed($continueButtonDisabled),
-          ]}
-          textStyle={themed(
-            selectedPreferences.length === 0 ? $continueButtonTextDisabled : $continueButtonText,
-          )}
-        />
-      </View>
-    </View>
+    <FlatList
+      data={allPreferences}
+      renderItem={renderItem}
+      keyExtractor={(item) => item.id.toString()}
+      numColumns={2}
+      contentContainerStyle={$listContent}
+      columnWrapperStyle={$row}
+      ListHeaderComponent={
+        <View style={$header}>
+          <Text preset="heading" style={themed($title)}>
+            What are you into?
+          </Text>
+          <Text preset="subheading" style={themed($subtitle)}>
+            Choose your interests and hobbies. You can select multiple options.
+          </Text>
+        </View>
+      }
+      ListFooterComponent={
+        <View style={$footer}>
+          <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
+          {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
+        </View>
+      }
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.6}
+    />
   )
-})
+}
 
 const $listContent: ViewStyle = {
   paddingHorizontal: spacing.lg,
@@ -196,7 +160,9 @@ const $chip: ViewStyle = {
   paddingVertical: spacing.sm,
   paddingHorizontal: spacing.md,
   marginBottom: spacing.md,
-  width: (width - spacing.lg * 3) / 2,
+  minWidth: 100,
+  flex: 1,
+  maxWidth: "48%",
   alignItems: "center",
 }
 

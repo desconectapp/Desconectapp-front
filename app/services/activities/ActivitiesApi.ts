@@ -13,7 +13,6 @@ export const activitiesService = {
     if (!response.ok) {
       throw new Error("Error al cargar preferencias")
     }
-    console.log("Preferencias obtenidas:", response.data)
     return response.data
   },
 }
