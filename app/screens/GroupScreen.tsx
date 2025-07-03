@@ -13,13 +13,14 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native"
-import { Text } from "@/components"
+import { Button, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import { MessageBubble, Message } from "@/components/Custom/Message"
+import { useExitGroup, useGroupById } from "@/hooks/Groups"
 
 interface Member {
   id: string
@@ -36,23 +37,6 @@ interface GroupData {
   icon: string
   location: string
   members: Member[]
-}
-
-const mockGroupData: GroupData = {
-  id: "group123",
-  name: "Futbol Martinez",
-  description: "A group for discussing study materials",
-  created_at: "2023-10-01T12:00:00Z",
-  activity: "Football",
-  icon: "⚽",
-  location: "Madrid, Spain",
-  members: [
-    { id: "user123", name: "John Doe" },
-    { id: "user456", name: "Maria Garcia" },
-    { id: "user789", name: "Carlos Rodriguez" },
-    { id: "user101", name: "Ana Lopez" },
-    { id: "currentUser", name: "You" },
-  ],
 }
 
 const mockMessages: Message[] = [
@@ -99,6 +83,9 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const navigation = useNavigation()
   const { showToast } = useAppToast()
 
+  const { data: groupData, isLoading } = useGroupById(groupId)
+  const { mutateAsync: exitGroupAsync } = useExitGroup()
+
   const sendMessage = () => {
     if (inputText.trim()) {
       const newMessage: Message = {
@@ -133,6 +120,23 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     </View>
   )
 
+  function leaveGroup(): void {
+    exitGroupAsync(groupId, {
+      onSuccess: () => {
+        showToast("Success", "You have left the group successfully.")
+        navigation.navigate("Main", { screen: "Tabs" })
+      },
+      onError: (error) => {
+        console.error("Error leaving group:", error)
+        showToast("Error", "Failed to leave the group. Please try again.")
+      },
+    })
+  }
+
+  if (isLoading) {
+    return <Text>Loading...</Text>
+  }
+
   return (
     <View style={$container}>
       <KeyboardAvoidingView
@@ -154,10 +158,10 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             onPress={() => setShowMembers(true)}
             activeOpacity={0.7}
           >
-            <Text style={$groupIcon}>{mockGroupData.icon}</Text>
+            <Text style={$groupIcon}>{groupData.icon}</Text>
             <View style={$headerTextContainer}>
-              <Text style={themed($groupName)}>{mockGroupData.name}</Text>
-              <Text style={themed($memberCount)}>{mockGroupData.members.length} members</Text>
+              <Text style={themed($groupName)}>{groupData.name}</Text>
+              <Text style={themed($memberCount)}>{groupData.members.length} members</Text>
             </View>
           </TouchableOpacity>
 
@@ -212,24 +216,57 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           </TouchableOpacity>
 
           <View style={themed($groupInfoSection)}>
-            <Text style={$groupIcon}>{mockGroupData.icon}</Text>
-            <Text style={themed($modalGroupName)}>{mockGroupData.name}</Text>
-            <Text style={themed($modalGroupLocation)}>{mockGroupData.location}</Text>
-            <Text style={themed($modalGroupDescription)}>{mockGroupData.description}</Text>
+            <Text style={$groupIcon}>{groupData.icon}</Text>
+            <Text style={themed($modalGroupName)}>{groupData.name}</Text>
+            <Text style={themed($modalGroupLocation)}>{groupData.location}</Text>
+            <Text style={themed($modalGroupDescription)}>{groupData.description}</Text>
           </View>
 
           <FlatList
-            data={mockGroupData.members}
+            data={groupData.members}
             renderItem={renderMember}
             keyExtractor={(item) => item.id}
             style={$membersList}
             showsVerticalScrollIndicator={false}
           />
+
+          <View style={themed($groupInfoSection)}>
+            <Button
+              text="Leave Group"
+              preset="default"
+              style={$leaveButton}
+              textStyle={$leaveButtonText}
+              pressedStyle={$pressedLeaveButton}
+              pressedTextStyle={$pressedLeaveButtonText}
+              onPress={leaveGroup}
+            />
+          </View>
         </View>
       </Modal>
     </View>
   )
 })
+
+const $leaveButton: ViewStyle = {
+  borderColor: "#e53935",
+  backgroundColor: "transparent",
+  borderWidth: 1.5,
+  borderRadius: 8,
+}
+
+const $leaveButtonText: TextStyle = {
+  color: "#e53935",
+  fontWeight: "600",
+}
+
+const $pressedLeaveButton: ViewStyle = {
+  backgroundColor: "rgba(229, 57, 53, 0.08)",
+}
+
+const $pressedLeaveButtonText: TextStyle = {
+  color: "#e53935",
+  opacity: 0.9,
+}
 
 const $container: ViewStyle = {
   flex: 1,
