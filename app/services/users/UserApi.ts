@@ -12,7 +12,6 @@ export const userService = {
   },
 
   signUp: async (data: { name: string; email: string; password: string }): Promise<void> => {
-    return
     const response = await api.apisauce.post<void>("/users", data)
     if (!response.ok) {
       throw new Error("Error al crear usuario")
@@ -49,7 +48,6 @@ export const userService = {
   },
 
   editProfile: async (data: ProfileData): Promise<void> => {
-    return
     const response = await api.apisauce.put<void>("/users/profile", data)
     if (!response.ok) {
       throw new Error("Error al editar perfil")
