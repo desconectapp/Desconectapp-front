@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Screen, Text, AutoImage } from "@/components"
 import { AppStackScreenProps } from "../../navigators"
 import { useSafeAreaInsetsStyle } from "../../utils/useSafeAreaInsetsStyle"
@@ -13,6 +13,7 @@ import { AuthForm } from "@/components/Custom/AuthForm"
 import { Dimensions, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
 import { spacing } from "@/theme"
 import logoImage from "../../../assets/images/logo.png"
+import { useStores } from "@/models"
 
 const { width } = Dimensions.get("window")
 
@@ -24,6 +25,13 @@ export const LoginScreen = observer(() => {
   const LoginFunc = useLogin()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
+  const { sessionStore } = useStores()
+
+  useEffect(() => {
+    if (sessionStore.expiresAt && new Date(sessionStore.expiresAt) > Date.now()) {
+      navigation.navigate("Main", { screen: "Tabs" })
+    }
+  }, [navigation, sessionStore.expiresAt])
 
   const form = useForm({
     defaultValues: {

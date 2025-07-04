@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { View, type ViewStyle, type TextStyle, type ImageStyle, Dimensions } from "react-native"
 import { Screen, Text, AutoImage } from "@/components"
 import type { AppStackScreenProps } from "../../navigators"
@@ -12,6 +12,7 @@ import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import logoImage from "../../../assets/images/logo.png"
 import { AuthForm } from "@/components/Custom/AuthForm"
+import { useStores } from "@/models"
 
 const { width } = Dimensions.get("window")
 
@@ -27,6 +28,14 @@ export const SignUpScreen = observer(() => {
   const signUp = useSignUp()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
+
+  const { sessionStore } = useStores()
+
+  useEffect(() => {
+    if (sessionStore.expiresAt && new Date(sessionStore.expiresAt) > Date.now()) {
+      navigation.navigate("Main", { screen: "Tabs" })
+    }
+  }, [navigation, sessionStore.expiresAt])
 
   const form = useForm<SignUpFormData>({
     defaultValues: {
@@ -55,6 +64,16 @@ export const SignUpScreen = observer(() => {
     signUp.mutateAsync(data, {
       onSuccess: (response) => {
         setLoading(false)
+        console.log("Sign Up Success:", response)
+
+        sessionStore.setSession({
+          expiresAt: response.expires_at,
+          refreshExpiresAt: response.refresh_expires_at,
+          refreshToken: response.refresh_token,
+          token: response.token,
+          email: data.email,
+        })
+
         navigation.navigate("MoreInfoScreen")
       },
       onError: (error) => {
