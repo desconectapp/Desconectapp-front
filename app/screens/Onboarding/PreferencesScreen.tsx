@@ -22,7 +22,9 @@ import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
 const { width } = Dimensions.get("window")
 
 export const PreferencesScreen = observer(() => {
-    {/* TODO: esto esta masomenos pasado a ActivitiesForm para reutilizar */}
+  {
+    /* TODO: esto esta masomenos pasado a ActivitiesForm para reutilizar */
+  }
 
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
   const [allPreferences, setAllPreferences] = useState<any[]>([])

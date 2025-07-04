@@ -10,15 +10,26 @@ import { useNavigation } from "@react-navigation/native"
 import { FlatList, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 
+import Animated from "react-native-reanimated"
+import caminata from "../../assets/images/caminata.jpeg"
+
+import { PhotoGallerySlider, PhotoItem } from "@/components/Custom/PhotoGallerySlider"
+
 const mockGroups = [
   { id: "1", name: "Fútbol lunes", lastMessage: "¿Quién va hoy?" },
   { id: "2", name: "Yoga en el parque", lastMessage: "Clase cancelada por lluvia" },
   { id: "3", name: "Gimnasio 18hs", lastMessage: "Hoy hacemos piernas 💪" },
 ]
 
-const mockSugerencias = [
-  { id: "4", name: "Ciclismo matutino", lastMessage: "¿Alguien se suma?" },
-  { id: "5", name: "Natación nocturna", lastMessage: "Piscina abierta hasta tarde" },
+const mockSuggestions: PhotoItem[] = [
+  { id: "1", image: caminata, title: "Caminata al Atardecer", subtitle: "Palermo, Buenos Aires" },
+  { id: "2", image: caminata, title: "Paseo con Perrito", subtitle: "Parque Centenario" },
+  { id: "3", image: caminata, title: "Feria Artesanal", subtitle: "Plaza Francia, Recoleta" },
+  { id: "4", image: caminata, title: "Tarde de Mate", subtitle: "Costanera Sur" },
+  { id: "5", image: caminata, title: "Clases de Tango", subtitle: "San Telmo" },
+  { id: "6", image: caminata, title: "Picnic en el Parque", subtitle: "Bosques de Palermo" },
+  { id: "7", image: caminata, title: "Salida Fotográfica", subtitle: "Puerto Madero" },
+  { id: "8", image: caminata, title: "Feria de Mataderos", subtitle: "Tradiciones Argentinas" },
 ]
 
 export const HomeScreen = observer(function HomeScreen() {
@@ -51,20 +62,12 @@ export const HomeScreen = observer(function HomeScreen() {
         contentContainerStyle={{ gap: 12 }}
       />
 
-      <Text text="Sugerencias" preset="heading" style={$subtitle}>
-        Quizas tamibien te interese...
-      </Text>
-      <FlatList
-        data={mockSugerencias}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ gap: 12 }}
-      />
+      <PhotoGallerySlider data={mockSuggestions} title="Sugerencias" />
     </Screen>
   )
 })
 
-const $container = { padding: 20 }
+const $container = { padding: 10 }
 const $heading = { marginBottom: 16 }
 const $subtitle = { marginBottom: 8 }
 

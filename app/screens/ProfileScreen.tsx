@@ -20,6 +20,9 @@ import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { useEditProfile, useProfile } from "@/hooks/Users"
 
+import caminata from "../../assets/images/caminata.jpeg"
+import Animated from "react-native-reanimated"
+
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 
 const { width } = Dimensions.get("window")

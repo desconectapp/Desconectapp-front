@@ -80,7 +80,7 @@ export function SearchScreen() {
 
         <Text text="Ubicación" />
         <Button text="Seleccionar en mapa" onPress={() => {}} />
-            <TimePickerForm/>
+        <TimePickerForm />
         <Text text="Horario disponible" />
         <Button
           text={`Desde: ${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
@@ -106,21 +106,21 @@ export function SearchScreen() {
         animationType="slide"
         onRequestClose={() => setModalMode(null)}
       >
-       <View style={modalStyles.overlay}>
-  <View style={modalStyles.content}>
-    <View style={{ flex: 1 }}>
-      <ActivitiesForm
-        selectedPreferences={selectedPreferences}
-        setSelectedPreferences={setSelectedPreferences}
-      />
-    </View>
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.content}>
+            <View style={{ flex: 1 }}>
+              <ActivitiesForm
+                selectedPreferences={selectedPreferences}
+                setSelectedPreferences={setSelectedPreferences}
+              />
+            </View>
 
-    <View style={modalStyles.footer}>
-      <Button text="Aceptar" onPress={() => setModalMode(null)} />
-      <Button text="Cerrar" onPress={() => setModalMode(null)} />
-    </View>
-  </View>
-</View>
+            <View style={modalStyles.footer}>
+              <Button text="Aceptar" onPress={() => setModalMode(null)} />
+              <Button text="Cerrar" onPress={() => setModalMode(null)} />
+            </View>
+          </View>
+        </View>
       </Modal>
     </Screen>
   )
@@ -158,11 +158,10 @@ const modalStyles = StyleSheet.create({
     flex: 1,
   },
 
-footer: {
-  padding: 16,
-  borderTopWidth: 1,
-  borderColor: "#ddd",
-  backgroundColor: "#fff",
-},
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    backgroundColor: "#fff",
+  },
 })
-

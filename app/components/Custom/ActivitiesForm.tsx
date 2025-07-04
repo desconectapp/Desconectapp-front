@@ -42,7 +42,6 @@ export function ActivitiesForm({
     }
   }, [data])
 
-
   const loadMore = () => {
     if (!isFetching && !isLoading && hasMore) {
       setOffset((prev) => prev + limit)
@@ -53,22 +52,22 @@ export function ActivitiesForm({
     const selected = selectedPreferences.some((p) => p.id === item.id)
     return (
       <TouchableOpacity
-        onPress={() => 
-       {
-        setSelectedPreferences((prev) => {
-      const exists = prev.some((p) => p.id === item.id)
-      if (exists) {
-        return prev.filter((p) => p.id !== item.id)
-      } else {
-        return [...prev, item]
-      }
-    })}
-
-
-        }
+        onPress={() => {
+          setSelectedPreferences((prev) => {
+            const exists = prev.some((p) => p.id === item.id)
+            if (exists) {
+              return prev.filter((p) => p.id !== item.id)
+            } else {
+              return [...prev, item]
+            }
+          })
+        }}
         style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
       >
-        <Text>{(item.emoji)}{item.name}</Text>
+        <Text>
+          {item.emoji}
+          {item.name}
+        </Text>
       </TouchableOpacity>
     )
   }
