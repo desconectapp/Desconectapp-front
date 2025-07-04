@@ -7,7 +7,9 @@ import {
   Modal,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
 } from "react-native"
+import DateTimePickerModal from "react-native-modal-datetime-picker"
 
 const days = ["D", "L", "M", "X", "J", "V", "S"]
 const hours = ["00:00", "06:00", "12:00", "18:00", "00:00"]
@@ -38,23 +40,62 @@ const selectedTime: SelectedTime = {
 }
 
 export function TimePickerForm() {
+
+  const [isStartPickerVisible, setStartPickerVisible] = useState(false)
+  const [isEndPickerVisible, setEndPickerVisible] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
+   const [selectedTime, setSelectedTime] = useState<SelectedTime>({
+    L: [
+      { start: "08:00", end: "10:00" },
+      { start: "14:00", end: "16:00" },
+    ],
+    X: [{ start: "09:30", end: "11:30" }],
+    V: [
+      { start: "13:00", end: "15:00" },
+      { start: "16:00", end: "18:00" },
+    ],
+  });
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
 
   const toggleDay = (day: string) => {
     setSelectedDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]))
   }
 
   const applySelection = () => {
-    console.log("Aplicar a:", selectedDays, "de", start, "a", end)
-    // lógica para guardar esto en selectedTime...
-    setModalVisible(false)
-    setSelectedDays([])
-    setStart("")
-    setEnd("")
-  }
+    if (!start || !end || selectedDays.length === 0) {
+      alert("Seleccioná días y horarios válidos");
+      return;
+    }
+
+    const updated: SelectedTime = { ...selectedTime };
+
+    selectedDays.forEach((day) => {
+      if (!updated[day]) updated[day] = [];
+      updated[day] = [...updated[day], { start, end }];
+    });
+
+    console.log("Horarios seleccionados:", updated);
+    setSelectedTime(updated);
+    setModalVisible(false);
+    setSelectedDays([]);
+    setStart("");
+    setEnd("");
+  };
+const removeRange = (day: string, index: number) => {
+  setSelectedTime((prev) => {
+    const updated = { ...prev };
+    updated[day] = updated[day].filter((_, i) => i !== index);
+    if (updated[day].length === 0) delete updated[day];
+    console.log("Rango eliminado:", updated);
+    return updated;
+  });
+
+};
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.timeLabels}>
@@ -64,6 +105,7 @@ export function TimePickerForm() {
           </Text>
         ))}
       </View>
+<View style={{ flexDirection: "column", alignItems: "center" }}>
 
       <ScrollView horizontal style={styles.scroll}>
         {days.map((day) => (
@@ -74,16 +116,19 @@ export function TimePickerForm() {
                 const height = ((toMinutes(end) - toMinutes(start)) / totalMinutes) * 100
 
                 return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.segment,
-                      {
-                        top: `${top}%`,
-                        height: `${height}%`,
-                      },
-                    ]}
-                  />
+                  <TouchableOpacity
+  key={i}
+  style={[
+    styles.segment,
+    {
+      top: `${top}%`,
+      height: `${height}%`,
+    },
+  ]}
+  onLongPress={() => removeRange(day, i)}
+>
+  {/* opcional: ícono o nada */}
+</TouchableOpacity>
                 )
               })}
             </View>
@@ -91,12 +136,18 @@ export function TimePickerForm() {
           </View>
         ))}
       </ScrollView>
-      <TouchableOpacity style={styles.openBtn} onPress={() => setModalVisible(true)}>
-        <Text style={styles.openText}>Agregar rango</Text>
-      </TouchableOpacity>
+       <TouchableOpacity style={[styles.openBtn, { marginTop: 10 }]} onPress={() => setModalVisible(true)}>
+    <Text style={styles.openText}>Agregar horarios</Text>
+  </TouchableOpacity>
+      </View>
+
 
       <Modal visible={modalVisible} animationType="slide" transparent>
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+
         <View style={styles.modalOverlay}>
+      <TouchableWithoutFeedback>
+
           <View style={styles.modalContent}>
             <Text style={styles.title}>Seleccionar días</Text>
 
@@ -113,26 +164,48 @@ export function TimePickerForm() {
             </View>
 
             <Text style={styles.title}>Horario</Text>
-            <View style={styles.inputs}>
-              <TextInput
-                placeholder="Inicio (HH:MM)"
-                value={start}
-                onChangeText={setStart}
-                style={styles.input}
-              />
-              <TextInput
-                placeholder="Fin (HH:MM)"
-                value={end}
-                onChangeText={setEnd}
-                style={styles.input}
-              />
-            </View>
+
+           <View style={{ flexDirection: "row", gap: 10, marginVertical: 10 }}>
+  <TouchableOpacity onPress={() => setStartPickerVisible(true)} style={[styles.input, { flex: 1 }]}>
+    <Text>{start || "Inicio"}</Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity onPress={() => setEndPickerVisible(true)} style={[styles.input, { flex: 1 }]}>
+    <Text>{end || "Fin"}</Text>
+  </TouchableOpacity>
+</View>
+
+            <DateTimePickerModal
+              isVisible={isStartPickerVisible}
+              mode="time"
+              onConfirm={(date) => {
+                setStart(formatTime(date));
+                setStartPickerVisible(false);
+              }}
+              onCancel={() => setStartPickerVisible(false)}
+              is24Hour
+            />
+
+            <DateTimePickerModal
+              isVisible={isEndPickerVisible}
+              mode="time"
+              onConfirm={(date) => {
+                setEnd(formatTime(date));
+                setEndPickerVisible(false);
+              }}
+              onCancel={() => setEndPickerVisible(false)}
+              is24Hour
+            />
 
             <TouchableOpacity style={styles.applyBtn} onPress={applySelection}>
               <Text style={styles.applyText}>Aplicar</Text>
             </TouchableOpacity>
           </View>
+                </TouchableWithoutFeedback>
+
         </View>
+              </TouchableWithoutFeedback>
+
       </Modal>
     </View>
   )

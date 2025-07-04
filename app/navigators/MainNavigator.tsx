@@ -19,7 +19,6 @@ export type MainTabParamList = {
 export type MainStackParamList = {
   Tabs: undefined
   PreferencesScreen: undefined
-  SearchScreen: undefined
   GroupScreen: { groupId: string }
   SuggestionScreen: { id: string }
 }

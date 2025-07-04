@@ -1,4 +1,17 @@
-/* eslint-disable import/first */
+/* eslint-disable import "./utils/gestureHandler"
+import { initI18n } from "./i18n"
+import { useFonts } from "expo-font"
+import { useEffect, useState } from "react"
+import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
+import * as Linking from "expo-linking"
+import * as SplashScreen from "expo-splash-screen"
+import { RootStoreProvider, useInitialRootStore } from "./models"
+import { AppNavigator, useNavigationPersistence } from "./navigators"
+import * as storage from "./utils/storage"
+import { customFontsToLoad } from "./theme"
+import { KeyboardProvider } from "react-native-keyboard-controller"
+import { loadDateFnsLocale } from "./utils/formatDate"
+import { GestureHandlerRootView } from "react-native-gesture-handler"*/
 /**
  * Welcome to the main entry point of the app. In this file, we'll
  * be kicking off our app.
@@ -29,6 +42,7 @@ import * as storage from "./utils/storage"
 import { customFontsToLoad } from "./theme"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { loadDateFnsLocale } from "./utils/formatDate"
+import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { createTamagui, TamaguiProvider, View } from "tamagui"
@@ -118,27 +132,29 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
-    <TamaguiProvider config={tamaguiConfig}>
-      <ToastProvider>
-        <YStack flex={1}>
-          <QueryClientProvider client={queryClient}>
-            <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-              <KeyboardProvider>
-                <RootStoreProvider value={rootStore}>
-                  <AppNavigator
-                    linking={linking}
-                    initialState={initialNavigationState}
-                    onStateChange={onNavigationStateChange}
-                  />
-                </RootStoreProvider>
-              </KeyboardProvider>
-            </SafeAreaProvider>
-          </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <TamaguiProvider config={tamaguiConfig}>
+        <ToastProvider>
+          <YStack flex={1}>
+            <QueryClientProvider client={queryClient}>
+              <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+                <KeyboardProvider>
+                  <RootStoreProvider value={rootStore}>
+                    <AppNavigator
+                      linking={linking}
+                      initialState={initialNavigationState}
+                      onStateChange={onNavigationStateChange}
+                    />
+                  </RootStoreProvider>
+                </KeyboardProvider>
+              </SafeAreaProvider>
+            </QueryClientProvider>
 
-          <ToastViewport bottom={0} left={0} right={0} />
-          <AppToast />
-        </YStack>
-      </ToastProvider>
-    </TamaguiProvider>
+            <ToastViewport bottom={0} left={0} right={0} />
+            <AppToast />
+          </YStack>
+        </ToastProvider>
+      </TamaguiProvider>
+    </GestureHandlerRootView>
   )
 }

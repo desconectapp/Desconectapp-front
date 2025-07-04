@@ -11,24 +11,22 @@ import { AppStackScreenProps } from "@/navigators"
 import { useActivities } from "@/hooks/Users"
 import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
 import { TimePickerForm } from "@/components/Custom/TimePickerForm"
+import LocationForm from "@/components/Custom/LocationForm"
+
+import MapView from "react-native-maps"
 
 export function SearchScreen() {
-  const [activity, setActivity] = useState("")
-  const [customActivity, setCustomActivity] = useState("")
-  const [showStartTime, setShowStartTime] = useState(false)
-  const [showEndTime, setShowEndTime] = useState(false)
-  const [startTime, setStartTime] = useState(new Date())
-  const [endTime, setEndTime] = useState(new Date())
   const { themed } = useAppTheme()
-  const navigator = useNavigation<AppStackScreenProps<"ProfileScreen">["navigation"]>()
-
-  const { data: activities, isLoading: loadingActivities, error } = useActivities()
 
   const [modalMode, setModalMode] = useState<
     "selectActivity" | "selectLocation" | "selectTime" | null
   >(null)
   const [selectedPreferences, setSelectedPreferences] = useState<any[]>([])
-
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{
+    latitude: number
+    longitude: number
+  } | null>(null)
+  
   return (
     <Screen
       preset="scroll"
@@ -78,26 +76,63 @@ export function SearchScreen() {
           </View>
         </View>
 
-        <Text text="Ubicación" />
-        <Button text="Seleccionar en mapa" onPress={() => {}} />
-        <TimePickerForm />
-        <Text text="Horario disponible" />
-        <Button
-          text={`Desde: ${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
-          onPress={() => setShowStartTime(true)}
-        />
-        <Button
-          text={`Hasta: ${endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
-          onPress={() => setShowEndTime(true)}
-        />
-
-        <Button
-          text="Buscar"
-          style={styles.button}
-          onPress={() => {
-            navigator.navigate("ProfileScreen")
+          <Text
+          text="Ubicacion"
+          style={{
+            color: themed("primary"),
+            fontSize: 20,
+            fontWeight: "bold",
+            textAlign: "center",
+            marginBottom: 12,
           }}
         />
+
+
+        <Button
+          text="Seleccionar en mapa"
+          onPress={() => {
+            setModalMode("selectLocation")
+          }}
+        />
+        {selectedCoordinates && (
+          <View style={{ marginTop: 16 }}>
+            <Text style={{ color: themed("text") }}>
+              Ubicación seleccionada: {selectedCoordinates.latitude},{" "}
+              {selectedCoordinates.longitude}
+            </Text>
+          </View>
+        )}
+
+        <Text
+          text="Dias y horarios"
+          style={{
+            color: themed("primary"),
+            fontSize: 20,
+            fontWeight: "bold",
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        />
+        <Button
+          text="Seleccionar horarios"
+          onPress={() => {
+            setModalMode("selectTime")
+          }}
+        />
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            marginTop: 130,
+            alignContent: "center",
+          }}
+        >
+          <TouchableOpacity style={styles.searchButton} onPress={() => {}} activeOpacity={0.7}>
+            <Text style={styles.text}>🔍</Text>
+          </TouchableOpacity>
+         
+        </View>
       </View>
 
       <Modal
@@ -122,6 +157,63 @@ export function SearchScreen() {
           </View>
         </View>
       </Modal>
+      <Modal
+        visible={modalMode === "selectLocation"}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalMode(null)}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.content}>
+            <View style={{ flex: 1 }}>
+              <Text
+                text="Seleccionar ubicación"
+                style={{
+                  color: themed("primary"),
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  marginBottom: 12,
+                }}
+              />
+              <LocationForm
+                selectedCoordinates={selectedCoordinates}
+                setSelectedCoordinates={setSelectedCoordinates}
+              />
+            </View>
+
+            <View style={modalStyles.footer}>
+              <Button text="Aceptar" onPress={() => setModalMode(null)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={modalMode === "selectTime"}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalMode(null)}
+      >
+        <View style={modalStyles.overlay}>
+          <View style={modalStyles.content}>
+            <View style={{ flex: 1 }}>
+              <Text
+                text="Dias y horarios"
+                style={{
+                  color: themed("primary"),
+                  fontSize: 20,
+                  fontWeight: "bold",
+                  textAlign: "center",
+                  marginBottom: 12,
+                }}
+              />
+              <TimePickerForm
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   )
 }
@@ -134,6 +226,23 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 24,
   },
+  searchButton: {
+    backgroundColor: "#ff5c5c",
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5, // Android
+    shadowColor: "#000", // iOS
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  text: {
+    fontSize: 24,
+    color: "white",
+  },
 })
 
 const $container = { padding: 20 }
@@ -143,19 +252,20 @@ const $heading = { marginBottom: 16 }
 
 const modalStyles = StyleSheet.create({
   overlay: {
-    flex: 1,
-    backgroundColor: "#00000088",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
+    flex: 1,
   },
 
   content: {
-    maxHeight: "90%",
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    width: "90%", // o tamaño que quieras
+    maxHeight: "40%",
+    height: 500,
+    backgroundColor: "white",
+    borderRadius: 15,
+    padding: 10,
     overflow: "hidden",
-    flex: 1,
   },
 
   footer: {
