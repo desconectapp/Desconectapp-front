@@ -10,6 +10,7 @@ import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { useActivities } from "@/hooks/Users"
 import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
+import { TimePickerForm } from "@/components/Custom/TimePickerForm"
 
 export function SearchScreen() {
   const [activity, setActivity] = useState("")
@@ -23,7 +24,9 @@ export function SearchScreen() {
 
   const { data: activities, isLoading: loadingActivities, error } = useActivities()
 
-  const [showForm, setShowForm] = useState(false)
+  const [modalMode, setModalMode] = useState<
+    "selectActivity" | "selectLocation" | "selectTime" | null
+  >(null)
   const [selectedPreferences, setSelectedPreferences] = useState<any[]>([])
 
   return (
@@ -35,21 +38,49 @@ export function SearchScreen() {
       <Text preset="heading" text="Búsqueda" style={$heading} />
 
       <View style={styles.form}>
-        <Text text="Actividad" style={{ color: themed("primary") }} />
+        <Text
+          text="Actividad"
+          style={{
+            color: themed("primary"),
+            fontSize: 20,
+            fontWeight: "bold",
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        />
 
-        <Button text="Seleccionar actividad" onPress={() => {setShowForm(true)}} />
-        {selectedPreferences.length > 0 &&
-          selectedPreferences.map((pref) => (
-            <Text
-              key={pref.id}
-              text={`${pref.id} ${pref.activity}`}
-              style={{ color: themed("text") }}
-            />
-          ))}
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          {selectedPreferences.length > 0 && (
+            <View style={{ marginBottom: 8, width: "100%" }}>
+              <Text style={{ color: themed("text"), fontWeight: "bold" }}>Seleccionadas</Text>
+            </View>
+          )}
+
+          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+            {selectedPreferences.map((pref) => (
+              <View
+                key={pref.id}
+                style={{
+                  backgroundColor: "#eaeaea",
+                  paddingHorizontal: 5,
+                  paddingVertical: 6,
+                  borderRadius: 12,
+                  marginRight: 4,
+                  marginBottom: 4,
+                }}
+              >
+                <Text style={{ color: themed("text") }}>{`${pref.emoji} ${pref.name}`}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={{ width: "100%", marginTop: 8 }}>
+            <Button text="Seleccionar actividad" onPress={() => setModalMode("selectActivity")} />
+          </View>
+        </View>
 
         <Text text="Ubicación" />
         <Button text="Seleccionar en mapa" onPress={() => {}} />
-
+            <TimePickerForm/>
         <Text text="Horario disponible" />
         <Button
           text={`Desde: ${startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
@@ -70,20 +101,26 @@ export function SearchScreen() {
       </View>
 
       <Modal
-        visible={showForm}
+        visible={modalMode === "selectActivity"}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowForm(false)}
+        onRequestClose={() => setModalMode(null)}
       >
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.content}>
-            <ActivitiesForm
-              selectedPreferences={selectedPreferences}
-              setSelectedPreferences={setSelectedPreferences}
-            />
-            <Button text="Cerrar" onPress={() => setShowForm(false)} />
-          </View>
-        </View>
+       <View style={modalStyles.overlay}>
+  <View style={modalStyles.content}>
+    <View style={{ flex: 1 }}>
+      <ActivitiesForm
+        selectedPreferences={selectedPreferences}
+        setSelectedPreferences={setSelectedPreferences}
+      />
+    </View>
+
+    <View style={modalStyles.footer}>
+      <Button text="Aceptar" onPress={() => setModalMode(null)} />
+      <Button text="Cerrar" onPress={() => setModalMode(null)} />
+    </View>
+  </View>
+</View>
       </Modal>
     </Screen>
   )
@@ -111,10 +148,21 @@ const modalStyles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   content: {
-    width: "90%",
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
+    maxHeight: "90%",
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: "hidden",
+    flex: 1,
   },
+
+footer: {
+  padding: 16,
+  borderTopWidth: 1,
+  borderColor: "#ddd",
+  backgroundColor: "#fff",
+},
 })
+

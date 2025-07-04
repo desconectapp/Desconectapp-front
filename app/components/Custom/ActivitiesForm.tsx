@@ -12,7 +12,6 @@ import { useActivities } from "@/hooks/Users"
 import { useEffect, useState } from "react"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
-import { emojiMapper } from "@/utils/utils"
 
 const { width } = Dimensions.get("window")
 
@@ -69,7 +68,7 @@ export function ActivitiesForm({
         }
         style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
       >
-        <Text>{emojiMapper(item.activity)}{item.activity}</Text>
+        <Text>{(item.emoji)}{item.name}</Text>
       </TouchableOpacity>
     )
   }
