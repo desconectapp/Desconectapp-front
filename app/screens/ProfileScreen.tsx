@@ -19,9 +19,7 @@ import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { useEditProfile, useProfile } from "@/hooks/Users"
-
-import caminata from "../../assets/images/caminata.jpeg"
-import Animated from "react-native-reanimated"
+import { useStores } from "@/models"
 
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 
@@ -44,6 +42,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const { data: profile } = useProfile()
   const { profileImage, handleImagePicker } = useImagePicker()
   const { mutateAsync: editProfileMutateAsync } = useEditProfile()
+
+  const { sessionStore } = useStores()
 
   const {
     control,
@@ -76,6 +76,11 @@ export const ProfileScreen = observer(function ProfileScreen() {
     }
   }
 
+  const logOut = () => {
+    sessionStore.setSession(null)
+    navigation.navigate("LoginScreen")
+  }
+
   const onCancel = () => {
     reset()
     setIsEditing(false)
@@ -89,15 +94,21 @@ export const ProfileScreen = observer(function ProfileScreen() {
       backgroundColor={themed($screenBackground)}
     >
       <View style={$headerContainer}>
-        <Text preset="heading" style={themed($titleText)}></Text>
+        <TouchableOpacity
+          style={themed($editButton)}
+          onPress={() => setIsEditing(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={themed($editButtonText)}>Edit</Text>
+        </TouchableOpacity>
 
         {!isEditing && (
           <TouchableOpacity
             style={themed($editButton)}
-            onPress={() => setIsEditing(true)}
+            onPress={() => logOut()}
             activeOpacity={0.7}
           >
-            <Text style={themed($editButtonText)}>Edit</Text>
+            <Text style={themed($editButtonText)}>Log Out</Text>
           </TouchableOpacity>
         )}
       </View>

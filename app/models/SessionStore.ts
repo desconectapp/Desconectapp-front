@@ -10,18 +10,18 @@ export interface UserSession {
 
 export const SessionModel = types
   .model("SessionModel", {
-    email: types.string,
-    expiresAt: types.string,
-    refreshExpiresAt: types.string,
-    refreshToken: types.string,
-    token: types.string,
+    email: types.maybeNull(types.string),
+    expiresAt: types.maybeNull(types.string),
+    refreshExpiresAt: types.maybeNull(types.string),
+    refreshToken: types.maybeNull(types.string),
+    token: types.maybeNull(types.string),
   })
   .actions((store) => ({
-    setSession(session: UserSession) {
-      store.email = session.email
-      store.token = session.token
-      store.expiresAt = session.expiresAt
-      store.refreshToken = session.refreshToken
-      store.refreshExpiresAt = session.refreshExpiresAt
+    setSession(session: UserSession | null) {
+      store.email = session?.email || null
+      store.token = session?.token || null
+      store.expiresAt = session?.expiresAt || null
+      store.refreshToken = session?.refreshToken || null
+      store.refreshExpiresAt = session?.refreshExpiresAt || null
     },
   }))

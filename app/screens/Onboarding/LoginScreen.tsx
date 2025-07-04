@@ -35,19 +35,26 @@ export const LoginScreen = observer(() => {
 
   const form = useForm({
     defaultValues: {
-      email: "a@a.com",
-      password: "123",
+      email: "admin@gmail.com",
+      password: "password12",
     },
   })
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (response: any) => {
     setLoading(true)
-    console.log(data)
-    LoginFunc.mutateAsync(data, {
+    LoginFunc.mutateAsync(response, {
       onSuccess: () => {
         setLoading(false)
         // aca guardar token y user info en storage
         // revisar npm install @react-native-async-storage/async-storage
+
+        sessionStore.setSession({
+          expiresAt: response.expires_at,
+          refreshExpiresAt: response.refresh_expires_at,
+          refreshToken: response.refresh_token,
+          token: response.token,
+          email: response.email,
+        })
 
         navigation.navigate("Main", { screen: "Tabs" })
       },
