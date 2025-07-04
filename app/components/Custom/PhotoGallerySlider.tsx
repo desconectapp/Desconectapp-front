@@ -13,6 +13,8 @@ import { Text } from "@/components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 
+import Animated from "react-native-reanimated"
+
 const { width } = Dimensions.get("window")
 
 export interface PhotoItem {
@@ -63,7 +65,11 @@ export const PhotoGallerySlider = observer(function PhotoGallerySlider({
         activeOpacity={0.8}
       >
         <View style={themed($photoCard)}>
-          <Image source={item.image} style={[$photoImage, { width: itemWidth }]} />
+          <Animated.Image
+            source={{ uri: item.image }}
+            style={[$photoImage, { width: itemWidth }]}
+            sharedTransitionTag={item.id}
+          />
           <View style={themed($photoOverlay)}>
             <View style={themed($gradientOverlay)} />
           </View>

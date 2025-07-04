@@ -8,6 +8,7 @@ import { TouchableOpacity } from "react-native"
 import { View } from "tamagui"
 import { Animated, Pressable } from "react-native"
 import { useRef } from "react"
+import { SuggestionScreen } from "@/screens/SuggestionScreen"
 
 export type MainTabParamList = {
   HomeScreen: undefined
@@ -20,6 +21,7 @@ export type MainStackParamList = {
   PreferencesScreen: undefined
   SearchScreen: undefined
   GroupScreen: { groupId: string }
+  SuggestionScreen: { id: string }
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -102,9 +104,17 @@ export function MainNavigator() {
         headerShown: true,
       }}
     >
+      <Stack.Screen
+        name="SuggestionScreen"
+        component={SuggestionScreen}
+        options={{
+          animation: "fade",
+        }}
+      />
       <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="PreferencesScreen" component={PreferencesScreen} />
       <Stack.Screen name="GroupScreen" component={GroupScreen} options={{ headerShown: false }} />
+
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
   )

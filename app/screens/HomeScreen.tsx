@@ -10,9 +10,6 @@ import { useNavigation } from "@react-navigation/native"
 import { FlatList, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 
-import Animated from "react-native-reanimated"
-import caminata from "../../assets/images/caminata.jpeg"
-
 import { PhotoGallerySlider, PhotoItem } from "@/components/Custom/PhotoGallerySlider"
 
 const mockGroups = [
@@ -22,14 +19,26 @@ const mockGroups = [
 ]
 
 const mockSuggestions: PhotoItem[] = [
-  { id: "1", image: caminata, title: "Caminata al Atardecer", subtitle: "Palermo, Buenos Aires" },
-  { id: "2", image: caminata, title: "Paseo con Perrito", subtitle: "Parque Centenario" },
-  { id: "3", image: caminata, title: "Feria Artesanal", subtitle: "Plaza Francia, Recoleta" },
-  { id: "4", image: caminata, title: "Tarde de Mate", subtitle: "Costanera Sur" },
-  { id: "5", image: caminata, title: "Clases de Tango", subtitle: "San Telmo" },
-  { id: "6", image: caminata, title: "Picnic en el Parque", subtitle: "Bosques de Palermo" },
-  { id: "7", image: caminata, title: "Salida Fotográfica", subtitle: "Puerto Madero" },
-  { id: "8", image: caminata, title: "Feria de Mataderos", subtitle: "Tradiciones Argentinas" },
+  {
+    id: "1",
+    image:
+      "https://diariohoynet.nyc3.cdn.digitaloceanspaces.com/adjuntos/galerias/000/338/0000338803.jpg",
+    title: "Caminata al Atardecer",
+    subtitle: "Palermo, Buenos Aires",
+  },
+  {
+    id: "2",
+    image:
+      "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png",
+    title: "Futbol 5",
+    subtitle: "Recoleta, Buenos Aires",
+  },
+  // { id: "3", image: "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png", title: "Feria Artesanal", subtitle: "Plaza Francia, Recoleta" },
+  // { id: "4", image: "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png", title: "Tarde de Mate", subtitle: "Costanera Sur" },
+  // { id: "5", image: "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png", title: "Clases de Tango", subtitle: "San Telmo" },
+  // { id: "6", image: "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png", title: "Picnic en el Parque", subtitle: "Bosques de Palermo" },
+  // { id: "7", image: "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png", title: "Salida Fotográfica", subtitle: "Puerto Madero" },
+  // { id: "8", image: "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png", title: "Feria de Mataderos", subtitle: "Tradiciones Argentinas" },
 ]
 
 export const HomeScreen = observer(function HomeScreen() {
@@ -62,7 +71,13 @@ export const HomeScreen = observer(function HomeScreen() {
         contentContainerStyle={{ gap: 12 }}
       />
 
-      <PhotoGallerySlider data={mockSuggestions} title="Sugerencias" />
+      <PhotoGallerySlider
+        onItemPress={(item) => {
+          navigation.navigate("SuggestionScreen")
+        }}
+        data={mockSuggestions}
+        title="Sugerencias"
+      />
     </Screen>
   )
 })

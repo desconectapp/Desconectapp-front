@@ -22,9 +22,6 @@ import { spacing } from "@/theme"
 import { MessageBubble, Message } from "@/components/Custom/Message"
 import { useExitGroup, useGroupById } from "@/hooks/Groups"
 
-import caminata from "../../assets/images/caminata.jpeg"
-import Animated from "react-native-reanimated"
-
 interface Member {
   id: string
   name: string
@@ -184,12 +181,6 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           contentContainerStyle={$messagesContent}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        />
-
-        <Animated.Image
-          source={caminata}
-          style={{ width: 300, height: 300 }}
-          sharedTransitionTag="tag"
         />
 
         <View style={[$inputContainer, $bottomInsets, themed($inputContainerBackground)]}>
