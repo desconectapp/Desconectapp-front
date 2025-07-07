@@ -16,13 +16,13 @@ import MapView, { Marker } from "react-native-maps"
 
 interface LocationFormProps {
   selectedCoordinates: { latitude: number; longitude: number } | null
-  setSelectedCoordinates: (coordinates: { latitude: number; longitude: number } | null
-    ) => void 
+  setSelectedCoordinates: (coordinates: { latitude: number; longitude: number } | null) => void
 }
 
-export default function LocationForm(
-    {  selectedCoordinates, setSelectedCoordinates }: LocationFormProps
-) {
+export default function LocationForm({
+  selectedCoordinates,
+  setSelectedCoordinates,
+}: LocationFormProps) {
   const fetchLocalidades = async (query: string) => {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       query,
@@ -55,7 +55,7 @@ export default function LocationForm(
     const data = await fetchLocalidades(text)
     setSugerencias(data)
   }
-  
+
   const handleSelect = (item: any) => {
     const lat = parseFloat(item.lat)
     const lon = parseFloat(item.lon)
@@ -72,7 +72,7 @@ export default function LocationForm(
   }
 
   return (
- <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={{ flex: 1 }}>
         <View style={{ padding: 8 }}>
           <TextInput

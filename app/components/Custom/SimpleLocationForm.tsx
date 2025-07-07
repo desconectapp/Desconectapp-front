@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from "react"
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native"
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native"
 import MapView, { Marker } from "react-native-maps"
 
 export default function SimpleLocationForm() {
   const [mapReady, setMapReady] = useState(false)
-  
+
   const fetchLocalidades = async (query: string) => {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-      query
+      query,
     )}&format=json&accept-language=es&countrycodes=ar&addressdetails=1&limit=5`
 
     const res = await fetch(url, {
@@ -60,7 +68,7 @@ export default function SimpleLocationForm() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{ flex: 1 }}
     >
       <View style={styles.container}>
@@ -74,9 +82,9 @@ export default function SimpleLocationForm() {
           {sugerencias.length > 0 && (
             <View style={styles.suggestionsList}>
               {sugerencias.map((item) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={item.place_id.toString()}
-                  onPress={() => handleSelect(item)} 
+                  onPress={() => handleSelect(item)}
                   style={styles.suggestion}
                 >
                   <Text style={styles.suggestionText}>{item.display_name}</Text>
@@ -91,7 +99,7 @@ export default function SimpleLocationForm() {
             </View>
           )}
         </View>
-        
+
         <View style={styles.mapContainer}>
           <MapView
             style={styles.map}
@@ -113,11 +121,7 @@ export default function SimpleLocationForm() {
             toolbarEnabled={false}
           >
             {marker && mapReady && (
-              <Marker 
-                coordinate={marker} 
-                title="Ubicación seleccionada"
-                draggable={false}
-              />
+              <Marker coordinate={marker} title="Ubicación seleccionada" draggable={false} />
             )}
           </MapView>
         </View>

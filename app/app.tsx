@@ -23,12 +23,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"*/
  * The app navigation resides in ./app/navigators, so head over there
  * if you're interested in adding screens and navigators.
  */
-if (__DEV__) {
-  // Load Reactotron in development only.
-  // Note that you must be using metro's `inlineRequires` for this to work.
-  // If you turn it off in metro.config.js, you'll have to manually import it.
-  require("./devtools/ReactotronConfig.ts")
-}
 import "./utils/gestureHandler"
 import { initI18n } from "./i18n"
 import { useFonts } from "expo-font"
@@ -52,6 +46,13 @@ import { AppToast, ToastRoot } from "./components/Toast"
 import { ToastControls } from "./components/ToastControls"
 import { YStack } from "tamagui"
 import { ToastProvider, ToastViewport } from "@tamagui/toast"
+import { api } from "./services/api"
+if (__DEV__) {
+  // Load Reactotron in development only.
+  // Note that you must be using metro's `inlineRequires` for this to work.
+  // If you turn it off in metro.config.js, you'll have to manually import it.
+  require("./devtools/ReactotronConfig.ts")
+}
 
 const tamaguiConfig = createTamagui(defaultConfig)
 
@@ -104,6 +105,18 @@ export function App() {
 
   const { rootStore, rehydrated } = useInitialRootStore(() => {
     // This runs after the root store has been initialized and rehydrated.
+    const s = rootStore.sessionStore
+    if (!s.token || !s.expiresAt || !s.refreshExpiresAt || !s.refreshToken) {
+      api.setToken(null)
+    } else {
+      api.setToken({
+        token: s.token,
+        expires_at: s.expiresAt,
+        refresh_token: s.refreshToken,
+        refresh_expires_at: s.refreshExpiresAt,
+        user_id: "",
+      })
+    }
 
     // If your initialization scripts run very fast, it's good to show the splash screen for just a bit longer to prevent flicker.
     // Slightly delaying splash screen hiding for better UX; can be customized or removed as needed,

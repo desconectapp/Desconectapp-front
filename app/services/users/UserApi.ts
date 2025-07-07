@@ -1,5 +1,11 @@
 import { api } from "../api"
-import { CreateProfileData, Preference, ProfileData, UserResponse } from "./UserApi.types"
+import {
+  CreateProfileData,
+  Preference,
+  ProfileData,
+  SessionData,
+  UserResponse,
+} from "./UserApi.types"
 
 export const userService = {
   getUsers: async (): Promise<UserResponse[] | undefined> => {
@@ -11,12 +17,36 @@ export const userService = {
     return response.data
   },
 
-  signUp: async (data: { name: string; email: string; password: string }): Promise<void> => {
-    const response = await api.apisauce.post<void>("/auth/signup", data)
+  signUp: async (data: {
+    name: string
+    email: string
+    password: string
+  }): Promise<SessionData | undefined> => {
+    const response = await api.apisauce.post<SessionData>("/auth/signup", data)
     if (!response.ok) {
       throw new Error("Error al crear usuario")
     }
-    console.log("Usuario creado:", response.data)
+    api.setToken(response.data || null)
+    return response.data
+  },
+
+  login: async (data: { email: string; password: string }): Promise<SessionData | undefined> => {
+    const response = await api.apisauce.post<SessionData>("/auth/login", data)
+    if (!response.ok) {
+      console.log(response.data)
+      throw new Error("Error al iniciar sesión")
+    }
+    api.setToken(response.data || null)
+    console.log("API:LOGIN: Sesión iniciada:", response.data)
+    return response.data
+  },
+
+  logout: async (): Promise<void> => {
+    const response = await api.apisauce.post<void>("/auth/logout")
+    if (!response.ok) {
+      throw new Error("Error al cerrar sesión")
+    }
+    api.setToken(null)
     return response.data
   },
 
@@ -52,16 +82,6 @@ export const userService = {
     if (!response.ok) {
       throw new Error("Error al editar perfil")
     }
-    return response.data
-  },
-
-  login: async (data: { email: string; password: string }): Promise<void> => {
-    const response = await api.apisauce.post<void>("/auth/login", data)
-    if (!response.ok) {
-      console.log(response.data)
-      throw new Error("Error al iniciar sesión")
-    }
-    console.log("Usuario autenticado:", response.data)
     return response.data
   },
 }

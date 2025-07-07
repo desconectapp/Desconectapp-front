@@ -32,3 +32,11 @@ export interface ProfileData {
   workStatus: string
   preferences: string[]
 }
+
+export interface SessionData {
+  token: string
+  refresh_token: string
+  expires_at: string
+  refresh_expires_at: string
+  user_id: string
+}

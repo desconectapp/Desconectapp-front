@@ -43,17 +43,16 @@ export const LoginScreen = observer(() => {
   const onSubmit = (response: any) => {
     setLoading(true)
     LoginFunc.mutateAsync(response, {
-      onSuccess: () => {
+      onSuccess: (dataSuccess) => {
         setLoading(false)
-        // aca guardar token y user info en storage
-        // revisar npm install @react-native-async-storage/async-storage
+        console.log("LOGIN SCREEN. Login successful", dataSuccess)
 
         sessionStore.setSession({
-          expiresAt: response.expires_at,
-          refreshExpiresAt: response.refresh_expires_at,
-          refreshToken: response.refresh_token,
-          token: response.token,
-          email: response.email,
+          expiresAt: dataSuccess.expires_at,
+          refreshExpiresAt: dataSuccess.refresh_expires_at,
+          refreshToken: dataSuccess.refresh_token,
+          token: dataSuccess.token,
+          email: dataSuccess.email,
         })
 
         navigation.navigate("Main", { screen: "Tabs" })

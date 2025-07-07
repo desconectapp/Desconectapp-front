@@ -18,6 +18,7 @@ export const SessionModel = types
   })
   .actions((store) => ({
     setSession(session: UserSession | null) {
+      console.log("Setting session:", session)
       store.email = session?.email || null
       store.token = session?.token || null
       store.expiresAt = session?.expiresAt || null

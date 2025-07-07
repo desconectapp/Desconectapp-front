@@ -29,8 +29,10 @@ export const useLogin = () => {
 
   return useMutation<any, Error, any>({
     mutationFn: (data) => userService.login(data),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("REACT QUERY ON SUCCESS. Login successful", data)
       queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      return data
     },
   })
 }
