@@ -45,8 +45,6 @@ export const LoginScreen = observer(() => {
     LoginFunc.mutateAsync(response, {
       onSuccess: (dataSuccess) => {
         setLoading(false)
-        console.log("LOGIN SCREEN. Login successful", dataSuccess)
-
         sessionStore.setSession({
           expiresAt: dataSuccess.expires_at,
           refreshExpiresAt: dataSuccess.refresh_expires_at,

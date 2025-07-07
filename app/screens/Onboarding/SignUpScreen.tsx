@@ -62,15 +62,13 @@ export const SignUpScreen = observer(() => {
     console.log(data)
 
     signUp.mutateAsync(data, {
-      onSuccess: (response) => {
+      onSuccess: (dataSuccess) => {
         setLoading(false)
-        console.log("Sign Up Success:", response)
-
         sessionStore.setSession({
-          expiresAt: response.expires_at,
-          refreshExpiresAt: response.refresh_expires_at,
-          refreshToken: response.refresh_token,
-          token: response.token,
+          expiresAt: dataSuccess.expires_at,
+          refreshExpiresAt: dataSuccess.refresh_expires_at,
+          refreshToken: dataSuccess.refresh_token,
+          token: dataSuccess.token,
           email: data.email,
         })
 
