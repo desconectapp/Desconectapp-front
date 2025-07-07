@@ -222,26 +222,15 @@ export function TimePickerForm() {
   )
 }
 const styles = StyleSheet.create({
-  wrapper: {
-    flexDirection: "row",
-    padding: 20,
+  applyBtn: {
+    backgroundColor: "#2196f3",
+    borderRadius: 8,
+    padding: 10,
   },
-  timeLabels: {
-    width: 35, // antes 50
-    height: 240,
-    justifyContent: "space-between",
-    marginRight: 4, // antes 10
-  },
-  timeLabel: {
-    fontSize: 12,
-    color: "#555",
-  },
-  scroll: {
-    flex: 1,
-  },
-  dayColumn: {
-    alignItems: "center",
-    marginHorizontal: 4, // antes 8
+  applyText: {
+    color: "#fff",
+    fontWeight: "bold",
+    textAlign: "center",
   },
   bar: {
     width: 30, // antes 40
@@ -251,67 +240,29 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     position: "relative",
   },
-  segment: {
-    position: "absolute",
-    left: 0,
-    width: "100%",
-    backgroundColor: "#4caf50",
-    opacity: 0.8,
-  },
-  label: {
-    marginTop: 6,
-    fontWeight: "bold",
-  },
-  openBtn: {
-    backgroundColor: "#4caf50",
-    padding: 10,
+  dayBtn: {
+    borderColor: "#ccc",
     borderRadius: 8,
-    alignSelf: "center",
+    borderWidth: 1,
+    margin: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  openText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "#00000088",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    width: "85%",
-    borderRadius: 12,
-    padding: 20,
-  },
-  title: {
-    fontWeight: "bold",
-    marginBottom: 10,
+  dayBtnSelected: {
+    backgroundColor: "#4caf50",
+    borderColor: "#4caf50",
   },
   dayButtons: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginBottom: 20,
   },
-  dayBtn: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    margin: 4,
-  },
-  dayBtnSelected: {
-    backgroundColor: "#4caf50",
-    borderColor: "#4caf50",
+  dayColumn: {
+    alignItems: "center",
+    marginHorizontal: 4, // antes 8
   },
   dayText: {
     color: "#000",
-  },
-  inputs: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
   },
   input: {
     borderBottomWidth: 1,
@@ -319,14 +270,63 @@ const styles = StyleSheet.create({
     padding: 6,
     width: "45%",
   },
-  applyBtn: {
-    backgroundColor: "#2196f3",
-    padding: 10,
-    borderRadius: 8,
+  inputs: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
-  applyText: {
-    color: "#fff",
-    textAlign: "center",
+  label: {
     fontWeight: "bold",
+    marginTop: 6,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: "85%",
+  },
+  modalOverlay: {
+    alignItems: "center",
+    backgroundColor: "#00000088",
+    flex: 1,
+    justifyContent: "center",
+  },
+  openBtn: {
+    alignSelf: "center",
+    backgroundColor: "#4caf50",
+    borderRadius: 8,
+    padding: 10,
+  },
+  openText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  scroll: {
+    flex: 1,
+  },
+  segment: {
+    backgroundColor: "#4caf50",
+    left: 0,
+    opacity: 0.8,
+    position: "absolute",
+    width: "100%",
+  },
+  timeLabel: {
+    color: "#555",
+    fontSize: 12,
+  },
+  timeLabels: {
+    width: 35, // antes 50
+    height: 240,
+    justifyContent: "space-between",
+    marginRight: 4, // antes 10
+  },
+  title: {
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  wrapper: {
+    flexDirection: "row",
+    padding: 20,
   },
 })

@@ -45,6 +45,7 @@ export const LoginScreen = observer(() => {
     LoginFunc.mutateAsync(response, {
       onSuccess: (dataSuccess) => {
         setLoading(false)
+
         sessionStore.setSession({
           expiresAt: dataSuccess.expires_at,
           refreshExpiresAt: dataSuccess.refresh_expires_at,

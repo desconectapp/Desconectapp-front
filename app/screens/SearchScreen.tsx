@@ -62,11 +62,11 @@ export function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  form: {
-    gap: 16,
+  button: {
     marginTop: 24,
   },
-  button: {
+  form: {
+    gap: 16,
     marginTop: 24,
   },
   searchButton: {
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   text: {
-    fontSize: 24,
     color: "white",
+    fontSize: 24,
   },
 })
 
@@ -94,13 +94,6 @@ const $screenBackground = "background"
 const $heading = { marginBottom: 16 }
 
 const modalStyles = StyleSheet.create({
-  overlay: {
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    flex: 1,
-  },
-
   content: {
     width: "90%", // o tamaño que quieras
     maxHeight: "40%",
@@ -112,9 +105,16 @@ const modalStyles = StyleSheet.create({
   },
 
   footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderColor: "#ddd",
     backgroundColor: "#fff",
+    borderColor: "#ddd",
+    borderTopWidth: 1,
+    padding: 16,
+  },
+
+  overlay: {
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    flex: 1,
+    justifyContent: "center",
   },
 })
