@@ -94,21 +94,17 @@ export const ProfileScreen = observer(function ProfileScreen() {
       backgroundColor={themed($screenBackground)}
     >
       <View style={$headerContainer}>
-        <TouchableOpacity
-          style={themed($editButton)}
-          onPress={() => setIsEditing(true)}
-          activeOpacity={0.7}
-        >
-          <Text style={themed($editButtonText)}>Edit</Text>
+        <TouchableOpacity style={themed($editButton)} onPress={() => logOut()} activeOpacity={0.7}>
+          <Text style={themed($editButtonText)}>Log Out</Text>
         </TouchableOpacity>
 
         {!isEditing && (
           <TouchableOpacity
             style={themed($editButton)}
-            onPress={() => logOut()}
+            onPress={() => setIsEditing(true)}
             activeOpacity={0.7}
           >
-            <Text style={themed($editButtonText)}>Log Out</Text>
+            <Text style={themed($editButtonText)}>Edit</Text>
           </TouchableOpacity>
         )}
       </View>

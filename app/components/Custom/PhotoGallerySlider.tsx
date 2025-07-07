@@ -118,7 +118,7 @@ export const PhotoGallerySlider = observer(function PhotoGallerySlider({
 const $container: ViewStyle = {}
 
 const $headerContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
+  // paddingHorizontal: spacing.md,
   marginBottom: spacing.md,
 }
 
@@ -129,7 +129,7 @@ const $sectionTitle = (theme: any): TextStyle => ({
 })
 
 const $listContainer: ViewStyle = {
-  paddingLeft: spacing.lg,
+  // paddingLeft: spacing.sm,
 }
 
 const $photoItemContainer: ViewStyle = {
