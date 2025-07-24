@@ -65,7 +65,7 @@ export function ActivitiesForm({
         style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
       >
         <Text>
-          {item.emoji}
+          {item.icon}
           {item.name}
         </Text>
       </TouchableOpacity>

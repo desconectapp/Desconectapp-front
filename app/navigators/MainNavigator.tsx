@@ -1,7 +1,7 @@
 // MainNavigator.tsx
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, GroupScreen } from "@/screens"
+import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, GroupScreen, LocationPickerScreen, SchedulePickerScreen, ActivityPickerScreen, RequestConfirmationScreen } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
@@ -21,6 +21,10 @@ export type MainStackParamList = {
   PreferencesScreen: undefined
   GroupScreen: { groupId: string }
   SuggestionScreen: { id: string }
+  LocationPickerScreen: undefined
+  SchedulePickerScreen: undefined
+  ActivityPickerScreen: undefined
+  RequestConfirmationScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -113,7 +117,26 @@ export function MainNavigator() {
       <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="PreferencesScreen" component={PreferencesScreen} />
       <Stack.Screen name="GroupScreen" component={GroupScreen} options={{ headerShown: false }} />
-
+      <Stack.Screen
+        name="LocationPickerScreen"
+        component={LocationPickerScreen}
+        options={{ headerShown: true, title: "Select Location" }}
+      />
+      <Stack.Screen
+        name="SchedulePickerScreen"
+        component={SchedulePickerScreen}
+        options={{ headerShown: true, title: "Select Schedule" }}
+      />
+      <Stack.Screen
+        name="ActivityPickerScreen"
+        component={ActivityPickerScreen}
+        options={{ headerShown: true, title: "Select Activity" }}
+      />
+      <Stack.Screen
+        name="RequestConfirmationScreen"
+        component={RequestConfirmationScreen}
+        options={{ headerShown: true, title: "Confirm Request" }}
+      />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
   )

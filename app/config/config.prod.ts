@@ -6,5 +6,5 @@
  * https://reactnative.dev/docs/security#storing-sensitive-info
  */
 export default {
-  API_URL: "https://catfact.ninja/",
+  API_URL: "http://localhost:8080",
 }

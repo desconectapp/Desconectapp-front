@@ -15,6 +15,7 @@ import LocationForm from "@/components/Custom/LocationForm"
 
 import MapView from "react-native-maps"
 
+
 export function SearchScreen() {
   const { themed } = useAppTheme()
 
@@ -27,6 +28,9 @@ export function SearchScreen() {
     longitude: number
   } | null>(null)
   
+  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
+
+
   return (
     <Screen
       preset="scroll"
@@ -36,90 +40,7 @@ export function SearchScreen() {
       <Text preset="heading" text="Búsqueda" style={$heading} />
 
       <View style={styles.form}>
-        <Text
-          text="Actividad"
-          style={{
-            color: themed("primary"),
-            fontSize: 20,
-            fontWeight: "bold",
-            textAlign: "center",
-            marginBottom: 12,
-          }}
-        />
-
-        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-          {selectedPreferences.length > 0 && (
-            <View style={{ marginBottom: 8, width: "100%" }}>
-              <Text style={{ color: themed("text"), fontWeight: "bold" }}>Seleccionadas</Text>
-            </View>
-          )}
-
-          <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-            {selectedPreferences.map((pref) => (
-              <View
-                key={pref.id}
-                style={{
-                  backgroundColor: "#eaeaea",
-                  paddingHorizontal: 5,
-                  paddingVertical: 6,
-                  borderRadius: 12,
-                  marginRight: 4,
-                  marginBottom: 4,
-                }}
-              >
-                <Text style={{ color: themed("text") }}>{`${pref.emoji} ${pref.name}`}</Text>
-              </View>
-            ))}
-          </View>
-          <View style={{ width: "100%", marginTop: 8 }}>
-            <Button text="Seleccionar actividad" onPress={() => setModalMode("selectActivity")} />
-          </View>
-        </View>
-
-          <Text
-          text="Ubicacion"
-          style={{
-            color: themed("primary"),
-            fontSize: 20,
-            fontWeight: "bold",
-            textAlign: "center",
-            marginBottom: 12,
-          }}
-        />
-
-
-        <Button
-          text="Seleccionar en mapa"
-          onPress={() => {
-            setModalMode("selectLocation")
-          }}
-        />
-        {selectedCoordinates && (
-          <View style={{ marginTop: 16 }}>
-            <Text style={{ color: themed("text") }}>
-              Ubicación seleccionada: {selectedCoordinates.latitude},{" "}
-              {selectedCoordinates.longitude}
-            </Text>
-          </View>
-        )}
-
-        <Text
-          text="Dias y horarios"
-          style={{
-            color: themed("primary"),
-            fontSize: 20,
-            fontWeight: "bold",
-            textAlign: "center",
-            marginBottom: 12,
-          }}
-        />
-        <Button
-          text="Seleccionar horarios"
-          onPress={() => {
-            setModalMode("selectTime")
-          }}
-        />
-
+      
         <View
           style={{
             flexDirection: "row",
@@ -128,92 +49,14 @@ export function SearchScreen() {
             alignContent: "center",
           }}
         >
-          <TouchableOpacity style={styles.searchButton} onPress={() => {}} activeOpacity={0.7}>
-            <Text style={styles.text}>🔍</Text>
+          <TouchableOpacity style={styles.searchButton} onPress={() => {navigation.navigate("ActivityPickerScreen")}} activeOpacity={0.7}>
+            <Text style={styles.text}>Busqueda 🔍</Text>
           </TouchableOpacity>
          
         </View>
       </View>
 
-      <Modal
-        visible={modalMode === "selectActivity"}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalMode(null)}
-      >
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.content}>
-            <View style={{ flex: 1 }}>
-              <ActivitiesForm
-                selectedPreferences={selectedPreferences}
-                setSelectedPreferences={setSelectedPreferences}
-              />
-            </View>
-
-            <View style={modalStyles.footer}>
-              <Button text="Aceptar" onPress={() => setModalMode(null)} />
-              <Button text="Cerrar" onPress={() => setModalMode(null)} />
-            </View>
-          </View>
-        </View>
-      </Modal>
-      <Modal
-        visible={modalMode === "selectLocation"}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalMode(null)}
-      >
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.content}>
-            <View style={{ flex: 1 }}>
-              <Text
-                text="Seleccionar ubicación"
-                style={{
-                  color: themed("primary"),
-                  fontSize: 20,
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  marginBottom: 12,
-                }}
-              />
-              <LocationForm
-                selectedCoordinates={selectedCoordinates}
-                setSelectedCoordinates={setSelectedCoordinates}
-              />
-            </View>
-
-            <View style={modalStyles.footer}>
-              <Button text="Aceptar" onPress={() => setModalMode(null)} />
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        visible={modalMode === "selectTime"}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalMode(null)}
-      >
-        <View style={modalStyles.overlay}>
-          <View style={modalStyles.content}>
-            <View style={{ flex: 1 }}>
-              <Text
-                text="Dias y horarios"
-                style={{
-                  color: themed("primary"),
-                  fontSize: 20,
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  marginBottom: 12,
-                }}
-              />
-              <TimePickerForm
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+      
     </Screen>
   )
 }
@@ -228,8 +71,8 @@ const styles = StyleSheet.create({
   },
   searchButton: {
     backgroundColor: "#ff5c5c",
-    width: 70,
-    height: 70,
+    width: 300,
+    height: 150,
     borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",

@@ -90,7 +90,7 @@ export const PreferencesScreen = observer(() => {
         onPress={() => togglePreference(item.id)}
         style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
       >
-        <Text style={$emoji}>{item.emoji}</Text>
+        <Text style={$emoji}>{item.icon}</Text>
         <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>{item.name}</Text>
       </TouchableOpacity>
     )
