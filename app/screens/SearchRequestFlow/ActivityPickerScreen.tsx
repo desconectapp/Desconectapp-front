@@ -2,8 +2,9 @@ import { Button, Screen, Text } from "@/components"
 import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
 import { AppStackScreenProps } from "@/navigators"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Alert } from "react-native"
 
 interface ActivityPickerScreenProps {
@@ -12,13 +13,24 @@ interface ActivityPickerScreenProps {
 
 export function ActivityPickerScreen({ nextScreen }: ActivityPickerScreenProps) {
   const { themed } = useAppTheme()
-  const [selectedActivities, setSelectedActivities] = useState<string[]>(["futbol"])
+  const { requestStore } = useStores()
+  const [selectedActivities, setSelectedActivities] = useState<string[]>(
+    requestStore.activities.length > 0 ? requestStore.activities.slice() : ["futbol"]
+  )
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
 
-  const handleNext = () => {
-    // Guardar las activiades en el storage
+  // Update store when selectedActivities changes
+  // Nota: Podria hacer que ActivitiesForm haga esto directamente y nos ahorramos
+  // el selectedActivities y setSelectedActivities
+  useEffect(() => {
+    requestStore.setActivities(selectedActivities)
+  }, [selectedActivities, requestStore])
 
-    //Ir a la siguiente pantalla
+  const handleNext = () => {
+    // Save activities to the store
+    requestStore.setActivities(selectedActivities)
+
+    // Navigate to the next screen
     navigation.navigate(nextScreen ?? "LocationPickerScreen")
   }
 

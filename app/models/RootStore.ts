@@ -1,6 +1,7 @@
 import { Instance, SnapshotOut, types } from "mobx-state-tree"
 import { SignUpStoreModel } from "./SignUpStore"
 import { SessionModel } from "./SessionStore"
+import { RequestStoreModel } from "./RequestStore"
 
 /**
   A RootStore model.
@@ -13,6 +14,11 @@ export const RootStoreModel = types.model("RootStore").props({
     refreshExpiresAt: "",
     refreshToken: "",
     token: "",
+  }),
+  requestStore: types.optional(RequestStoreModel, {
+    activities: [],
+    location: null,
+    schedules: [],
   }),
 })
 

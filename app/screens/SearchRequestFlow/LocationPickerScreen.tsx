@@ -14,6 +14,7 @@ import { PanGestureHandler, State, TapGestureHandler } from "react-native-gestur
 import { Screen, Text, Button } from "../../components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
+import { useStores } from "@/models"
 
 import { AppStackScreenProps } from "@/navigators"
 import { MainStackParamList } from "@/navigators/MainNavigator"
@@ -47,21 +48,26 @@ interface LocationPickerScreenProps {
 
 export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) {
   const { themed } = useAppTheme()
+  const { requestStore } = useStores()
   const [searchQuery, setSearchQuery] = useState("")
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([])
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
+    requestStore.location
+  )
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hasSelectedFromSuggestion, setHasSelectedFromSuggestion] = useState(false)
   const [mapRegion, setMapRegion] = useState({
-    latitude: -34.6037, // Buenos Aires default
-    longitude: -58.3816,
+    latitude: requestStore.location?.latitude || -34.6037, // Buenos Aires default
+    longitude: requestStore.location?.longitude || -58.3816,
     latitudeDelta: 0.1,
     longitudeDelta: 0.1,
   })
   const [zoom, setZoom] = useState(13)
 
   // Separate marker position from map center
-  const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(null)
+  const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(
+    requestStore.location ? { latitude: requestStore.location.latitude, longitude: requestStore.location.longitude } : null
+  )
 
   // Pan gesture state - simplified
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
@@ -71,6 +77,12 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
   const singleTapRef = useRef<any>()
   const doubleTapRef = useRef<any>()
   const panRef = useRef<any>()
+
+  // Helper function to update both local state and store
+  const updateSelectedLocation = (location: Location | null) => {
+    setSelectedLocation(location)
+    requestStore.setLocation(location)
+  }
 
   // Helper functions for tile calculations
   const deg2rad = (deg: number) => deg * (Math.PI / 180)
@@ -372,7 +384,7 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
       longitude: Number.parseFloat(suggestion.lon),
       address: suggestion.display_name,
     }
-    setSelectedLocation(location)
+    updateSelectedLocation(location)
     setSearchQuery(suggestion.display_name)
     setShowSuggestions(false)
     setHasSelectedFromSuggestion(true)
@@ -411,7 +423,7 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
     setHasSelectedFromSuggestion(false)
     setSuggestions([])
     setShowSuggestions(false)
-    setSelectedLocation(null)
+    updateSelectedLocation(null)
     setMarkerPosition(null)
   }
 
@@ -434,7 +446,7 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
           longitude,
           address: data.display_name,
         }
-        setSelectedLocation(location)
+        updateSelectedLocation(location)
         setSearchQuery(data.display_name)
         setHasSelectedFromSuggestion(true)
       }
@@ -447,15 +459,19 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
         longitude,
         address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
       }
-      setSelectedLocation(location)
+      updateSelectedLocation(location)
       setSearchQuery(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
       setHasSelectedFromSuggestion(true)
     }
   }
 
   const handleNext = () => {
-        
-    navigation.navigate("SchedulePickerScreen")
+    // Save selected location to the store
+    if (selectedLocation) {
+      requestStore.setLocation(selectedLocation)
+    }
+
+    navigation.navigate(nextScreen ?? "SchedulePickerScreen")
   }
 
   const renderSuggestion = ({ item }: { item: NominatimResult }) => {
@@ -468,7 +484,7 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
       </TouchableOpacity>
     )
   }
-  const navigation = useNavigation<MainStackParamList["navigation"]>()
+  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
   return (
     <Screen
       preset="scroll"

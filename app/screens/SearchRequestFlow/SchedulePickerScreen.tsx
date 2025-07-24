@@ -1,10 +1,10 @@
 import { Button, Screen, Text } from "@/components"
-import { MainStackParamList } from "@/navigators/MainNavigator";
+import { AppStackScreenProps } from "@/navigators"
 import { useAppTheme } from "@/utils/useAppTheme"
-import { useState } from "react"
+import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
 
-import { Alert } from "react-native"
+import { TimePickerForm } from "@/components/Custom/TimePickerForm"
 
 interface SchedulePickerScreenProps {
   nextScreen: any; 
@@ -12,14 +12,12 @@ interface SchedulePickerScreenProps {
 
 export function SchedulePickerScreen({ nextScreen }: SchedulePickerScreenProps) {
   const { themed } = useAppTheme()
- const [selectedSchedules, setSelectedSchedules] = useState<string[]>(["1"])
+  const { requestStore } = useStores()
 
-  const navigation = useNavigation<MainStackParamList["navigation"]>()
+  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
 
    const handleNext = () => {
-      // Guardar las activiades en el storage
-  
-      //Ir a la siguiente pantalla
+      // The TimePickerForm already manages the store directly, so we just navigate
       navigation.navigate(nextScreen ?? "RequestConfirmationScreen")
     }
   
@@ -31,19 +29,19 @@ export function SchedulePickerScreen({ nextScreen }: SchedulePickerScreenProps) 
       >
         <Text>Selecciona dias y horarios</Text>
 
-
+        <TimePickerForm/>
         {/* Next Button */}    
         <Button
           text="Siguiente"
           style={[
             $nextButton,
-            selectedSchedules.length > 0 ? $nextButtonEnabled : $nextButtonDisabled,
+            requestStore.isScheduleSelected ? $nextButtonEnabled : $nextButtonDisabled,
           ]}
           textStyle={[
             $nextButtonText,
-            selectedSchedules.length > 0 ? $nextButtonTextEnabled : $nextButtonTextDisabled,
+            requestStore.isScheduleSelected ? $nextButtonTextEnabled : $nextButtonTextDisabled,
           ]}
-          disabled={selectedSchedules.length === 0}
+          disabled={!requestStore.isScheduleSelected}
           onPress={handleNext}
         />
       </Screen>

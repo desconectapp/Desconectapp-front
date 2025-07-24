@@ -1,4 +1,5 @@
-import React, { useState } from "react"
+import { useStores, DaySchedule, TimeRange } from "@/models"
+import React, { useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -12,14 +13,18 @@ import {
 import DateTimePickerModal from "react-native-modal-datetime-picker"
 
 const days = ["D", "L", "M", "X", "J", "V", "S"]
+const dayMapping: { [key: string]: string } = {
+  "D": "Domingo",
+  "L": "Lunes", 
+  "M": "Martes",
+  "X": "Miércoles",
+  "J": "Jueves",
+  "V": "Viernes",
+  "S": "Sábado"
+}
+
 const hours = ["00:00", "06:00", "12:00", "18:00", "00:00"]
 
-type SelectedTime = {
-  [day: string]: {
-    start: string
-    end: string
-  }[]
-}
 const toMinutes = (time: string) => {
   const [h, m] = time.split(":").map(Number)
   return h * 60 + m
@@ -27,37 +32,31 @@ const toMinutes = (time: string) => {
 
 const totalMinutes = 24 * 60
 
-const selectedTime: SelectedTime = {
-  L: [
-    { start: "08:00", end: "10:00" },
-    { start: "14:00", end: "16:00" },
-  ],
-  X: [{ start: "09:30", end: "11:30" }],
-  V: [
-    { start: "13:00", end: "15:00" },
-    { start: "16:00", end: "18:00" },
-  ],
-}
-
 export function TimePickerForm() {
-
   const [isStartPickerVisible, setStartPickerVisible] = useState(false)
   const [isEndPickerVisible, setEndPickerVisible] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
-   const [selectedTime, setSelectedTime] = useState<SelectedTime>({
-    L: [
-      { start: "08:00", end: "10:00" },
-      { start: "14:00", end: "16:00" },
-    ],
-    X: [{ start: "09:30", end: "11:30" }],
-    V: [
-      { start: "13:00", end: "15:00" },
-      { start: "16:00", end: "18:00" },
-    ],
-  });
+  const { requestStore } = useStores()
+
+  // Force re-render when store schedules change
+  useEffect(() => {
+    // This effect will trigger re-renders when the store schedules change
+  }, [requestStore.schedules])
+
+  // Convert DaySchedule[] to a lookup object for easier rendering
+  const getTimeSlotsByDay = (day: string): TimeRange[] => {
+    const dayName = dayMapping[day]
+    const daySchedule = requestStore.schedules.find(schedule => schedule.day === dayName)
+    return daySchedule ? daySchedule.timeSlots.slice() : []
+  }
+
+  // Helper to get total selected time slots for debugging
+  const getTotalSelectedSlots = () => {
+    return requestStore.schedules.reduce((total, day) => total + day.timeSlots.length, 0)
+  }
   const formatTime = (date: Date) =>
     date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
 
@@ -71,30 +70,38 @@ export function TimePickerForm() {
       return;
     }
 
-    const updated: SelectedTime = { ...selectedTime };
+    // Convert selected days to DaySchedule format and add to store
+    selectedDays.forEach((dayCode) => {
+      const dayName = dayMapping[dayCode]
+      const existingTimeSlots = getTimeSlotsByDay(dayCode)
+      const newTimeSlot: TimeRange = { start, end }
+      
+      // Add the new time slot to existing ones
+      const updatedTimeSlots = [...existingTimeSlots, newTimeSlot]
+      
+      // Update store for this specific day
+      requestStore.setScheduleForDay(dayName, updatedTimeSlots)
+    })
 
-    selectedDays.forEach((day) => {
-      if (!updated[day]) updated[day] = [];
-      updated[day] = [...updated[day], { start, end }];
-    });
+    console.log("Horarios guardados en el store:", requestStore.schedules.slice())
+    setModalVisible(false)
+    setSelectedDays([])
+    setStart("")
+    setEnd("")
+  }
 
-    console.log("Horarios seleccionados:", updated);
-    setSelectedTime(updated);
-    setModalVisible(false);
-    setSelectedDays([]);
-    setStart("");
-    setEnd("");
-  };
-const removeRange = (day: string, index: number) => {
-  setSelectedTime((prev) => {
-    const updated = { ...prev };
-    updated[day] = updated[day].filter((_, i) => i !== index);
-    if (updated[day].length === 0) delete updated[day];
-    console.log("Rango eliminado:", updated);
-    return updated;
-  });
-
-};
+  const removeRange = (day: string, index: number) => {
+    const dayName = dayMapping[day]
+    const existingTimeSlots = getTimeSlotsByDay(day)
+    
+    // Remove the time slot at the specified index
+    const updatedTimeSlots = existingTimeSlots.filter((_, i) => i !== index)
+    
+    // Update store for this day
+    requestStore.setScheduleForDay(dayName, updatedTimeSlots)
+    
+    console.log(`Rango eliminado para ${dayName}`)
+  }
 
   return (
     <View style={styles.wrapper}>
@@ -108,33 +115,37 @@ const removeRange = (day: string, index: number) => {
 <View style={{ flexDirection: "column", alignItems: "center" }}>
 
       <ScrollView horizontal style={styles.scroll}>
-        {days.map((day) => (
-          <View key={day} style={styles.dayColumn}>
-            <View style={styles.bar}>
-              {(selectedTime[day] || []).map(({ start, end }, i) => {
-                const top = (toMinutes(start) / totalMinutes) * 100
-                const height = ((toMinutes(end) - toMinutes(start)) / totalMinutes) * 100
+        {days.map((day) => {
+          const timeSlots = getTimeSlotsByDay(day)
+          
+          return (
+            <View key={day} style={styles.dayColumn}>
+              <View style={styles.bar}>
+                {timeSlots.map(({ start, end }, i) => {
+                  const top = (toMinutes(start) / totalMinutes) * 100
+                  const height = ((toMinutes(end) - toMinutes(start)) / totalMinutes) * 100
 
-                return (
-                  <TouchableOpacity
-  key={i}
-  style={[
-    styles.segment,
-    {
-      top: `${top}%`,
-      height: `${height}%`,
-    },
-  ]}
-  onLongPress={() => removeRange(day, i)}
->
-  {/* opcional: ícono o nada */}
-</TouchableOpacity>
-                )
-              })}
+                  return (
+                    <TouchableOpacity
+                      key={i}
+                      style={[
+                        styles.segment,
+                        {
+                          top: `${top}%`,
+                          height: `${height}%`,
+                        },
+                      ]}
+                      onLongPress={() => removeRange(day, i)}
+                    >
+                      {/* opcional: ícono o nada */}
+                    </TouchableOpacity>
+                  )
+                })}
+              </View>
+              <Text style={styles.label}>{day === "X" ? "M" : day}</Text>
             </View>
-            <Text style={styles.label}>{day === "X" ? "M" : day}</Text>
-          </View>
-        ))}
+          )
+        })}
       </ScrollView>
        <TouchableOpacity style={[styles.openBtn, { marginTop: 10 }]} onPress={() => setModalVisible(true)}>
     <Text style={styles.openText}>Agregar horarios</Text>
