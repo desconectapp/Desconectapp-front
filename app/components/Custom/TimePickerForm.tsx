@@ -1,5 +1,6 @@
 import { useStores, DaySchedule, TimeRange } from "@/models"
-import React, { useState, useEffect } from "react"
+import React, { useState, useCallback, useMemo } from "react"
+import { observer } from "mobx-react-lite"
 import {
   View,
   Text,
@@ -14,13 +15,13 @@ import DateTimePickerModal from "react-native-modal-datetime-picker"
 
 const days = ["D", "L", "M", "X", "J", "V", "S"]
 const dayMapping: { [key: string]: string } = {
-  "D": "Domingo",
-  "L": "Lunes", 
-  "M": "Martes",
-  "X": "Miércoles",
-  "J": "Jueves",
-  "V": "Viernes",
-  "S": "Sábado"
+  D: "Domingo",
+  L: "Lunes",
+  M: "Martes",
+  X: "Miércoles",
+  J: "Jueves",
+  V: "Viernes",
+  S: "Sábado",
 }
 
 const hours = ["00:00", "06:00", "12:00", "18:00", "00:00"]
@@ -32,76 +33,151 @@ const toMinutes = (time: string) => {
 
 const totalMinutes = 24 * 60
 
-export function TimePickerForm() {
+export const TimePickerForm = observer(function TimePickerForm() {
   const [isStartPickerVisible, setStartPickerVisible] = useState(false)
   const [isEndPickerVisible, setEndPickerVisible] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
+  
   const { requestStore } = useStores()
 
-  // Force re-render when store schedules change
-  useEffect(() => {
-    // This effect will trigger re-renders when the store schedules change
+  // Safety check to prevent crashes if store is not available
+  if (!requestStore) {
+    console.error("RequestStore not available in TimePickerForm")
+    return null
+  }
+
+  // Convert DaySchedule[] to a lookup object for easier rendering - memoized
+  const getTimeSlotsByDay = useCallback((day: string): TimeRange[] => {
+    try {
+      const dayName = dayMapping[day]
+      const daySchedule = requestStore.schedules.find((schedule) => schedule.day === dayName)
+      return daySchedule ? daySchedule.timeSlots.slice() : []
+    } catch (error) {
+      console.error('Error getting time slots for day:', day, error)
+      return []
+    }
   }, [requestStore.schedules])
 
-  // Convert DaySchedule[] to a lookup object for easier rendering
-  const getTimeSlotsByDay = (day: string): TimeRange[] => {
-    const dayName = dayMapping[day]
-    const daySchedule = requestStore.schedules.find(schedule => schedule.day === dayName)
-    return daySchedule ? daySchedule.timeSlots.slice() : []
-  }
-
-  // Helper to get total selected time slots for debugging
-  const getTotalSelectedSlots = () => {
-    return requestStore.schedules.reduce((total, day) => total + day.timeSlots.length, 0)
-  }
-  const formatTime = (date: Date) =>
+  // Memoize the formatTime function
+  const formatTime = useCallback((date: Date) =>
     date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+  , [])
 
-  const toggleDay = (day: string) => {
+  const toggleDay = useCallback((day: string) => {
     setSelectedDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]))
-  }
+  }, [])
 
-  const applySelection = () => {
-    if (!start || !end || selectedDays.length === 0) {
-      alert("Seleccioná días y horarios válidos");
-      return;
+  const applySelection = useCallback(() => {
+    try {
+      if (!start || !end || selectedDays.length === 0) {
+        alert("Seleccioná días y horarios válidos")
+        return
+      }
+
+      // Validate time format
+      const startMinutes = toMinutes(start)
+      const endMinutes = toMinutes(end)
+      
+      if (isNaN(startMinutes) || isNaN(endMinutes) || startMinutes >= endMinutes) {
+        alert("Horarios inválidos. El horario de fin debe ser posterior al de inicio.")
+        return
+      }
+
+      // Convert selected days to DaySchedule format and add to store
+      selectedDays.forEach((dayCode) => {
+        const dayName = dayMapping[dayCode]
+        const existingTimeSlots = getTimeSlotsByDay(dayCode)
+        const newTimeSlot: TimeRange = { start, end }
+
+        // Add the new time slot to existing ones
+        const updatedTimeSlots = [...existingTimeSlots, newTimeSlot]
+
+        // Update store for this specific day
+        requestStore.setScheduleForDay(dayName, updatedTimeSlots)
+      })
+
+      console.log("Horarios guardados en el store:", requestStore.schedules.slice())
+      setModalVisible(false)
+      setSelectedDays([])
+      setStart("")
+      setEnd("")
+    } catch (error) {
+      console.error("Error applying selection:", error)
+      alert("Error al guardar los horarios")
     }
+  }, [start, end, selectedDays, getTimeSlotsByDay, requestStore])
 
-    // Convert selected days to DaySchedule format and add to store
-    selectedDays.forEach((dayCode) => {
-      const dayName = dayMapping[dayCode]
-      const existingTimeSlots = getTimeSlotsByDay(dayCode)
-      const newTimeSlot: TimeRange = { start, end }
-      
-      // Add the new time slot to existing ones
-      const updatedTimeSlots = [...existingTimeSlots, newTimeSlot]
-      
-      // Update store for this specific day
+  const removeRange = useCallback((day: string, index: number) => {
+    try {
+      const dayName = dayMapping[day]
+      const existingTimeSlots = getTimeSlotsByDay(day)
+
+      // Validate index
+      if (index < 0 || index >= existingTimeSlots.length) {
+        console.warn(`Invalid index ${index} for day ${day}`)
+        return
+      }
+
+      // Remove the time slot at the specified index
+      const updatedTimeSlots = existingTimeSlots.filter((_, i) => i !== index)
+
+      // Update store for this day
       requestStore.setScheduleForDay(dayName, updatedTimeSlots)
+
+      console.log(`Rango eliminado para ${dayName}`)
+    } catch (error) {
+      console.error("Error removing range:", error)
+    }
+  }, [getTimeSlotsByDay, requestStore])
+
+  // Memoize day columns for better performance
+  const renderDayColumns = useMemo(() => {
+    return days.map((day) => {
+      const timeSlots = getTimeSlotsByDay(day)
+
+      return (
+        <View key={day} style={styles.dayColumn}>
+          <View style={styles.bar}>
+            {timeSlots.map(({ start, end }, i) => {
+              try {
+                const topValue = (toMinutes(start) / totalMinutes) * 240 // Use fixed pixel value instead of percentage
+                const heightValue = ((toMinutes(end) - toMinutes(start)) / totalMinutes) * 240
+
+                // Ensure valid values
+                if (isNaN(topValue) || isNaN(heightValue) || topValue < 0 || heightValue <= 0) {
+                  console.warn(`Invalid time slot values for day ${day}, slot ${i}:`, { start, end, topValue, heightValue })
+                  return null
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={`${day}-${i}-${start}-${end}`}
+                    style={[
+                      styles.segment,
+                      {
+                        top: Math.max(0, topValue),
+                        height: Math.max(1, heightValue),
+                      },
+                    ]}
+                    onLongPress={() => removeRange(day, i)}
+                  >
+                    {/* opcional: ícono o nada */}
+                  </TouchableOpacity>
+                )
+              } catch (error) {
+                console.error(`Error rendering time slot for day ${day}, slot ${i}:`, error)
+                return null
+              }
+            })}
+          </View>
+          <Text style={styles.label}>{day === "X" ? "M" : day}</Text>
+        </View>
+      )
     })
-
-    console.log("Horarios guardados en el store:", requestStore.schedules.slice())
-    setModalVisible(false)
-    setSelectedDays([])
-    setStart("")
-    setEnd("")
-  }
-
-  const removeRange = (day: string, index: number) => {
-    const dayName = dayMapping[day]
-    const existingTimeSlots = getTimeSlotsByDay(day)
-    
-    // Remove the time slot at the specified index
-    const updatedTimeSlots = existingTimeSlots.filter((_, i) => i !== index)
-    
-    // Update store for this day
-    requestStore.setScheduleForDay(dayName, updatedTimeSlots)
-    
-    console.log(`Rango eliminado para ${dayName}`)
-  }
+  }, [getTimeSlotsByDay, removeRange])
 
   return (
     <View style={styles.wrapper}>
@@ -112,115 +188,88 @@ export function TimePickerForm() {
           </Text>
         ))}
       </View>
-<View style={{ flexDirection: "column", alignItems: "center" }}>
-
-      <ScrollView horizontal style={styles.scroll}>
-        {days.map((day) => {
-          const timeSlots = getTimeSlotsByDay(day)
-          
-          return (
-            <View key={day} style={styles.dayColumn}>
-              <View style={styles.bar}>
-                {timeSlots.map(({ start, end }, i) => {
-                  const top = (toMinutes(start) / totalMinutes) * 100
-                  const height = ((toMinutes(end) - toMinutes(start)) / totalMinutes) * 100
-
-                  return (
-                    <TouchableOpacity
-                      key={i}
-                      style={[
-                        styles.segment,
-                        {
-                          top: `${top}%`,
-                          height: `${height}%`,
-                        },
-                      ]}
-                      onLongPress={() => removeRange(day, i)}
-                    >
-                      {/* opcional: ícono o nada */}
-                    </TouchableOpacity>
-                  )
-                })}
-              </View>
-              <Text style={styles.label}>{day === "X" ? "M" : day}</Text>
-            </View>
-          )
-        })}
-      </ScrollView>
-       <TouchableOpacity style={[styles.openBtn, { marginTop: 10 }]} onPress={() => setModalVisible(true)}>
-    <Text style={styles.openText}>Agregar horarios</Text>
-  </TouchableOpacity>
+      <View style={{ flexDirection: "column", alignItems: "center" }}>
+        <ScrollView horizontal style={styles.scroll}>
+          {renderDayColumns}
+        </ScrollView>
+        <TouchableOpacity
+          style={[styles.openBtn, { marginTop: 10 }]}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.openText}>Agregar horarios</Text>
+        </TouchableOpacity>
       </View>
 
-
       <Modal visible={modalVisible} animationType="slide" transparent>
-          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalContent}>
+                <Text style={styles.title}>Seleccionar días</Text>
 
-        <View style={styles.modalOverlay}>
-      <TouchableWithoutFeedback>
+                <View style={styles.dayButtons}>
+                  {days.map((day) => (
+                    <TouchableOpacity
+                      key={day}
+                      style={[styles.dayBtn, selectedDays.includes(day) && styles.dayBtnSelected]}
+                      onPress={() => toggleDay(day)}
+                    >
+                      <Text style={styles.dayText}>{day}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
 
-          <View style={styles.modalContent}>
-            <Text style={styles.title}>Seleccionar días</Text>
+                <Text style={styles.title}>Horario</Text>
 
-            <View style={styles.dayButtons}>
-              {days.map((day) => (
-                <TouchableOpacity
-                  key={day}
-                  style={[styles.dayBtn, selectedDays.includes(day) && styles.dayBtnSelected]}
-                  onPress={() => toggleDay(day)}
-                >
-                  <Text style={styles.dayText}>{day}</Text>
+                <View style={{ flexDirection: "row", gap: 10, marginVertical: 10 }}>
+                  <TouchableOpacity
+                    onPress={() => setStartPickerVisible(true)}
+                    style={[styles.input, { flex: 1 }]}
+                  >
+                    <Text>{start || "Inicio"}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setEndPickerVisible(true)}
+                    style={[styles.input, { flex: 1 }]}
+                  >
+                    <Text>{end || "Fin"}</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <DateTimePickerModal
+                  isVisible={isStartPickerVisible}
+                  mode="time"
+                  onConfirm={(date) => {
+                    setStart(formatTime(date))
+                    setStartPickerVisible(false)
+                  }}
+                  onCancel={() => setStartPickerVisible(false)}
+                  is24Hour
+                />
+
+                <DateTimePickerModal
+                  isVisible={isEndPickerVisible}
+                  mode="time"
+                  onConfirm={(date) => {
+                    setEnd(formatTime(date))
+                    setEndPickerVisible(false)
+                  }}
+                  onCancel={() => setEndPickerVisible(false)}
+                  is24Hour
+                />
+
+                <TouchableOpacity style={styles.applyBtn} onPress={applySelection}>
+                  <Text style={styles.applyText}>Aplicar</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.title}>Horario</Text>
-
-           <View style={{ flexDirection: "row", gap: 10, marginVertical: 10 }}>
-  <TouchableOpacity onPress={() => setStartPickerVisible(true)} style={[styles.input, { flex: 1 }]}>
-    <Text>{start || "Inicio"}</Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity onPress={() => setEndPickerVisible(true)} style={[styles.input, { flex: 1 }]}>
-    <Text>{end || "Fin"}</Text>
-  </TouchableOpacity>
-</View>
-
-            <DateTimePickerModal
-              isVisible={isStartPickerVisible}
-              mode="time"
-              onConfirm={(date) => {
-                setStart(formatTime(date));
-                setStartPickerVisible(false);
-              }}
-              onCancel={() => setStartPickerVisible(false)}
-              is24Hour
-            />
-
-            <DateTimePickerModal
-              isVisible={isEndPickerVisible}
-              mode="time"
-              onConfirm={(date) => {
-                setEnd(formatTime(date));
-                setEndPickerVisible(false);
-              }}
-              onCancel={() => setEndPickerVisible(false)}
-              is24Hour
-            />
-
-            <TouchableOpacity style={styles.applyBtn} onPress={applySelection}>
-              <Text style={styles.applyText}>Aplicar</Text>
-            </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-                </TouchableWithoutFeedback>
-
-        </View>
-              </TouchableWithoutFeedback>
-
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   )
-}
+})
 const styles = StyleSheet.create({
   wrapper: {
     flexDirection: "row",

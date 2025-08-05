@@ -3,6 +3,7 @@ import { AppStackScreenProps } from "@/navigators"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
+import { observer } from "mobx-react-lite"
 
 import { TimePickerForm } from "@/components/Custom/TimePickerForm"
 
@@ -10,7 +11,7 @@ interface SchedulePickerScreenProps {
   nextScreen: any; 
 }
 
-export function SchedulePickerScreen({ nextScreen }: SchedulePickerScreenProps) {
+export const SchedulePickerScreen = observer(function SchedulePickerScreen({ nextScreen }: SchedulePickerScreenProps) {
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
 
@@ -18,12 +19,12 @@ export function SchedulePickerScreen({ nextScreen }: SchedulePickerScreenProps) 
 
    const handleNext = () => {
       // The TimePickerForm already manages the store directly, so we just navigate
-      navigation.navigate(nextScreen ?? "RequestConfirmationScreen")
+      navigation.navigate("RequestConfirmationScreen" as any)
     }
   
     return (
       <Screen
-        preset="scroll"
+        preset="fixed"
         contentContainerStyle={[$container, $bottomContainerInsets]}
         backgroundColor={themed($screenBackground)}
       >
@@ -44,11 +45,11 @@ export function SchedulePickerScreen({ nextScreen }: SchedulePickerScreenProps) 
           disabled={!requestStore.isScheduleSelected}
           onPress={handleNext}
         />
-      </Screen>
-    )
-  }
-  
-  const $container = { padding: 20 }
+    </Screen>
+  )
+})
+
+const $container = { padding: 20 }
   const $bottomContainerInsets = {}
   const $screenBackground = "background"
   

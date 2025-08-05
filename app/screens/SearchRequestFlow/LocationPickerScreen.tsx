@@ -8,16 +8,22 @@ import {
   Alert,
   Dimensions,
   Image,
+  ScrollView,
   type DimensionValue,
+  ViewStyle,
+  TextStyle,
 } from "react-native"
 import { PanGestureHandler, State, TapGestureHandler } from "react-native-gesture-handler"
 import { Screen, Text, Button } from "../../components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
+import { observer } from "mobx-react-lite"
+import { Slider } from "tamagui"
 
 import { AppStackScreenProps } from "@/navigators"
 import { MainStackParamList } from "@/navigators/MainNavigator"
+import { spacing } from "@/theme"
 
 interface Location {
   id: string
@@ -46,7 +52,7 @@ interface LocationPickerScreenProps {
   nextScreen: any; 
 }
 
-export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) {
+export const LocationPickerScreen = observer(function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) {
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
   const [searchQuery, setSearchQuery] = useState("")
@@ -63,6 +69,7 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
     longitudeDelta: 0.1,
   })
   const [zoom, setZoom] = useState(13)
+  const [radiusKm, setRadiusKm] = useState(requestStore.radiusKm || 5) // Use store value or default 5km
 
   // Separate marker position from map center
   const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(
@@ -82,6 +89,12 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
   const updateSelectedLocation = (location: Location | null) => {
     setSelectedLocation(location)
     requestStore.setLocation(location)
+  }
+
+  // Helper function to update radius in both local state and store
+  const updateRadius = (radius: number) => {
+    setRadiusKm(radius)
+    requestStore.setRadiusKm(radius)
   }
 
   // Helper functions for tile calculations
@@ -130,6 +143,13 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
       x: mapSize / 2 + pixelX,
       y: mapSize / 2 + pixelY,
     }
+  }
+
+  // Calculate radius in pixels based on kilometers
+  const getRadiusInPixels = (radiusKm: number) => {
+    const metersPerPixel = (40075016.686 * Math.cos(deg2rad(mapRegion.latitude))) / Math.pow(2, zoom + 8)
+    const radiusInMeters = radiusKm * 1000
+    return radiusInMeters / metersPerPixel
   }
 
   const onPanGestureEvent = (event: any) => {
@@ -223,16 +243,28 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
 
     // Calculate marker position on screen if we have a selected location
     let markerScreenPosition = null
+    let radiusPixels = 0
     if (markerPosition) {
       const screenPos = getPixelFromLatLon(markerPosition.latitude, markerPosition.longitude)
+      radiusPixels = getRadiusInPixels(radiusKm)
       markerScreenPosition = {
         left: screenPos.x - 12 + panOffset.x, // Center the marker (24px width / 2)
         top: screenPos.y - 24 + panOffset.y, // Position above the point (24px height)
+        radiusLeft: screenPos.x - radiusPixels + panOffset.x, // Center the radius circle
+        radiusTop: screenPos.y - radiusPixels + panOffset.y,
       }
     }
 
     return (
       <View style={$mapContainer}>
+        <View style={$header}>
+                      <Text preset="heading" style={themed($title)}>
+                        "What are you into?"
+                      </Text>
+                      <Text preset="subheading" style={themed($subtitle)}>
+                        "Choose your interests and hobbies. You can select multiple options."
+                      </Text>
+                    </View>
         <PanGestureHandler
           ref={panRef}
           onGestureEvent={onPanGestureEvent}
@@ -244,7 +276,6 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
             onActivated={onDoubleTap}
             numberOfTaps={2}
             minPointers={1}
-            maxPointers={1}
             simultaneousHandlers={[panRef]}
           >
             <TapGestureHandler
@@ -252,7 +283,6 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
               onActivated={onSingleTap}
               numberOfTaps={1}
               minPointers={1}
-              maxPointers={1}
               waitFor={doubleTapRef}
               simultaneousHandlers={[panRef]}
             >
@@ -281,17 +311,33 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
 
                 {/* Selected location marker */}
                 {markerPosition && markerScreenPosition && (
-                  <View
-                    style={[
-                      $markerContainer,
-                      {
-                        left: markerScreenPosition.left,
-                        top: markerScreenPosition.top,
-                      },
-                    ]}
-                  >
-                    <View style={$marker} />
-                  </View>
+                  <>
+                    {/* Radius circle */}
+                    <View
+                      style={[
+                        $radiusOutlineMarker,
+                        {
+                          left: markerScreenPosition.radiusLeft,
+                          top: markerScreenPosition.radiusTop,
+                          width: radiusPixels * 2,
+                          height: radiusPixels * 2,
+                          borderRadius: radiusPixels,
+                        },
+                      ]}
+                    />
+                    {/* Marker pin */}
+                    <View
+                      style={[
+                        $markerContainer,
+                        {
+                          left: markerScreenPosition.left,
+                          top: markerScreenPosition.top,
+                        },
+                      ]}
+                    >
+                      <View style={$marker} />
+                    </View>
+                  </>
                 )}
 
                 {/* Map info overlay */}
@@ -466,12 +512,13 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
   }
 
   const handleNext = () => {
-    // Save selected location to the store
+    // Save selected location and radius to the store
     if (selectedLocation) {
       requestStore.setLocation(selectedLocation)
+      requestStore.setRadiusKm(radiusKm)
     }
 
-    navigation.navigate(nextScreen ?? "SchedulePickerScreen")
+    navigation.navigate("SchedulePickerScreen" as any)
   }
 
   const renderSuggestion = ({ item }: { item: NominatimResult }) => {
@@ -487,71 +534,125 @@ export function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) 
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
   return (
     <Screen
-      preset="scroll"
+      preset="fixed"
       contentContainerStyle={[$container, $bottomContainerInsets]}
       backgroundColor={themed($screenBackground)}
     >
-      <Text preset="heading" text="Selecciona una ubicación" style={$heading} />
+      
+      <ScrollView 
+        style={$scrollView}
+        contentContainerStyle={$scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+            <View style={$header}>
+                      <Text preset="heading" style={themed($title)}>
+                        Por donde?
+                      </Text>                      
+                    </View>
 
-      {/* Search Bar with Clear Button */}
-      <View style={$searchContainer}>
-        <View style={$searchInputContainer}>
-          <TextInput
-            style={$searchInput}
-            placeholder="Buscar ubicación en Argentina..."
-            value={searchQuery}
-            onChangeText={handleSearchInputChange}
-            onFocus={handleSearchFocus}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity style={$clearButton} onPress={handleClearSearch}>
-              <Text style={$clearButtonText}>×</Text>
-            </TouchableOpacity>
-          )}
+        {/* Search Bar with Clear Button */}
+        <View style={$searchContainer}>
+          <View style={$searchInputContainer}>
+            <TextInput
+              style={$searchInput}
+              placeholder="Buscar ubicación en Argentina..."
+              value={searchQuery}
+              onChangeText={handleSearchInputChange}
+              onFocus={handleSearchFocus}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity style={$clearButton} onPress={handleClearSearch}>
+                <Text style={$clearButtonText}>×</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
-        {/* Suggestions List */}
-        {showSuggestions && suggestions.length > 0 && (
-          <View style={$suggestionsContainer}>
-            <FlatList
-              data={suggestions}
-              renderItem={renderSuggestion}
-              keyExtractor={(item) => item.place_id}
-              style={$suggestionsList}
-              keyboardShouldPersistTaps="handled"
-            />
+        {/* Custom OpenStreetMap */}
+        {renderMap()}
+
+        {/* Radius Slider */}
+   {selectedLocation && (
+  <View style={$radiusContainer}>
+    <Text style={$radiusLabel}>Radio de búsqueda: {radiusKm} km</Text>
+
+    {radiusKm > 10 ? (
+      <Text style={$radiusLabel}>Capaz que me tomo un avión</Text>
+    ) : radiusKm > 5 ? (
+      <Text style={$radiusLabel}>Viajo en tren también</Text>
+    ) : radiusKm > 1 ? (
+      <Text >Viajo en bondi</Text>
+    ) : null}
+
+    <Slider 
+      size="$2" 
+      width={"100%"} 
+      value={[radiusKm]} 
+      onValueChange={(value) => updateRadius(value[0])}
+      max={15} 
+      min={1}
+      step={1}
+    >
+      <Slider.Track>
+        <Slider.TrackActive />
+      </Slider.Track>
+      <Slider.Thumb circular index={0} />
+    </Slider>
+  </View>
+)}
+
+
+        {/* Selected Location Info */}
+        {selectedLocation && (
+          <View style={$selectedLocationContainer}>
+            <Text style={$selectedLocationTitle}>Ubicación seleccionada:</Text>
+            <Text style={$selectedLocationName}>{selectedLocation.name}</Text>
+            <Text style={$selectedLocationAddress}>{selectedLocation.address}</Text>
           </View>
         )}
-      </View>
 
-      {/* Custom OpenStreetMap */}
-      {renderMap()}
+        {/* Next Button */}
+        <Button
+          text="Siguiente"
+          style={[$nextButton, selectedLocation ? $nextButtonEnabled : $nextButtonDisabled]}
+          textStyle={[$nextButtonText, selectedLocation ? $nextButtonTextEnabled : $nextButtonTextDisabled]}
+          disabled={!selectedLocation}
+          onPress={handleNext}
+        />
+      </ScrollView>
 
-      {/* Selected Location Info */}
-      {selectedLocation && (
-        <View style={$selectedLocationContainer}>
-          <Text style={$selectedLocationTitle}>Ubicación seleccionada:</Text>
-          <Text style={$selectedLocationName}>{selectedLocation.name}</Text>
-          <Text style={$selectedLocationAddress}>{selectedLocation.address}</Text>
+      {/* Suggestions List - Outside ScrollView to avoid nesting VirtualizedList */}
+      {showSuggestions && suggestions.length > 0 && (
+        <View style={$suggestionsOverlay}>
+          <FlatList
+            data={suggestions}
+            renderItem={renderSuggestion}
+            keyExtractor={(item) => item.place_id}
+            style={$suggestionsList}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          />
         </View>
       )}
-
-      {/* Next Button */}
-      <Button
-        text="Siguiente"
-        style={[$nextButton, selectedLocation ? $nextButtonEnabled : $nextButtonDisabled]}
-        textStyle={[$nextButtonText, selectedLocation ? $nextButtonTextEnabled : $nextButtonTextDisabled]}
-        disabled={!selectedLocation}
-        onPress={handleNext}
-      />
     </Screen>
   )
-}
+})
 
 // Styles
-const $container = { padding: 20 }
+const $container = { 
+  flex: 1,
+  padding: 0,
+}
 const $bottomContainerInsets = {}
 const $screenBackground = "background"
+
+const $scrollView = {
+  flex: 1,
+}
+
+const $scrollContent = {
+  padding: 20,
+}
 
 const $heading = {
   marginBottom: 20,
@@ -560,7 +661,7 @@ const $heading = {
 
 const $searchContainer = {
   position: "relative" as const,
-  zIndex: 1000,
+  zIndex: 100,
   marginBottom: 16,
 }
 
@@ -599,17 +700,23 @@ const $clearButtonText = {
   fontWeight: "bold" as const,
 }
 
-const $suggestionsContainer = {
+// Overlay for suggestions - positioned absolutely over the screen
+const $suggestionsOverlay = {
   position: "absolute" as const,
-  top: 50,
-  left: 0,
-  right: 0,
+  top: 100, // Position below search bar
+  left: 20,
+  right: 20,
   backgroundColor: "#fff",
   borderRadius: 8,
   borderWidth: 1,
   borderColor: "#ddd",
-  borderTopWidth: 0,
   maxHeight: 200,
+  zIndex: 1000,
+  elevation: 10, // For Android shadow
+  shadowColor: "#000", // For iOS shadow
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
 }
 
 const $suggestionsList = {
@@ -704,6 +811,34 @@ const $marker = {
   elevation: 5,
 }
 
+const $radiusOutlineMarker = {
+  position: "absolute" as const,
+  backgroundColor: "rgba(255, 113, 106, 0.25)",
+  borderWidth: 2,
+  borderColor: "rgba(255, 113, 106, 0.5)",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+  elevation: 5,
+}
+
+const $radiusContainer = {
+  backgroundColor: "#f8f9fa",
+  padding: 16,
+  borderRadius: 8,
+  marginBottom: 16,
+}
+
+const $radiusLabel = {
+  fontSize: 16,
+  fontWeight: "500" as const,
+  color: "#333",
+  marginBottom: 12,
+  textAlign: "center" as const,
+}
+
+
 const $zoomControls = {
   position: "absolute" as const,
   right: 10,
@@ -783,3 +918,23 @@ const $nextButtonTextEnabled = {
 const $nextButtonTextDisabled = {
   color: "#8E8E93",
 }
+
+const $header: ViewStyle = {
+  alignItems: "center",
+  marginBottom: spacing.lg,
+}
+
+const $title = (theme: any): TextStyle => ({
+  color: theme.colors.text,
+  fontSize: 28,
+  fontWeight: "bold",
+  marginBottom: spacing.sm,
+  textAlign: "center",
+})
+
+const $subtitle = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  textAlign: "center",
+  fontSize: 16,
+  lineHeight: 22,
+})
