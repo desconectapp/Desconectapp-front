@@ -10,13 +10,14 @@ import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import { useStores } from "@/models"
+import { useCreateProfile } from "@/hooks/Users"
 
 interface UserInfoFormData {
   name: string
   age: string
   gender: string
-  location: string
-  workStatus: string
+  city: string
+  current_situation: string
 }
 
 const genderOptions = [
@@ -43,6 +44,8 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
   const { showToast } = useAppToast()
   const { signUpStore } = useStores()
 
+  const { mutateAsync: createProfileMutateAsync } = useCreateProfile()
+
   const {
     control,
     handleSubmit,
@@ -52,22 +55,26 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
       name: "",
       age: "",
       gender: "",
-      location: "",
-      workStatus: "",
+      city: "",
+      current_situation: "",
     },
   })
 
   const onSubmit = async (data: UserInfoFormData) => {
     setIsSubmitting(true)
 
+    const d = {
+      name: data.name,
+      age: Number.parseInt(data.age),
+      gender: data.gender,
+      city: data.city,
+      current_situation: data.current_situation,
+      preferences: [],
+    }
+
     try {
-      signUpStore.setUserInfo({
-        name: data.name,
-        age: Number.parseInt(data.age),
-        gender: data.gender,
-        location: data.location,
-        workStatus: data.workStatus,
-      })
+      await createProfileMutateAsync(d)
+      signUpStore.setUserInfo(d)
       navigation.navigate("Main", { screen: "PreferencesScreen" })
     } catch (error) {
       console.error("Error saving user info:", error)
@@ -200,7 +207,7 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
 
         <Controller
           control={control}
-          name="location"
+          name="city"
           rules={{
             required: "Where are you located?",
             minLength: {
@@ -214,8 +221,8 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
               placeholder="City, Country"
               value={value}
               onChangeText={onChange}
-              helper={errors.location?.message}
-              status={errors.location ? "error" : undefined}
+              helper={errors.city?.message}
+              status={errors.city ? "error" : undefined}
               containerStyle={$fieldContainer}
               autoCapitalize="words"
             />
@@ -228,15 +235,15 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
           </Text>
           <Controller
             control={control}
-            name="workStatus"
+            name="current_situation"
             rules={{ required: "Tell us about your current status" }}
             render={({ field: { onChange, value } }) =>
               renderOptionButton(workStatusOptions, value, onChange)
             }
           />
-          {errors.workStatus && (
+          {errors.current_situation && (
             <Text preset="formHelper" style={themed($errorText)}>
-              {errors.workStatus.message}
+              {errors.current_situation.message}
             </Text>
           )}
         </View>

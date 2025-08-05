@@ -59,6 +59,17 @@ export const useEditProfile = () => {
   })
 }
 
+export const useAddPreferences = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<any, Error, any>({
+    mutationFn: (data) => userService.addPreferences(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] })
+    },
+  })
+}
+
 export const useProfile = () => {
   return useQuery({
     queryKey: ["profile"],

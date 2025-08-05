@@ -52,7 +52,7 @@ export const userService = {
 
   createProfile: async (data: CreateProfileData): Promise<void> => {
     console.log("Creando perfil con datos:", data)
-    const response = await api.apisauce.post<void>("/users/profile", data)
+    const response = await api.apisauce.post<void>("/users/1/profile", data)
     if (!response.ok) {
       throw new Error("Error al crear perfil")
     }
@@ -70,15 +70,23 @@ export const userService = {
     return {
       name: "Lionel Messi",
       image: null,
-      location: "Miami, FL",
+      city: "Miami, FL",
       gender: "",
-      workStatus: "Employed",
+      current_situation: "Employed",
       preferences: ["chess", "football", "basketball"],
     }
   },
 
   editProfile: async (data: ProfileData): Promise<void> => {
     const response = await api.apisauce.put<void>("/users/profile", data)
+    if (!response.ok) {
+      throw new Error("Error al editar perfil")
+    }
+    return response.data
+  },
+
+  addPreferences: async (preferenceIds: number[]): Promise<void> => {
+    const response = await api.apisauce.post<void>("/users/6/preferences", preferenceIds)
     if (!response.ok) {
       throw new Error("Error al editar perfil")
     }

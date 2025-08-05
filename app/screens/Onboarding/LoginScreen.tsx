@@ -27,11 +27,11 @@ export const LoginScreen = observer(() => {
   const { showToast } = useAppToast()
   const { sessionStore } = useStores()
 
-  useEffect(() => {
-    if (sessionStore.expiresAt && new Date(sessionStore.expiresAt) > Date.now()) {
-      navigation.navigate("Main", { screen: "Tabs" })
-    }
-  }, [navigation, sessionStore.expiresAt])
+  // useEffect(() => {
+  //   if (sessionStore.expiresAt && new Date(sessionStore.expiresAt) > Date.now()) {
+  //     navigation.navigate("Main", { screen: "Tabs" })
+  //   }
+  // }, [navigation, sessionStore.expiresAt])
 
   const form = useForm({
     defaultValues: {

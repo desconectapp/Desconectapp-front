@@ -14,7 +14,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
 import { useStores } from "@/models"
-import { useEditProfile, useActivities } from "@/hooks/Users"
+import { useEditProfile, useActivities, useAddPreferences } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
@@ -26,7 +26,7 @@ export const PreferencesScreen = observer(() => {
     /* TODO: esto esta masomenos pasado a ActivitiesForm para reutilizar */
   }
 
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
+  const [selectedPreferences, setSelectedPreferences] = useState<number[]>([])
   const [allPreferences, setAllPreferences] = useState<any[]>([])
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
@@ -38,7 +38,7 @@ export const PreferencesScreen = observer(() => {
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
 
   const { data, isLoading, isError, isFetching } = useActivities(limit, offset)
-  const editProfileFunc = useEditProfile()
+  const addPreferences = useAddPreferences()
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -51,29 +51,23 @@ export const PreferencesScreen = observer(() => {
     }
   }, [data])
 
-  const togglePreference = (id: string) => {
+  const togglePreference = (id: number) => {
     setSelectedPreferences((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
     )
   }
 
   const handleContinue = async () => {
-    await editProfileFunc.mutateAsync(
-      {
-        ...signUpStore.userInfo,
-        preferences: selectedPreferences,
+    await addPreferences.mutateAsync(selectedPreferences, {
+      onSuccess: () => {
+        // signUpStore.setPreferences(selectedPreferences)
+        navigation.navigate("Main", { screen: "Tabs" })
       },
-      {
-        onSuccess: () => {
-          signUpStore.setPreferences(selectedPreferences)
-          navigation.navigate("Main", { screen: "Tabs" })
-        },
-        onError: (error) => {
-          console.error("Error updating profile:", error)
-          navigation.navigate("Main", { screen: "Tabs" })
-        },
+      onError: (error) => {
+        console.error("Error updating profile:", error)
+        navigation.navigate("Main", { screen: "Tabs" })
       },
-    )
+    })
   }
 
   const loadMore = () => {

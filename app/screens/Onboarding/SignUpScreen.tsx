@@ -31,11 +31,13 @@ export const SignUpScreen = observer(() => {
 
   const { sessionStore } = useStores()
 
-  useEffect(() => {
-    if (sessionStore.expiresAt && new Date(sessionStore.expiresAt) > Date.now()) {
-      navigation.navigate("Main", { screen: "Tabs" })
-    }
-  }, [navigation, sessionStore.expiresAt])
+  // useEffect(() => {
+  //   console.log('use effect en SignUpScreen')
+  //   if (sessionStore.expiresAt && new Date(sessionStore.expiresAt) > Date.now()) {
+  //     console.log('redirigiendo a Main')
+  //     navigation.navigate("Main", { screen: "Tabs" })
+  //   }
+  // }, [navigation])
 
   const form = useForm<SignUpFormData>({
     defaultValues: {

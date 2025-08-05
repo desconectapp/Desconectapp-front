@@ -18,18 +18,18 @@ export interface Preference {
 export interface CreateProfileData {
   name: string
   age: number
-  location: string
+  city: string
   gender: string
-  workStatus: string
+  current_situation: string
   preferences: string[]
 }
 
 export interface ProfileData {
   name: string
   image: string | null
-  location: string
+  city: string
   gender: string
-  workStatus: string
+  current_situation: string
   preferences: string[]
 }
 
