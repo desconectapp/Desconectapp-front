@@ -6,12 +6,19 @@ import {
   StyleSheet, 
   Platform, 
   TouchableOpacity, 
+  Modal, 
   Animated,
   Dimensions
 } from "react-native"
+import { Picker } from "@react-native-picker/picker"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
+import { useActivities } from "@/hooks/Users"
+import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
+import { TimePickerForm } from "@/components/Custom/TimePickerForm"
+import LocationForm from "@/components/Custom/LocationForm"
+import MapView from "react-native-maps"
 
 const { width } = Dimensions.get('window')
 
