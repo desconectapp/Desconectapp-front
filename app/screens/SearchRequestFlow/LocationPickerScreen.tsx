@@ -21,8 +21,8 @@ import { useStores } from "@/models"
 import { observer } from "mobx-react-lite"
 import { Slider } from "tamagui"
 
-import { AppStackScreenProps } from "@/navigators"
 import { MainStackParamList } from "@/navigators/MainNavigator"
+import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { spacing } from "@/theme"
 
 interface Location {
@@ -48,11 +48,10 @@ interface NominatimResult {
 
 const { width } = Dimensions.get("window")
 
-interface LocationPickerScreenProps {
-  nextScreen: any; 
-}
+type LocationPickerScreenProps = NativeStackScreenProps<MainStackParamList, "LocationPickerScreen">
 
-export const LocationPickerScreen = observer(function LocationPickerScreen({ nextScreen }: LocationPickerScreenProps) {
+export const LocationPickerScreen = observer(function LocationPickerScreen({ route }: LocationPickerScreenProps) {
+  const { nextScreen } = route.params || {}
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
   const [searchQuery, setSearchQuery] = useState("")
@@ -531,7 +530,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({ nex
       </TouchableOpacity>
     )
   }
-  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
+  const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   return (
     <Screen
       preset="fixed"

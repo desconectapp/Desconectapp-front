@@ -1,22 +1,23 @@
 import { Button, Screen, Text } from "@/components"
-import { AppStackScreenProps } from "@/navigators"
+import { MainStackParamList } from "@/navigators/MainNavigator"
+import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
-import { View } from "react-native"
+import { Alert, View } from "react-native"
 import { observer } from "mobx-react-lite"
 
 import { useStores } from "@/models"
+import { useSearch } from "@/hooks/Search"
 
-interface RequestConfirmationScreenProps {
-  nextScreen: any; 
-}
+type RequestConfirmationScreenProps = NativeStackScreenProps<MainStackParamList, "RequestConfirmationScreen">
 
-export const RequestConfirmationScreen = observer(function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScreenProps) {
+export const RequestConfirmationScreen = observer(function RequestConfirmationScreen({ route }: RequestConfirmationScreenProps) {
+  const { nextScreen } = route.params || {}
   const { themed } = useAppTheme()
 
-  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
+  const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const { requestStore } = useStores()
-
+  const search = useSearch()
   const activities = requestStore.activities
   const location = requestStore.location
   const schedules = requestStore.schedules
@@ -51,11 +52,21 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
 
       // TODO: Hacer la request al backend
       // borrar datos de storage
-      requestStore.clearRequest()
+      // requestStore.clearRequest()
       // redireccionar a home? 
       // For now, just go back or navigate to a tab
-      navigation.goBack()
-      navigation.navigate(nextScreen ?? "HomeScreen")
+      // navigation.goBack()
+      search.mutateAsync(requestData)
+        .then(() => {
+          console.log("Búsqueda realizada con éxito")
+          requestStore.clearRequest() // Clear the request data after successful search
+        })
+        .catch(error => {
+          console.error("Error al realizar la búsqueda:", error)
+          Alert.alert("Error", "No se pudo realizar la búsqueda. Inténtalo de nuevo más tarde.")
+        })
+
+      navigation.navigate("Tabs")
 
     }
   
