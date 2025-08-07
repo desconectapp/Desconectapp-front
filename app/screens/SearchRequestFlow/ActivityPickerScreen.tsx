@@ -4,49 +4,174 @@ import { AppStackScreenProps } from "@/navigators"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
-import { useState, useEffect } from "react"
-import { Alert } from "react-native"
+import { useState, useEffect, useCallback } from "react"
+import { Alert, StyleSheet } from "react-native"
+import { observer } from "mobx-react-lite"
+import { Slider, View } from "tamagui"
 
 interface ActivityPickerScreenProps {
-  nextScreen: any; 
+  nextScreen?: string; // Made optional and typed as string
 }
 
-export function ActivityPickerScreen({ nextScreen }: ActivityPickerScreenProps) {
+export const ActivityPickerScreen = observer(function ActivityPickerScreen({ 
+  nextScreen 
+}: ActivityPickerScreenProps) {
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
-  const [selectedActivities, setSelectedActivities] = useState<string[]>(
-    requestStore.activities.length > 0 ? requestStore.activities.slice() : ["futbol"]
-  )
+  
+  // Safety check to ensure store is available
+  if (!requestStore) {
+    console.error("RequestStore not available in ActivityPickerScreen")
+    return <Screen preset="fixed"><Text>Loading...</Text></Screen>
+  }
+  
+  // Changed to work with multiple activities array
+  const [selectedActivities, setSelectedActivities] = useState<any[]>([])
+  
+  // Add slider states with proper initialization
+  const [maxParticipants, setMaxParticipants] = useState<number>(requestStore.maxParticipants || 5)
+  const [minParticipants, setMinParticipants] = useState<number>(requestStore.minParticipants || 2)
+  
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
 
-  // Update store when selectedActivities changes
-  // Nota: Podria hacer que ActivitiesForm haga esto directamente y nos ahorramos
-  // el selectedActivities y setSelectedActivities
-  useEffect(() => {
-    requestStore.setActivities(selectedActivities)
-  }, [selectedActivities, requestStore])
+  // Create a stable callback for setSelectedPreferences
+  const handleSetSelectedPreferences = useCallback((activitiesOrUpdater: any[] | ((prev: any[]) => any[])) => {
+    console.log('ActivityPickerScreen setSelectedPreferences called')
+    
+    // Handle function updater case
+    if (typeof activitiesOrUpdater === 'function') {
+      const activities = activitiesOrUpdater(selectedActivities)
+      console.log('Function updater, result length:', activities.length)
+      
+      // Simple single selection logic
+      if (Array.isArray(activities)) {
+        if (activities.length <= 1) {
+          setSelectedActivities(activities)
+        } else {
+          const lastItem = activities[activities.length - 1]
+          console.log('Multiple items, keeping last item')
+          setSelectedActivities([lastItem])
+        }
+      }
+    } else {
+      // Handle direct array case
+      const activities = activitiesOrUpdater
+      console.log('Direct array, length:', activities.length)
+      
+      if (Array.isArray(activities)) {
+        if (activities.length <= 1) {
+          setSelectedActivities(activities)
+        } else {
+          const lastItem = activities[activities.length - 1]
+          console.log('Multiple items, keeping last item')
+          setSelectedActivities([lastItem])
+        }
+      }
+    }
+  }, [selectedActivities])
 
   const handleNext = () => {
-    // Save activities to the store
-    requestStore.setActivities(selectedActivities)
+    try {
+      // Save activities to the store
+      if (selectedActivities.length > 0) {
+        // Extract the activity names/ids for the store
+        const activityNames = selectedActivities.map(activity => 
+          activity.name || activity.id || activity
+        )
+        requestStore.setActivities(activityNames)
+        
+        // Save participants data to the store
+        requestStore.setMinParticipants(minParticipants)
+        requestStore.setMaxParticipants(maxParticipants)
+        
+        // Navigate to the next screen using proper navigation structure
+        navigation.navigate("LocationPickerScreen" as any)
+      } else {
+        Alert.alert("Error", "Por favor selecciona una actividad")
+      }
+    } catch (error) {
+      console.error("Error navigating:", error)
+      Alert.alert("Error", "Hubo un problema al continuar")
+    }
+  }
 
-    // Navigate to the next screen
-    navigation.navigate(nextScreen ?? "LocationPickerScreen")
+  // Handle slider value changes
+  const handleMaxParticipantsChange = (value: number[]) => {
+    const newMax = value[0]
+    setMaxParticipants(newMax)
+    // Ensure min doesn't exceed max
+    if (minParticipants > newMax) {
+      setMinParticipants(newMax - 1 > 1 ? newMax - 1 : 1)
+    }
+  }
+
+  const handleMinParticipantsChange = (value: number[]) => {
+    const newMin = value[0]
+    setMinParticipants(newMin)
+    // Ensure max is at least min + 1
+    if (maxParticipants <= newMin) {
+      setMaxParticipants(newMin + 1 <= 10 ? newMin + 1 : 10)
+    }
   }
 
   return (
     <Screen
-      preset="scroll"
+      preset="fixed" // Changed back to fixed to avoid VirtualizedList nesting
       contentContainerStyle={[$container, $bottomContainerInsets]}
       backgroundColor={themed($screenBackground)}
-    >
-      <Text>Selecciona una actividad</Text>
-      {/* Next Button */}
+    >      
+      {/* Activities Form - Modified to enforce single selection */}
       <ActivitiesForm
         selectedPreferences={selectedActivities}
-        setSelectedPreferences={setSelectedActivities}
+        setSelectedPreferences={handleSetSelectedPreferences}
+        title="¿Qué actividad estas buscando hacer?"
+        description="Selecciona una actividad que te interese. Puedes elegir solo una opción."
       />
 
+      {/* Participants Selection */}
+      <View style={styles.participantsContainer}>
+        <View style={styles.sliderContainer}>
+          <Text style={styles.sliderLabel}>
+            Mínimo integrantes: {minParticipants}
+          </Text>
+          <Slider 
+            size="$1.5" 
+            width={"95%"} 
+            value={[minParticipants]} 
+            onValueChange={handleMinParticipantsChange}
+            max={10} 
+            min={3}
+            step={1}
+          >
+            <Slider.Track>
+              <Slider.TrackActive />
+            </Slider.Track>
+            <Slider.Thumb circular index={0} />
+          </Slider>
+        </View>
+
+        <View style={styles.sliderContainer}>
+          <Text style={styles.sliderLabel}>
+            Máximo integrantes: {maxParticipants}
+          </Text>
+          <Slider 
+            size="$1.5" 
+            width={"95%"}
+            value={[maxParticipants]} 
+            onValueChange={handleMaxParticipantsChange}
+            max={10} 
+            min={3}
+            step={1}
+          >
+            <Slider.Track>
+              <Slider.TrackActive />
+            </Slider.Track>
+            <Slider.Thumb circular index={0} />
+          </Slider>
+        </View>
+      </View>
+
+      {/* Next Button */}
       <Button
         text="Siguiente"
         style={[
@@ -62,10 +187,51 @@ export function ActivityPickerScreen({ nextScreen }: ActivityPickerScreenProps) 
       />
     </Screen>
   )
+})
+
+const styles = StyleSheet.create({
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  searchContainer: {
+    marginBottom: 20,
+  },
+  searchInput: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    backgroundColor: "#F8F9FA",
+  },
+  participantsContainer: {
+    marginVertical: 20,
+    padding: 16,
+    backgroundColor: "#F8F9FA",
+    borderRadius: 12,
+  },
+  sliderContainer: {
+    marginBottom: 20,
+  },
+  sliderLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 10,
+    color: "#333",
+  },
+})
+
+const $container = { 
+  flex: 1,
+  padding: 20,
 }
 
-const $container = { padding: 20 }
 const $bottomContainerInsets = {}
+
 const $screenBackground = "background"
 
 const $nextButton = {

@@ -467,7 +467,7 @@ export function LocationPickerScreen() {
 
   return (
     <Screen
-      preset="scroll"
+      preset="fixed"
       contentContainerStyle={[$container, $bottomContainerInsets]}
       backgroundColor={themed($screenBackground)}
     >

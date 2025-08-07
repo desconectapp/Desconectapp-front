@@ -18,11 +18,15 @@ const { width } = Dimensions.get("window")
 interface ActivitiesFormProps {
   selectedPreferences?: any[]
   setSelectedPreferences?: React.Dispatch<React.SetStateAction<any[]>>
+  title?: string
+  description?: string
 }
 
 export function ActivitiesForm({
   selectedPreferences = [],
   setSelectedPreferences = () => {},
+  title,
+  description,
 }: ActivitiesFormProps) {
   const limit = 10
   const [allPreferences, setAllPreferences] = useState<any[]>([])
@@ -31,19 +35,30 @@ export function ActivitiesForm({
   const { themed } = useAppTheme()
 
   const { data, isLoading, isError, isFetching } = useActivities(limit, offset)
+  
   useEffect(() => {
+    if (isError) {
+      console.error("Error loading activities")
+      return
+    }
+    
     if (data && data.length > 0) {
-      setAllPreferences((prev) => [...prev, ...data])
+      setAllPreferences((prev) => {
+        // Prevent duplicate entries
+        const existingIds = new Set(prev.map(item => item.id))
+        const newItems = data.filter(item => !existingIds.has(item.id))
+        return [...prev, ...newItems]
+      })
       if (data.length < limit) {
         setHasMore(false)
       }
     } else if (data && data.length === 0) {
       setHasMore(false)
     }
-  }, [data])
+  }, [data, isError])
 
   const loadMore = () => {
-    if (!isFetching && !isLoading && hasMore) {
+    if (!isFetching && !isLoading && hasMore && !isError) {
       setOffset((prev) => prev + limit)
     }
   }
@@ -73,32 +88,51 @@ export function ActivitiesForm({
   }
 
   return (
-    <FlatList
-      data={allPreferences}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id.toString()}
-      numColumns={2}
-      contentContainerStyle={$listContent}
-      columnWrapperStyle={$row}
-      ListHeaderComponent={
+    <View style={$contentWrapper}>
+      {isError ? (
         <View style={$header}>
           <Text preset="heading" style={themed($title)}>
-            What are you into?
+            Error loading activities
           </Text>
           <Text preset="subheading" style={themed($subtitle)}>
-            Choose your interests and hobbies. You can select multiple options.
+            Please check your connection and try again.
           </Text>
         </View>
-      }
-      ListFooterComponent={
-        <View style={$footer}>
-          <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
-          {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
-        </View>
-      }
-      onEndReached={loadMore}
-      onEndReachedThreshold={0.6}
-    />
+      ) : (
+        <FlatList
+          data={allPreferences}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          contentContainerStyle={$listContent}
+          columnWrapperStyle={$row}
+          ListHeaderComponent={
+            <View style={$header}>
+              <Text preset="heading" style={themed($title)}>
+                {title ?? "What are you into?"}
+              </Text>
+              <Text preset="subheading" style={themed($subtitle)}>
+                {description ?? "Choose your interests and hobbies. You can select multiple options."}
+              </Text>
+            </View>
+          }
+          ListFooterComponent={
+            <View style={$footer}>
+              <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
+              {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
+              {isLoading && allPreferences.length === 0 && (
+                <Text style={themed($selectedCount)}>Loading activities...</Text>
+              )}
+            </View>
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.6}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+        />
+      )}
+    </View>
   )
 }
 

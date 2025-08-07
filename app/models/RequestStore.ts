@@ -24,8 +24,12 @@ export interface ScheduleData {
 
 export interface RequestData {
   activities: string[]
-  location: LocationData | null
-  schedules: DaySchedule[]
+  minPeople: number | null
+  maxPeople: number | null
+  lon: number | null
+  lat: number | null
+  radiusKm: number | null
+  schedules: DaySchedule[] | null
 }
 
 export const LocationModel = types.model("LocationModel", {
@@ -51,6 +55,9 @@ export const RequestStoreModel = types
     activities: types.array(types.string),
     location: types.maybeNull(LocationModel),
     schedules: types.array(DayScheduleModel),
+    radiusKm: types.optional(types.number, 5), // Default 5km radius
+    minParticipants: types.optional(types.number, 2), // Default 2 minimum participants
+    maxParticipants: types.optional(types.number, 5), // Default 5 maximum participants
   })
   .actions((store) => ({
     setActivities(activities: string[]) {
@@ -83,6 +90,15 @@ export const RequestStoreModel = types
       )
       store.schedules.replace(convertedSchedules)
     },
+    setRadiusKm(radius: number) {
+      store.radiusKm = radius
+    },
+    setMinParticipants(min: number) {
+      store.minParticipants = min
+    },
+    setMaxParticipants(max: number) {
+      store.maxParticipants = max
+    },
     setScheduleForDay(day: string, timeSlots: TimeRange[]) {
       const existingIndex = store.schedules.findIndex(s => s.day === day)
       const newSchedule = DayScheduleModel.create({
@@ -106,13 +122,18 @@ export const RequestStoreModel = types
     getRequestData(): RequestData {
       return {
         activities: store.activities.slice(),
-        location: store.location ? {
-          id: store.location.id,
-          name: store.location.name,
-          latitude: store.location.latitude,
-          longitude: store.location.longitude,
-          address: store.location.address,
-        } : null,
+        minPeople: store.minParticipants,
+        maxPeople: store.maxParticipants,
+        lon: store.location ? store.location.longitude : null,
+        lat: store.location ? store.location.latitude : null,
+        radiusKm: store.radiusKm,
+        // location: store.location ? {
+        //   id: store.location.id,
+        //   name: store.location.name,
+        //   latitude: store.location.latitude,
+        //   longitude: store.location.longitude,
+        //   address: store.location.address,
+        // } : null,
         schedules: store.schedules.map(schedule => ({
           day: schedule.day,
           timeSlots: schedule.timeSlots.map(slot => ({

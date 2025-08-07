@@ -3,6 +3,7 @@ import { AppStackScreenProps } from "@/navigators"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { View } from "react-native"
+import { observer } from "mobx-react-lite"
 
 import { useStores } from "@/models"
 
@@ -10,7 +11,7 @@ interface RequestConfirmationScreenProps {
   nextScreen: any; 
 }
 
-export function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScreenProps) {
+export const RequestConfirmationScreen = observer(function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScreenProps) {
   const { themed } = useAppTheme()
 
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
@@ -19,6 +20,9 @@ export function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScr
   const activities = requestStore.activities
   const location = requestStore.location
   const schedules = requestStore.schedules
+  const minParticipants = requestStore.minParticipants
+  const maxParticipants = requestStore.maxParticipants
+  const radiusKm = requestStore.radiusKm
 
   // Helper function to format schedule display
   const formatSchedules = () => {
@@ -43,13 +47,16 @@ export function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScr
    const handleSearch = () => {
       // Agarrar la data del storage
       const requestData = requestStore.getRequestData()
-      console.log("Datos de la búsqueda:", requestData)
+      console.log("Datos de la búsqueda:", JSON.stringify(requestData, null, 2))
 
       // TODO: Hacer la request al backend
-   
+      // borrar datos de storage
+      requestStore.clearRequest()
       // redireccionar a home? 
       // For now, just go back or navigate to a tab
       navigation.goBack()
+      navigation.navigate(nextScreen ?? "HomeScreen")
+
     }
   
     return (
@@ -76,8 +83,18 @@ export function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScr
         </View>
 
         <View style={$sectionContainer}>
+          <Text preset="subheading">Con un grupo:</Text>
+          <Text>{`De ${minParticipants} a ${maxParticipants} personas`}</Text>
+        </View>
+
+        <View style={$sectionContainer}>
           <Text preset="subheading">Cerca de:</Text>
           <Text>{formatLocation() || "No hay ubicación seleccionada"}</Text>
+          {location && (
+            <Text style={$radiusText}>
+              te moves hasta {radiusKm} km
+            </Text>
+          )}
         </View>
 
         <View style={$sectionContainer}>
@@ -101,7 +118,7 @@ export function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScr
         />
       </Screen>
     )
-  }
+  })
   
   const $container = { padding: 20 }
   const $bottomContainerInsets = {}
@@ -136,6 +153,20 @@ export function RequestConfirmationScreen({ nextScreen }: RequestConfirmationScr
   const $scheduleText = {
     lineHeight: 20,
     whiteSpace: "pre-line" as const,
+  }
+
+  const $participantsText = {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#666",
+    fontStyle: "italic" as const,
+  }
+
+  const $radiusText = {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#666",
+    fontStyle: "italic" as const,
   }
   
   const $nextButton = {
