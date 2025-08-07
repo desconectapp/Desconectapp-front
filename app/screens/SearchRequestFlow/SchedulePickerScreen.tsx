@@ -1,5 +1,6 @@
 import { Button, Screen, Text } from "@/components"
-import { AppStackScreenProps } from "@/navigators"
+import { MainStackParamList } from "@/navigators/MainNavigator"
+import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
@@ -7,15 +8,14 @@ import { observer } from "mobx-react-lite"
 
 import { TimePickerForm } from "@/components/Custom/TimePickerForm"
 
-interface SchedulePickerScreenProps {
-  nextScreen: any; 
-}
+type SchedulePickerScreenProps = NativeStackScreenProps<MainStackParamList, "SchedulePickerScreen">
 
-export const SchedulePickerScreen = observer(function SchedulePickerScreen({ nextScreen }: SchedulePickerScreenProps) {
+export const SchedulePickerScreen = observer(function SchedulePickerScreen({ route }: SchedulePickerScreenProps) {
+  const { nextScreen } = route.params || {}
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
 
-  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
+  const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
 
    const handleNext = () => {
       // The TimePickerForm already manages the store directly, so we just navigate

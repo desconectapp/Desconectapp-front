@@ -1,6 +1,7 @@
 import { Button, Screen, Text } from "@/components"
 import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
-import { AppStackScreenProps } from "@/navigators"
+import { MainStackParamList } from "@/navigators/MainNavigator"
+import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
@@ -9,13 +10,12 @@ import { Alert, StyleSheet } from "react-native"
 import { observer } from "mobx-react-lite"
 import { Slider, View } from "tamagui"
 
-interface ActivityPickerScreenProps {
-  nextScreen?: string; // Made optional and typed as string
-}
+type ActivityPickerScreenProps = NativeStackScreenProps<MainStackParamList, "ActivityPickerScreen">
 
 export const ActivityPickerScreen = observer(function ActivityPickerScreen({ 
-  nextScreen 
+  route
 }: ActivityPickerScreenProps) {
+  const { nextScreen } = route.params || {}
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
   
@@ -32,7 +32,7 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
   const [maxParticipants, setMaxParticipants] = useState<number>(requestStore.maxParticipants || 5)
   const [minParticipants, setMinParticipants] = useState<number>(requestStore.minParticipants || 2)
   
-  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
+  const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
 
   // Create a stable callback for setSelectedPreferences
   const handleSetSelectedPreferences = useCallback((activitiesOrUpdater: any[] | ((prev: any[]) => any[])) => {
@@ -83,7 +83,7 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
         // Save participants data to the store
         requestStore.setMinParticipants(minParticipants)
         requestStore.setMaxParticipants(maxParticipants)
-        
+        console.log("selecting activities:", activityNames)
         // Navigate to the next screen using proper navigation structure
         navigation.navigate("LocationPickerScreen" as any)
       } else {

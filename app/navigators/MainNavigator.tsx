@@ -21,10 +21,10 @@ export type MainStackParamList = {
   PreferencesScreen: undefined
   GroupScreen: { groupId: string }
   SuggestionScreen: { id: string }
-  LocationPickerScreen: undefined
-  SchedulePickerScreen: undefined
-  ActivityPickerScreen: undefined
-  RequestConfirmationScreen: undefined
+  LocationPickerScreen: { nextScreen?: string }
+  SchedulePickerScreen: { nextScreen?: string }
+  ActivityPickerScreen: { nextScreen?: string }
+  RequestConfirmationScreen: { nextScreen?: string }
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -120,22 +120,22 @@ export function MainNavigator() {
       <Stack.Screen
         name="LocationPickerScreen"
         component={LocationPickerScreen}
-        options={{ headerShown: true, title: "Select Location" }}
+        options={{ headerShown: true, title: "Ubicación" }}
       />
       <Stack.Screen
         name="SchedulePickerScreen"
         component={SchedulePickerScreen}
-        options={{ headerShown: true, title: "Select Schedule" }}
+        options={{ headerShown: true, title: "Horarios" }}
       />
       <Stack.Screen
         name="ActivityPickerScreen"
         component={ActivityPickerScreen}
-        options={{ headerShown: true, title: "Select Activity" }}
+        options={{ headerShown: true, title: "Actividad" }}
       />
       <Stack.Screen
         name="RequestConfirmationScreen"
         component={RequestConfirmationScreen}
-        options={{ headerShown: true, title: "Confirm Request" }}
+        options={{ headerShown: true, title: "Confirmar Busqueda" }}
       />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
