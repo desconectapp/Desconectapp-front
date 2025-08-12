@@ -32,6 +32,7 @@ export const userService = {
 
   login: async (data: { email: string; password: string }): Promise<SessionData | undefined> => {
     const response = await api.apisauce.post<SessionData>("/auth/login", data)
+    console.log("API:LOGIN: Respuesta del servidor:", response)
     if (!response.ok) {
       console.log(response.data)
       throw new Error("Error al iniciar sesión")

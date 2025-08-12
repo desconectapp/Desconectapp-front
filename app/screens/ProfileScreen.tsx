@@ -26,6 +26,7 @@ import { Pressable } from "react-native"
 
 // import defaultAvatar from "../../assets/images/default-avatar.png"
 import defaultAvatar from "../../assets/images/logo.png"
+import { ActivityRequestsList } from "@/components/Custom/ActivitiesRequestList"
 
 const { width } = Dimensions.get("window")
 
@@ -96,10 +97,14 @@ export const ProfileScreen = observer(function ProfileScreen() {
       contentContainerStyle={[$container, $bottomContainerInsets]}
       backgroundColor={themed($screenBackground)}
     >
+      <Text preset="heading" style={themed({ fontSize: 24, fontWeight: "bold" })}>
+        My Profile
+      </Text>
+
       <Pressable
         style={themed($profileCard)}
         onPress={() => setIsEditing(true)}
-        disabled={isEditing} // only touchable when !isEditing
+        disabled={isEditing}
         android_ripple={{ borderless: false }}
       >
         <View style={$profileContent}>
@@ -200,6 +205,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
         )}
       </Pressable>
 
+      <ActivityRequestsList />
+
       <Pressable
         onPress={() => logOut()}
         style={({ pressed }) => [
@@ -225,13 +232,6 @@ const $screenBackground = (theme: any) => ({
   backgroundColor: theme.colors.background,
 })
 
-const $headerContainer: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.lg,
-}
-
 const $settingsButton = (theme: any): ViewStyle => ({
   width: 40,
   height: 40,
@@ -245,27 +245,7 @@ const $settingsButtonText = (theme: any): TextStyle => ({
   fontSize: 18,
 })
 
-const $editButton = (theme: any): ViewStyle => ({
-  // backgroundColor: theme.colors.tint,
-  // paddingHorizontal: spacing.md,
-  // paddingVertical: spacing.sm,
-  borderRadius: spacing.sm,
-  position: "absolute",
-  top: spacing.sm,
-  right: spacing.sm,
-  padding: 0,
-  width: 40,
-  height: 40,
-})
-
-const $editButtonText = (theme: any): TextStyle => ({
-  color: theme.colors.tintInverse,
-  fontWeight: "600",
-  fontSize: 14,
-})
-
 const $profileCard = (theme: any): ViewStyle => ({
-
   marginTop: spacing.md,
 
   backgroundColor: theme.colors.palette.neutral100,
