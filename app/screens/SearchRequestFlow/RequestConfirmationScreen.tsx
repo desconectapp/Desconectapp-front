@@ -18,7 +18,7 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const { requestStore } = useStores()
   const search = useSearch()
-  const activities = requestStore.activities
+  const activity = requestStore.activity
   const location = requestStore.location
   const schedules = requestStore.schedules
   const minParticipants = requestStore.minParticipants
@@ -90,7 +90,7 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
         
         <View style={$sectionContainer}>
           <Text preset="subheading">Queres hacer:</Text>
-          <Text>{activities.length > 0 ? activities.join(", ") : "No hay actividades seleccionadas"}</Text>
+          <Text>{activity ? activity.name : "No hay actividad seleccionada"}</Text>
         </View>
 
         <View style={$sectionContainer}>

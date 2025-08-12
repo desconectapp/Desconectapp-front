@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native"
 import { observer } from "mobx-react-lite"
 
 import { TimePickerForm } from "@/components/Custom/TimePickerForm"
+import { View } from "react-native"
 
 type SchedulePickerScreenProps = NativeStackScreenProps<MainStackParamList, "SchedulePickerScreen">
 
@@ -28,6 +29,11 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({ rou
         contentContainerStyle={[$container, $bottomContainerInsets]}
         backgroundColor={themed($screenBackground)}
       >
+        <View >
+                              <Text preset="heading">
+                                Por donde?
+                              </Text>                      
+                            </View>
         <Text>Selecciona dias y horarios</Text>
 
         <TimePickerForm/>
@@ -78,5 +84,15 @@ const $container = { padding: 20 }
   
   const $nextButtonTextDisabled = {
     color: "#8E8E93",
+  }
+
+  const $header = {
+    marginBottom: 20,
+    alignItems: "center",
+  }
+
+  const $title = {
+    fontSize: 24,
+    fontWeight: "bold"
   }
   

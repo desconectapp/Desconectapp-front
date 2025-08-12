@@ -1,3 +1,5 @@
+import { Activity } from "@/services/activities"
+import { ActivitySearchRequest } from "@/services/search/Search.types"
 import { types } from "mobx-state-tree"
 
 export interface LocationData {
@@ -13,6 +15,11 @@ export interface TimeRange {
   end: string
 }
 
+export interface TimeSlot {
+  start: number
+  end: number
+}
+
 export interface DaySchedule {
   day: string
   timeSlots: TimeRange[]
@@ -22,15 +29,38 @@ export interface ScheduleData {
   [day: string]: TimeRange[]
 }
 
-export interface RequestData {
-  activities: string[]
-  minPeople: number | null
-  maxPeople: number | null
-  lon: number | null
-  lat: number | null
-  radiusKm: number | null
-  schedules: DaySchedule[] | null
+// Backend expected format
+export interface Schedules {
+  [day: string]: TimeSlot[]
 }
+
+// Helper function to convert time string (HH:MM) to minutes from midnight
+const timeStringToMinutes = (timeString: string): number => {
+  const [hours, minutes] = timeString.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+// Map Spanish day names to English lowercase
+const dayTranslation: { [key: string]: string } = {
+  'Lunes': 'monday',
+  'Martes': 'tuesday',
+  'Miércoles': 'wednesday',
+  'Jueves': 'thursday',
+  'Viernes': 'friday',
+  'Sábado': 'saturday',
+  'Domingo': 'sunday'
+}
+
+// export interface RequestData {
+//   activities: string[]
+//   minPeople: number | null
+//   maxPeople: number | null
+//   lon: number | null
+//   lat: number | null
+//   radiusKm: number | null
+//   schedules: DaySchedule[] | null
+// }
+
 
 export const LocationModel = types.model("LocationModel", {
   id: types.string,
@@ -50,9 +80,14 @@ const DayScheduleModel = types.model("DaySchedule", {
   timeSlots: types.array(TimeRangeModel),
 })
 
+const ActivityModel = types.model("ActivityModel", {
+  id: types.number,
+  name: types.string,
+})
+
 export const RequestStoreModel = types
   .model("RequestStoreModel", {
-    activities: types.array(types.string),
+    activity: types.maybeNull(ActivityModel),
     location: types.maybeNull(LocationModel),
     schedules: types.array(DayScheduleModel),
     radiusKm: types.optional(types.number, 5), // Default 5km radius
@@ -60,9 +95,11 @@ export const RequestStoreModel = types
     maxParticipants: types.optional(types.number, 5), // Default 5 maximum participants
   })
   .actions((store) => ({
-    setActivities(activities: string[]) {
-      store.activities.replace(activities)
+
+    setActivity(activity: Activity | null) {
+      store.activity = activity
     },
+
     setLocation(location: LocationData | null) {
       if (location) {
         store.location = {
@@ -115,38 +152,42 @@ export const RequestStoreModel = types
       }
     },
     clearRequest() {
-      store.activities.clear()
+      store.activity = null
+      store.radiusKm = 5 // Reset to default
+      store.minParticipants = 2 // Reset to default
+      store.maxParticipants = 5 // Reset to default
       store.location = null
       store.schedules.clear()
     },
-    getRequestData(): RequestData {
+    getRequestData(): ActivitySearchRequest {
+      // Convert schedules to backend format
+      const backendSchedules: Schedules = {}
+      store.schedules.forEach(daySchedule => {
+        // Translate Spanish day name to English lowercase
+        const englishDay = dayTranslation[daySchedule.day] || daySchedule.day.toLowerCase()
+        backendSchedules[englishDay] = daySchedule.timeSlots.map(timeSlot => ({
+          start: timeStringToMinutes(timeSlot.start),
+          end: timeStringToMinutes(timeSlot.end),
+        }))
+      })
+
       return {
-        activities: store.activities.slice(),
-        minPeople: store.minParticipants,
-        maxPeople: store.maxParticipants,
-        lon: store.location ? store.location.longitude : null,
-        lat: store.location ? store.location.latitude : null,
-        radiusKm: store.radiusKm,
-        // location: store.location ? {
-        //   id: store.location.id,
-        //   name: store.location.name,
-        //   latitude: store.location.latitude,
-        //   longitude: store.location.longitude,
-        //   address: store.location.address,
-        // } : null,
-        schedules: store.schedules.map(schedule => ({
-          day: schedule.day,
-          timeSlots: schedule.timeSlots.map(slot => ({
-            start: slot.start,
-            end: slot.end,
-          })),
-        })),
+        user_id: 11,
+        description: "no sabia que iban a tener description jaja xd",
+        activity_id: store.activity ? store.activity.id : 0,
+        participants_needed: store.minParticipants,
+        max_participants: store.maxParticipants,
+        longitude: store.location ? store.location.longitude : 0,
+        latitude: store.location ? store.location.latitude : 0,
+        search_radius: store.radiusKm,
+        schedules: backendSchedules,
       }
     },
   }))
+
   .views((store) => ({
     get isActivitySelected() {
-      return store.activities.length > 0
+      return store.activity !== null
     },
     get isLocationSelected() {
       return store.location !== null

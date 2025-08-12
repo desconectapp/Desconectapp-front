@@ -13,15 +13,15 @@ import {
 } from "react-native"
 import DateTimePickerModal from "react-native-modal-datetime-picker"
 
-const days = ["D", "L", "M", "X", "J", "V", "S"]
+const days = ["L", "M", "X", "J", "V", "S", "D"]
 const dayMapping: { [key: string]: string } = {
-  D: "Domingo",
   L: "Lunes",
   M: "Martes",
   X: "Miércoles",
   J: "Jueves",
   V: "Viernes",
   S: "Sábado",
+  D: "Domingo"
 }
 
 const hours = ["00:00", "06:00", "12:00", "18:00", "00:00"]

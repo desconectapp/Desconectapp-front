@@ -74,16 +74,13 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
     try {
       // Save activities to the store
       if (selectedActivities.length > 0) {
-        // Extract the activity names/ids for the store
-        const activityNames = selectedActivities.map(activity => 
-          activity.name || activity.id || activity
-        )
-        requestStore.setActivities(activityNames)
+       
+        requestStore.setActivity(selectedActivities[0])
         
         // Save participants data to the store
         requestStore.setMinParticipants(minParticipants)
         requestStore.setMaxParticipants(maxParticipants)
-        console.log("selecting activities:", activityNames)
+        console.log("selecting activities:", selectedActivities[0])
         // Navigate to the next screen using proper navigation structure
         navigation.navigate("LocationPickerScreen" as any)
       } else {
