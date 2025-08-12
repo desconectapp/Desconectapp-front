@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Modal,
 } from "react-native"
 import { Screen, TextField, Button, Text, AutoImage } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
@@ -28,7 +29,7 @@ import { Pressable } from "react-native"
 import defaultAvatar from "../../assets/images/logo.png"
 import { ActivityRequestsList } from "@/components/Custom/ActivitiesRequestList"
 
-const { width } = Dimensions.get("window")
+const { width, height } = Dimensions.get("window")
 
 interface ProfileFormData {
   name: string
@@ -37,16 +38,20 @@ interface ProfileFormData {
 }
 
 export const ProfileScreen = observer(function ProfileScreen() {
-  const { themed } = useAppTheme()
+  const { themed, theme } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
+  const [modalVisible, setModalVisible] = useState(true)
+
   const { data: profile } = useProfile()
   const { profileImage, handleImagePicker } = useImagePicker()
   const { mutateAsync: editProfileMutateAsync } = useEditProfile()
+
+  const modalStyles = createModalStyles(theme)
 
   const { sessionStore } = useStores()
 
@@ -205,7 +210,32 @@ export const ProfileScreen = observer(function ProfileScreen() {
         )}
       </Pressable>
 
-      <ActivityRequestsList />
+      <ActivityRequestsList onItemPress={(item) => setModalVisible(true)} />
+
+      <Modal
+        {...modalAnimationConfig}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={modalStyles.modalOverlay}>
+          <View style={modalStyles.modalContainer}>
+            <View style={modalStyles.modalHeader}>
+              <Text style={themed(modalStyles.modalTitle)}>Are you sure you want cancel this request?</Text>
+              <TouchableOpacity
+                style={modalStyles.modalCloseButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={modalStyles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={modalStyles.modalBody}>
+              <Pressable style={modalStyles.modalPrimaryButton} onPress={() => {}}>
+                <Text style={modalStyles.modalPrimaryButtonText}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Pressable
         onPress={() => logOut()}
@@ -369,3 +399,274 @@ const $cancelButtonText = (theme: any): TextStyle => ({
   fontWeight: "600",
   fontSize: 14,
 })
+
+export const createModalStyles = (theme: any) => ({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+  } as ViewStyle,
+
+  modalContainer: {
+    backgroundColor: theme.colors.background,
+    borderRadius: spacing.lg,
+    width: "100%",
+    maxWidth: width * 0.9,
+    maxHeight: height * 0.8,
+    elevation: 10,
+    padding: spacing.lg,
+  } as ViewStyle,
+
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: spacing.md,
+  } as ViewStyle,
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: theme.colors.text,
+    flex: 1,
+  } as TextStyle,
+
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.palette.neutral200,
+    justifyContent: "center",
+    alignItems: "center",
+  } as ViewStyle,
+
+  modalCloseText: {
+    fontSize: 18,
+    color: theme.colors.textDim,
+    fontWeight: "500",
+  } as TextStyle,
+
+  modalBody: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  } as ViewStyle,
+
+  modalFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+    gap: spacing.md,
+  } as ViewStyle,
+
+  modalPrimaryButton: {
+    flex: 1,
+    backgroundColor: theme.colors.tint,
+    borderRadius: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  } as ViewStyle,
+
+  modalSecondaryButton: {
+    flex: 1,
+    backgroundColor: "transparent",
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    borderRadius: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  } as ViewStyle,
+
+  modalPrimaryButtonText: {
+    color: theme.colors.tintInverse,
+    fontSize: 16,
+    fontWeight: "600",
+  } as TextStyle,
+
+  modalSecondaryButtonText: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: "600",
+  } as TextStyle,
+
+  modalContent: {
+    fontSize: 16,
+    color: theme.colors.text,
+    lineHeight: 24,
+    marginBottom: spacing.md,
+  } as TextStyle,
+
+  modalSubtitle: {
+    fontSize: 14,
+    color: theme.colors.textDim,
+    marginBottom: spacing.lg,
+  } as TextStyle,
+
+  modalSection: {
+    marginBottom: spacing.lg,
+  } as ViewStyle,
+
+  modalSectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: theme.colors.text,
+    marginBottom: spacing.md,
+  } as TextStyle,
+
+  modalListItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  } as ViewStyle,
+
+  modalListItemText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    flex: 1,
+  } as TextStyle,
+
+  modalListItemIcon: {
+    fontSize: 20,
+    marginRight: spacing.md,
+  } as TextStyle,
+
+  modalInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 16,
+    color: theme.colors.text,
+    backgroundColor: theme.colors.palette.neutral100,
+    marginBottom: spacing.md,
+  } as ViewStyle,
+
+  modalTextArea: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 16,
+    color: theme.colors.text,
+    backgroundColor: theme.colors.palette.neutral100,
+    minHeight: 100,
+    textAlignVertical: "top",
+  } as ViewStyle,
+
+  modalDangerButton: {
+    flex: 1,
+    backgroundColor: theme.colors.error,
+    borderRadius: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  } as ViewStyle,
+
+  modalDangerButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
+  } as TextStyle,
+
+  modalFullScreen: {
+    margin: 0,
+    width: width,
+    height: height,
+    borderRadius: 0,
+  } as ViewStyle,
+
+  modalBottomSheet: {
+    justifyContent: "flex-end",
+    margin: 0,
+  } as ViewStyle,
+
+  modalBottomSheetContainer: {
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: spacing.xl,
+    borderTopRightRadius: spacing.xl,
+    paddingBottom: spacing.xl,
+    maxHeight: height * 0.7,
+  } as ViewStyle,
+
+  modalBottomSheetHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: theme.colors.palette.neutral400,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
+  } as ViewStyle,
+
+  modalCard: {
+    backgroundColor: theme.colors.palette.neutral100,
+    borderRadius: spacing.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  } as ViewStyle,
+
+  modalCardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: theme.colors.text,
+    marginBottom: spacing.xs,
+  } as TextStyle,
+
+  modalCardSubtitle: {
+    fontSize: 14,
+    color: theme.colors.textDim,
+  } as TextStyle,
+
+  modalScrollView: {
+    maxHeight: height * 0.5,
+  } as ViewStyle,
+
+  modalCenteredContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xl,
+  } as ViewStyle,
+
+  modalIcon: {
+    fontSize: 48,
+    marginBottom: spacing.lg,
+  } as TextStyle,
+
+  modalLoadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xxl,
+  } as ViewStyle,
+
+  modalLoadingText: {
+    fontSize: 16,
+    color: theme.colors.textDim,
+    marginTop: spacing.md,
+  } as TextStyle,
+})
+
+export const modalAnimationConfig = {
+  animationType: "fade" as const,
+  transparent: true,
+  statusBarTranslucent: true,
+}
+
+export const bottomSheetAnimationConfig = {
+  animationType: "slide" as const,
+  transparent: true,
+  statusBarTranslucent: true,
+}
