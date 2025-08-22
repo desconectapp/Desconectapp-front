@@ -57,11 +57,7 @@ export class Api {
   }
 
   async refreshSession() {
-    if (
-      !this.refreshToken ||
-      !this.refreshTokenExpiration ||
-      this.refreshTokenExpiration < new Date()
-    ) {
+    if (!this.refreshToken || !this.refreshTokenExpiration) {
       console.warn("API: No valid refresh token available, cannot refresh session.")
       this.setToken(null)
       return

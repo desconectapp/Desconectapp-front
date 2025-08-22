@@ -71,7 +71,7 @@ export const SignUpScreen = observer(() => {
           refreshExpiresAt: dataSuccess.refresh_expires_at,
           refreshToken: dataSuccess.refresh_token,
           token: dataSuccess.token,
-          email: data.email,
+          user_id: dataSuccess.user_id,
         })
 
         navigation.navigate("MoreInfoScreen")

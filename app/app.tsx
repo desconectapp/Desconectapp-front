@@ -31,7 +31,7 @@ import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-c
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
 import { RootStoreProvider, UserSession, useInitialRootStore, useStores } from "./models"
-import { AppNavigator, useNavigationPersistence } from "./navigators"
+import { AppNavigator, AppStackScreenProps, useNavigationPersistence } from "./navigators"
 import * as storage from "./utils/storage"
 import { customFontsToLoad } from "./theme"
 import { KeyboardProvider } from "react-native-keyboard-controller"
@@ -48,6 +48,7 @@ import { YStack } from "tamagui"
 import { ToastProvider, ToastViewport } from "@tamagui/toast"
 import { api } from "./services/api"
 import { SessionData } from "./services/users"
+import { useNavigation } from "@react-navigation/native"
 if (__DEV__) {
   // Load Reactotron in development only.
   // Note that you must be using metro's `inlineRequires` for this to work.
@@ -104,8 +105,6 @@ export function App() {
       .then(() => loadDateFnsLocale())
   }, [])
 
-  const [refreshSavedToken, setRefreshSavedToken] = useState(0)
-
   const { sessionStore } = useStores()
 
   const { rootStore, rehydrated } = useInitialRootStore(() => {
@@ -114,6 +113,7 @@ export function App() {
     if (!s.token || !s.expiresAt || !s.refreshExpiresAt || !s.refreshToken) {
       api.setToken(null)
     } else {
+      console.log("setting saved token", s.token, s.expiresAt, s.refreshToken, s.refreshExpiresAt)
       api.setToken({
         token: s.token,
         expires_at: s.expiresAt,
@@ -124,8 +124,13 @@ export function App() {
     }
 
     function callbackRefreshToken(s: SessionData | null) {
+      if (!s) {
+        api.setToken(null)
+        return
+      }
+
       sessionStore.setSession({
-        email: s?.email,
+        user_id: s?.user_id,
         token: s?.token,
         expiresAt: s?.expires_at,
         refreshToken: s?.refresh_token,

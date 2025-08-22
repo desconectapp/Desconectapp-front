@@ -1,7 +1,7 @@
 import { types } from "mobx-state-tree"
 
 export interface UserSession {
-  email: string
+  user_id: string
   expiresAt: string
   refreshExpiresAt: string
   refreshToken: string
@@ -10,7 +10,7 @@ export interface UserSession {
 
 export const SessionModel = types
   .model("SessionModel", {
-    email: types.maybeNull(types.string),
+    user_id: types.maybeNull(types.string),
     expiresAt: types.maybeNull(types.string),
     refreshExpiresAt: types.maybeNull(types.string),
     refreshToken: types.maybeNull(types.string),
@@ -19,7 +19,7 @@ export const SessionModel = types
   .actions((store) => ({
     setSession(session: UserSession | null) {
       console.log("Setting session:", session)
-      store.email = session?.email || null
+      store.user_id = session?.user_id || null
       store.token = session?.token || null
       store.expiresAt = session?.expiresAt || null
       store.refreshToken = session?.refreshToken || null
