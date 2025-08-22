@@ -414,6 +414,7 @@ const $emptyContainer: ViewStyle = {
 
 const $emptyIcon: TextStyle = {
   fontSize: 64,
+  lineHeight: 64,
   marginBottom: spacing.lg,
 }
 

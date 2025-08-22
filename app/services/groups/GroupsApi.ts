@@ -3,9 +3,7 @@ import { Group, GroupData } from "./Groups.types"
 
 export const groupsService = {
   getGroups: async (): Promise<Group[] | undefined> => {
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-
-    const response = await api.apisauce.get<Group[]>(`/groups`)
+    const response = await api.apisauce.get<Group[]>(`/groups/user`)
     if (!response.ok) {
       throw new Error("Error al cargar los grupos")
     }

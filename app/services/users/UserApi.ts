@@ -62,20 +62,12 @@ export const userService = {
   },
 
   getProfile: async (): Promise<ProfileData | undefined> => {
-    // const response = await api.apisauce.get<void>("/users/profile")
-    // if (!response.ok) {
-    //   throw new Error("Error al obtener perfil")
-    // }
-    // return response.data
-
-    return {
-      name: "Lionel Messi",
-      image: null,
-      city: "Miami, FL",
-      gender: "",
-      current_situation: "Employed",
-      preferences: ["chess", "football", "basketball"],
+    const response = await api.apisauce.get<ProfileData>("/users/user")
+    if (!response.ok) {
+      throw new Error("Error al obtener perfil")
     }
+    console.log("Obteniendo perfil del usuario", response.data)
+    return response.data
   },
 
   editProfile: async (data: ProfileData): Promise<void> => {
@@ -87,7 +79,7 @@ export const userService = {
   },
 
   addPreferences: async (preferenceIds: number[]): Promise<void> => {
-    const response = await api.apisauce.post<void>("/users/6/preferences", preferenceIds)
+    const response = await api.apisauce.post<void>("/preferences", preferenceIds)
     if (!response.ok) {
       throw new Error("Error al editar perfil")
     }

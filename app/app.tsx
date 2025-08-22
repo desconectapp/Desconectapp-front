@@ -30,7 +30,7 @@ import { useEffect, useState } from "react"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
-import { RootStoreProvider, useInitialRootStore } from "./models"
+import { RootStoreProvider, UserSession, useInitialRootStore, useStores } from "./models"
 import { AppNavigator, useNavigationPersistence } from "./navigators"
 import * as storage from "./utils/storage"
 import { customFontsToLoad } from "./theme"
@@ -47,6 +47,7 @@ import { ToastControls } from "./components/ToastControls"
 import { YStack } from "tamagui"
 import { ToastProvider, ToastViewport } from "@tamagui/toast"
 import { api } from "./services/api"
+import { SessionData } from "./services/users"
 if (__DEV__) {
   // Load Reactotron in development only.
   // Note that you must be using metro's `inlineRequires` for this to work.
@@ -103,6 +104,10 @@ export function App() {
       .then(() => loadDateFnsLocale())
   }, [])
 
+  const [refreshSavedToken, setRefreshSavedToken] = useState(0)
+
+  const { sessionStore } = useStores()
+
   const { rootStore, rehydrated } = useInitialRootStore(() => {
     // This runs after the root store has been initialized and rehydrated.
     const s = rootStore.sessionStore
@@ -117,6 +122,18 @@ export function App() {
         user_id: "",
       })
     }
+
+    function callbackRefreshToken(s: SessionData | null) {
+      sessionStore.setSession({
+        email: s?.email,
+        token: s?.token,
+        expiresAt: s?.expires_at,
+        refreshToken: s?.refresh_token,
+        refreshExpiresAt: s?.refresh_expires_at,
+      })
+    }
+
+    api.setCallbackRefreshSession(callbackRefreshToken)
 
     // If your initialization scripts run very fast, it's good to show the splash screen for just a bit longer to prevent flicker.
     // Slightly delaying splash screen hiding for better UX; can be customized or removed as needed,

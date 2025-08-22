@@ -30,7 +30,13 @@ export class Api {
   refreshToken: string | null = null
   refreshTokenExpiration: Date | null = null
 
+  callbackToken: ((data: SessionData | null) => void) | null = null
+
   setToken(data: SessionData | null) {
+    if (this.callbackToken) {
+      this.callbackToken(data)
+    }
+
     if (!data) {
       this.token = null
       this.refreshToken = null
@@ -44,6 +50,35 @@ export class Api {
 
     this.refreshToken = data.refresh_token || null
     this.refreshTokenExpiration = data.refresh_expires_at ? new Date(data.refresh_expires_at) : null
+  }
+
+  setCallbackRefreshSession(callback: (data: SessionData | null) => void) {
+    this.callbackToken = callback
+  }
+
+  async refreshSession() {
+    if (
+      !this.refreshToken ||
+      !this.refreshTokenExpiration ||
+      this.refreshTokenExpiration < new Date()
+    ) {
+      console.warn("API: No valid refresh token available, cannot refresh session.")
+      this.setToken(null)
+      return
+    }
+
+    const res = await this.apisauce.post("/auth/refresh", {
+      refresh_token: this.refreshToken,
+    })
+
+    if (res.ok && res.data) {
+      console.log("REFRESHING TOKEN", res.data)
+      const data: SessionData = res.data as SessionData
+      this.setToken(data)
+    } else {
+      console.error("API: Error refreshing session", res.problem, res.status, res.data)
+      this.setToken(null)
+    }
   }
 
   /**
@@ -63,6 +98,12 @@ export class Api {
     this.apisauce.addRequestTransform((request) => {
       if (this.token && request.headers) {
         request.headers["Authorization"] = `Bearer ${this.token}`
+      }
+    })
+
+    this.apisauce.addResponseTransform((response) => {
+      if (response.status === 401) {
+        this.refreshSession()
       }
     })
   }

@@ -415,12 +415,13 @@ const $emptyContainer: ViewStyle = {
   flex: 1,
   justifyContent: "center",
   alignItems: "center",
-  paddingVertical: spacing.xxl,
+  paddingVertical: spacing.xl,
   paddingHorizontal: spacing.xl,
 }
 
 const $emptyIcon: TextStyle = {
   fontSize: 48,
+  lineHeight: 64,
   marginBottom: spacing.md,
 }
 

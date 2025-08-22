@@ -34,7 +34,7 @@ const { width, height } = Dimensions.get("window")
 interface ProfileFormData {
   name: string
   location: string
-  workStatus: string
+  // workStatus: string
 }
 
 export const ProfileScreen = observer(function ProfileScreen() {
@@ -45,7 +45,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
-  const [modalVisible, setModalVisible] = useState(true)
+  const [modalVisible, setModalVisible] = useState(false)
 
   const { data: profile } = useProfile()
   const { profileImage, handleImagePicker } = useImagePicker()
@@ -62,6 +62,10 @@ export const ProfileScreen = observer(function ProfileScreen() {
     formState: { errors, isDirty },
   } = useForm<ProfileFormData>({
     defaultValues: {
+      name: profile?.name || "",
+      location: profile?.city || "",
+    },
+    values: {
       name: profile?.name || "",
       location: profile?.city || "",
     },
