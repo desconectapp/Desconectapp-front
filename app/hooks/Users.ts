@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { userService } from "../services/users"
+import { activitiesService } from "../services/activities"
 
 export const useUsers = () => {
   return useQuery({
@@ -17,8 +18,9 @@ export const useSignUp = () => {
 
   return useMutation<any, Error, any>({
     mutationFn: (data) => userService.signUp(data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      return data
     },
   })
 }
@@ -28,8 +30,9 @@ export const useLogin = () => {
 
   return useMutation<any, Error, any>({
     mutationFn: (data) => userService.login(data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      return data
     },
   })
 }
@@ -56,6 +59,17 @@ export const useEditProfile = () => {
   })
 }
 
+export const useAddPreferences = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<any, Error, any>({
+    mutationFn: (data) => userService.addPreferences(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] })
+    },
+  })
+}
+
 export const useProfile = () => {
   return useQuery({
     queryKey: ["profile"],
@@ -67,11 +81,11 @@ export const useProfile = () => {
   })
 }
 
-export const usePreferences = () => {
+export const useActivities = (limit: number = 10, offset: number = 0) => {
   return useQuery({
-    queryKey: ["preferences"],
+    queryKey: ["activities", limit, offset],
     queryFn: async () => {
-      const response = await userService.getPreferences()
+      const response = await activitiesService.getActivities(limit, offset)
       if (!response) throw new Error("Error al cargar preferencias")
       return response
     },

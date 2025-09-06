@@ -3,9 +3,9 @@ import { types } from "mobx-state-tree"
 export interface ProfileInfo {
   name: string
   age: number
-  location: string
+  city: string
   gender: string
-  workStatus: string
+  current_situation: string
 }
 
 export const SignUpStoreModel = types
@@ -16,8 +16,8 @@ export const SignUpStoreModel = types
         name: types.string,
         age: types.number,
         gender: types.string,
-        location: types.string,
-        workStatus: types.string,
+        city: types.string,
+        current_situation: types.string,
       }),
     ),
   })
@@ -30,8 +30,8 @@ export const SignUpStoreModel = types
         name: data.name,
         gender: data.gender,
         age: data.age,
-        location: data.location,
-        workStatus: data.workStatus,
+        city: data.city,
+        current_situation: data.current_situation,
       }
       store.userInfo = userInfo
     },

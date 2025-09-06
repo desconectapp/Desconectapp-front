@@ -1,98 +1,123 @@
 import { observer } from "mobx-react-lite"
-import { useState } from "react"
-import { View, ScrollView, TouchableOpacity, Dimensions, ViewStyle, TextStyle } from "react-native"
+import { useEffect, useState } from "react"
+import {
+  View,
+  TouchableOpacity,
+  Dimensions,
+  FlatList,
+  ViewStyle,
+  TextStyle,
+  ListRenderItem,
+} from "react-native"
 import { Text, Button } from "@/components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
 import { useStores } from "@/models"
-import { usePreferences, useProfile } from "@/hooks/Users"
+import { useEditProfile, useActivities, useAddPreferences } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
-import { useAppToast } from "@/components/useToast"
+import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
 
 const { width } = Dimensions.get("window")
 
 export const PreferencesScreen = observer(() => {
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
+  {
+    /* TODO: esto esta masomenos pasado a ActivitiesForm para reutilizar */
+  }
+
+  const [selectedPreferences, setSelectedPreferences] = useState<number[]>([])
+  const [allPreferences, setAllPreferences] = useState<any[]>([])
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+
+  const limit = 10
   const { signUpStore } = useStores()
   const { themed } = useAppTheme()
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
-  const { showToast } = useAppToast()
+  const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
 
-  const { data: preferences, isLoading, isError } = usePreferences()
-  const { mutateAsync: profileMutateAsync } = useProfile()
+  const { data, isLoading, isError, isFetching } = useActivities(limit, offset)
+  const addPreferences = useAddPreferences()
 
-  const togglePreference = (id: string) => {
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setAllPreferences((prev) => [...prev, ...data])
+      if (data.length < limit) {
+        setHasMore(false)
+      }
+    } else if (data && data.length === 0) {
+      setHasMore(false)
+    }
+  }, [data])
+
+  const togglePreference = (id: number) => {
     setSelectedPreferences((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
     )
   }
 
-  const handleContinue = () => {
-    profileMutateAsync(
-      {
-        ...signUpStore.userInfo,
-        preferences: selectedPreferences,
+  const handleContinue = async () => {
+    await addPreferences.mutateAsync(selectedPreferences, {
+      onSuccess: () => {
+        // signUpStore.setPreferences(selectedPreferences)
+        navigation.navigate("Main", { screen: "Tabs" })
       },
-      {
-        onSuccess: (response) => {
-          console.log("Profile updated successfully:", response)
-          signUpStore.setPreferences(selectedPreferences)
-          navigation.navigate("Welcome")
-        },
-        onError: (error) => {
-          console.error("Error updating profile:", error)
-          showToast("Creation Failed")
-        },
+      onError: (error) => {
+        console.error("Error updating profile:", error)
+        navigation.navigate("Main", { screen: "Tabs" })
       },
+    })
+  }
+
+  const loadMore = () => {
+    if (!isFetching && !isLoading && hasMore) {
+      setOffset((prev) => prev + limit)
+    }
+  }
+
+  const renderItem: ListRenderItem<any> = ({ item }) => {
+    const selected = selectedPreferences.includes(item.id)
+    return (
+      <TouchableOpacity
+        key={item.id}
+        onPress={() => togglePreference(item.id)}
+        style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
+      >
+        <Text style={$emoji}>{item.icon}</Text>
+        <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>{item.name}</Text>
+      </TouchableOpacity>
     )
   }
 
   return (
     <View style={$contentWrapper}>
-      <ScrollView
-        style={$scroll}
-        contentContainerStyle={$scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={$header}>
-          <Text preset="heading" style={themed($title)}>
-            What are you into?
-          </Text>
-          <Text preset="subheading" style={themed($subtitle)}>
-            Choose your interests and hobbies. You can select multiple options.
-          </Text>
-        </View>
-
-        <View style={$chipsContainer}>
-          {isError && <Text style={themed($subtitle)}>Error loading preferences</Text>}
-          {isLoading && "Loading preferences..."}
-          {preferences &&
-            preferences.length > 0 &&
-            preferences.map((pref) => {
-              const selected = selectedPreferences.includes(pref.id)
-              return (
-                <TouchableOpacity
-                  key={pref.id}
-                  onPress={() => togglePreference(pref.id)}
-                  style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
-                >
-                  <Text style={$emoji}>{pref.icon}</Text>
-                  <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>
-                    {pref.label}
-                  </Text>
-                </TouchableOpacity>
-              )
-            })}
-        </View>
-
-        <View style={$footer}>
-          <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
-        </View>
-      </ScrollView>
-
+      <FlatList
+        data={allPreferences}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        contentContainerStyle={$listContent}
+        columnWrapperStyle={$row}
+        ListHeaderComponent={
+          <View style={$header}>
+            <Text preset="heading" style={themed($title)}>
+              What are you into?
+            </Text>
+            <Text preset="subheading" style={themed($subtitle)}>
+              Choose your interests and hobbies. You can select multiple options.
+            </Text>
+          </View>
+        }
+        ListFooterComponent={
+          <View style={$footer}>
+            <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
+            {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
+          </View>
+        }
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.6}
+      />
       <View style={[$bottomBar, $bottomInsets]}>
         <Button
           text="Continue"
@@ -111,6 +136,16 @@ export const PreferencesScreen = observer(() => {
   )
 })
 
+const $listContent: ViewStyle = {
+  paddingHorizontal: spacing.lg,
+  paddingTop: spacing.lg,
+  paddingBottom: spacing.xxl,
+}
+
+const $row: ViewStyle = {
+  justifyContent: "space-between",
+  marginBottom: spacing.md,
+}
 const $contentWrapper: ViewStyle = {
   flex: 1,
 }

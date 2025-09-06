@@ -1,5 +1,11 @@
 import { api } from "../api"
-import { CreateProfileData, Preference, ProfileData, UserResponse } from "./UserApi.types"
+import {
+  CreateProfileData,
+  Preference,
+  ProfileData,
+  SessionData,
+  UserResponse,
+} from "./UserApi.types"
 
 export const userService = {
   getUsers: async (): Promise<UserResponse[] | undefined> => {
@@ -11,18 +17,49 @@ export const userService = {
     return response.data
   },
 
-  signUp: async (data: { name: string; email: string; password: string }): Promise<void> => {
-    const response = await api.apisauce.post<void>("/users", data)
+  signUp: async (data: {
+    name: string
+    email: string
+    password: string
+  }): Promise<SessionData | undefined> => {
+    const response = await api.apisauce.post<SessionData>("/auth/signup", data)
     if (!response.ok) {
       throw new Error("Error al crear usuario")
     }
-    console.log("Usuario creado:", response.data)
+    api.setToken(response.data || null)
+    return response.data
+  },
+
+  login: async (data: { email: string; password: string }): Promise<SessionData | undefined> => {
+    const response = await api.apisauce.post<SessionData>("/auth/login", data)
+    console.log("API:LOGIN: Respuesta del servidor:", response.ok)
+    if (!response.ok) {
+      console.log(response.data)
+      throw new Error("Error al iniciar sesión")
+    }
+    try {
+      api.setToken(response.data || null)
+    } catch (error) {
+      console.error("API:LOGIN: Error al establecer el token:", error)
+      throw new Error("Error al procesar la sesión")
+    }
+
+    console.log("API:LOGIN: Sesión iniciada:", response.data)
+    return response.data
+  },
+
+  logout: async (): Promise<void> => {
+    const response = await api.apisauce.post<void>("/auth/logout")
+    if (!response.ok) {
+      throw new Error("Error al cerrar sesión")
+    }
+    api.setToken(null)
     return response.data
   },
 
   createProfile: async (data: CreateProfileData): Promise<void> => {
     console.log("Creando perfil con datos:", data)
-    const response = await api.apisauce.post<void>("/users/profile", data)
+    const response = await api.apisauce.post<void>("/users/1/profile", data)
     if (!response.ok) {
       throw new Error("Error al crear perfil")
     }
@@ -31,20 +68,12 @@ export const userService = {
   },
 
   getProfile: async (): Promise<ProfileData | undefined> => {
-    // const response = await api.apisauce.get<void>("/users/profile")
-    // if (!response.ok) {
-    //   throw new Error("Error al obtener perfil")
-    // }
-    // return response.data
-
-    return {
-      name: "Lionel Messi",
-      image: null,
-      location: "Miami, FL",
-      gender: "",
-      workStatus: "Employed",
-      preferences: ["chess", "football", "basketball"],
+    const response = await api.apisauce.get<ProfileData>("/users/user")
+    if (!response.ok) {
+      throw new Error("Error al obtener perfil")
     }
+    console.log("Obteniendo perfil del usuario", response.data)
+    return response.data
   },
 
   editProfile: async (data: ProfileData): Promise<void> => {
@@ -55,42 +84,11 @@ export const userService = {
     return response.data
   },
 
-  getPreferences: async (): Promise<Preference[] | undefined> => {
-    // const response = await api.apisauce.get<string[]>("/users/preferences")
-    // if (!response.ok) {
-    //   throw new Error("Error al cargar preferencias")
-    // }
-    // console.log("Preferencias obtenidas:", response.data)
-    // return response.data
-
-    // dejo mockeado
-    return [
-      { id: "chess", label: "Chess", icon: "♟️" },
-      { id: "football", label: "Football", icon: "⚽" },
-      { id: "basketball", label: "Basketball", icon: "🏀" },
-      { id: "tennis", label: "Tennis", icon: "🎾" },
-      { id: "swimming", label: "Swimming", icon: "🏊" },
-      { id: "running", label: "Running", icon: "🏃" },
-      { id: "cycling", label: "Cycling", icon: "🚴" },
-      { id: "yoga", label: "Yoga", icon: "🧘" },
-      { id: "hiking", label: "Hiking", icon: "🥾" },
-      { id: "dancing", label: "Dancing", icon: "💃" },
-      { id: "music", label: "Music", icon: "🎵" },
-      { id: "reading", label: "Reading", icon: "📚" },
-      { id: "cooking", label: "Cooking", icon: "👨‍🍳" },
-      { id: "photography", label: "Photography", icon: "📸" },
-      { id: "gaming", label: "Gaming", icon: "🎮" },
-      { id: "travel", label: "Travel", icon: "✈️" },
-      { id: "art", label: "Art", icon: "🎨" },
-    ]
-  },
-
-  login: async (data: { email: string; password: string }): Promise<void> => {
-    const response = await api.apisauce.post<void>("/users/login", data)
+  addPreferences: async (preferenceIds: number[]): Promise<void> => {
+    const response = await api.apisauce.post<void>("/preferences", preferenceIds)
     if (!response.ok) {
-      throw new Error("Error al iniciar sesión")
+      throw new Error("Error al editar perfil")
     }
-    console.log("Usuario autenticado:", response.data)
     return response.data
   },
 }
