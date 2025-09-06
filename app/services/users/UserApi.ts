@@ -32,12 +32,18 @@ export const userService = {
 
   login: async (data: { email: string; password: string }): Promise<SessionData | undefined> => {
     const response = await api.apisauce.post<SessionData>("/auth/login", data)
-    console.log("API:LOGIN: Respuesta del servidor:", response)
+    console.log("API:LOGIN: Respuesta del servidor:", response.ok)
     if (!response.ok) {
       console.log(response.data)
       throw new Error("Error al iniciar sesión")
     }
-    api.setToken(response.data || null)
+    try {
+      api.setToken(response.data || null)
+    } catch (error) {
+      console.error("API:LOGIN: Error al establecer el token:", error)
+      throw new Error("Error al procesar la sesión")
+    }
+
     console.log("API:LOGIN: Sesión iniciada:", response.data)
     return response.data
   },

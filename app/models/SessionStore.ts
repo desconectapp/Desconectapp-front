@@ -1,7 +1,7 @@
 import { types } from "mobx-state-tree"
 
 export interface UserSession {
-  user_id: string
+  user_id: number
   expiresAt: string
   refreshExpiresAt: string
   refreshToken: string
@@ -10,7 +10,7 @@ export interface UserSession {
 
 export const SessionModel = types
   .model("SessionModel", {
-    user_id: types.maybeNull(types.string),
+    user_id: types.maybeNull(types.number),
     expiresAt: types.maybeNull(types.string),
     refreshExpiresAt: types.maybeNull(types.string),
     refreshToken: types.maybeNull(types.string),

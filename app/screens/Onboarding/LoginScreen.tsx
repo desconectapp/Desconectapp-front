@@ -30,30 +30,25 @@ export const LoginScreen = observer(() => {
   useEffect(() => {
     if (!sessionStore.token) {
       navigation.navigate("LoginScreen")
+    } else {
+      console.log("o por aca??????")
+      navigation.navigate("Main", { screen: "Tabs" })
     }
   }, [navigation, sessionStore.token])
 
   const form = useForm({
     defaultValues: {
-      email: "admin@gmail.com",
-      password: "password12",
+      email: "martina@example.com",
+      password: "password123",
     },
   })
 
   const onSubmit = (response: any) => {
     setLoading(true)
     LoginFunc.mutateAsync(response, {
-      onSuccess: (dataSuccess) => {
+      onSuccess: (_) => {
         setLoading(false)
-
-        sessionStore.setSession({
-          expiresAt: dataSuccess.expires_at,
-          refreshExpiresAt: dataSuccess.refresh_expires_at,
-          refreshToken: dataSuccess.refresh_token,
-          token: dataSuccess.token,
-          user_id: dataSuccess.user_id,
-        })
-
+        console.log("PASA POR ACA?")
         navigation.navigate("Main", { screen: "Tabs" })
       },
       onError: (error) => {
