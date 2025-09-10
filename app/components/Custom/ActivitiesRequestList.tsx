@@ -141,7 +141,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
           </View>
         </View>
 
-        <View style={$footer}>
+        <View style={themed($footer)}>
           <Text style={themed($dateText)}>Created: {formatDate(item.created_at)}</Text>
 
           <Text
@@ -343,14 +343,14 @@ const $detailValue = (theme: any): TextStyle => ({
   fontWeight: "500",
 })
 
-const $footer: ViewStyle = {
+const $footer = (theme: any): ViewStyle => ({
   borderTopWidth: 1,
-  borderTopColor: "#f0f0f0",
+  borderTopColor: theme.colors.border,
   paddingTop: spacing.sm,
   flex: 1,
   flexDirection: "row",
   justifyContent: "space-between",
-}
+})
 
 const $dateText = (theme: any): TextStyle => ({
   fontSize: 12,

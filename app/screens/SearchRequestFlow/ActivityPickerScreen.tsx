@@ -3,6 +3,7 @@ import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
 import { MainStackParamList } from "@/navigators/MainNavigator"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useThemedStyles } from "@/theme"
 import { useStores } from "@/models"
 import { useNavigation } from "@react-navigation/native"
 import { useState, useEffect, useCallback } from "react"
@@ -34,7 +35,11 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
 
   // Add slider states with proper initialization
   const [maxParticipants, setMaxParticipants] = useState<number>(requestStore.maxParticipants || 5)
-  const [minParticipants, setMinParticipants] = useState<number>(requestStore.minParticipants || 2)
+  const [minParticipants, setMinParticipants] = useState<number>(
+  requestStore.minParticipants && requestStore.minParticipants >= 3
+    ? requestStore.minParticipants
+    : 3
+)
 
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
 
@@ -136,37 +141,41 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
         <View style={styles.sliderContainer}>
           <Text style={styles.sliderLabel}>Mínimo integrantes: {minParticipants}</Text>
           <Slider
-            size="$1.5"
-            width={"95%"}
-            value={[minParticipants]}
-            onValueChange={handleMinParticipantsChange}
-            max={10}
-            min={3}
-            step={1}
-          >
-            <Slider.Track>
-              <Slider.TrackActive />
-            </Slider.Track>
-            <Slider.Thumb circular index={0} />
-          </Slider>
+  size="$1.5"
+  width="95%"
+  value={[minParticipants]}
+  onValueChange={handleMinParticipantsChange}
+  max={10}
+  min={3}
+  step={1}
+  animation="quick"
+>
+  <Slider.Track>
+    <Slider.TrackActive animation="quick" />
+  </Slider.Track>
+  <Slider.Thumb circular index={0} animation="bouncy" />
+</Slider>
+
         </View>
 
         <View style={styles.sliderContainer}>
           <Text style={styles.sliderLabel}>Máximo integrantes: {maxParticipants}</Text>
           <Slider
-            size="$1.5"
-            width={"95%"}
-            value={[maxParticipants]}
-            onValueChange={handleMaxParticipantsChange}
-            max={10}
-            min={3}
-            step={1}
-          >
-            <Slider.Track>
-              <Slider.TrackActive />
-            </Slider.Track>
-            <Slider.Thumb circular index={0} />
-          </Slider>
+  size="$1.5"
+  width="95%"
+  value={[maxParticipants]}
+  onValueChange={handleMaxParticipantsChange}
+  max={10}
+  min={3}
+  step={1}
+  animation="quick"
+>
+  <Slider.Track>
+    <Slider.TrackActive animation="quick" />
+  </Slider.Track>
+  <Slider.Thumb circular index={0} animation="bouncy" />
+</Slider>
+
         </View>
       </View>
 

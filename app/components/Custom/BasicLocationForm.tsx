@@ -1,7 +1,10 @@
 import React, { useState } from "react"
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, KeyboardAvoidingView, Platform } from "react-native"
+import { useAppTheme } from "@/utils/useAppTheme"
 
 export default function BasicLocationForm() {
+  const { theme } = useAppTheme()
+  const styles = createThemedStyles(theme)
   const fetchLocalidades = async (query: string) => {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       query
@@ -86,71 +89,74 @@ export default function BasicLocationForm() {
   )
 }
 
-const styles = StyleSheet.create({
+// Create theme-aware styles
+const createThemedStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
   searchSection: {
     padding: 8,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: theme.colors.border,
     padding: 8,
     borderRadius: 4,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
   },
   suggestionsList: {
     maxHeight: 150,
     marginTop: 4,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
     borderRadius: 4,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
   },
   suggestion: {
     padding: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: theme.colors.border,
   },
   suggestionText: {
     fontSize: 14,
-    color: "#333",
+    color: theme.colors.text,
   },
   selectedContainer: {
     marginTop: 16,
     padding: 8,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: theme.colors.backgroundMuted,
     borderRadius: 4,
   },
   selectedLabel: {
     fontWeight: "bold",
     marginBottom: 4,
+    color: theme.colors.text,
   },
   selectedText: {
     fontSize: 14,
-    color: "#666",
+    color: theme.colors.textMuted,
   },
   mapPlaceholder: {
     flex: 1,
     minHeight: 300,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: theme.colors.backgroundMuted,
     justifyContent: "center",
     alignItems: "center",
     margin: 8,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: "#ddd",
+    borderColor: theme.colors.border,
     borderStyle: "dashed",
   },
   placeholderText: {
     fontSize: 24,
     marginBottom: 8,
+    color: theme.colors.text,
   },
   placeholderSubtext: {
     fontSize: 14,
-    color: "#666",
+    color: theme.colors.textMuted,
     textAlign: "center",
     paddingHorizontal: 20,
   },

@@ -1,7 +1,7 @@
 export interface Activity {
   id: number
   name: string
-  emoji: string
+  icon: string
 }
 
 export interface ActivityRequest {

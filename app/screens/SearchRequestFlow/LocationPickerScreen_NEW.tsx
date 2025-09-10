@@ -8,11 +8,23 @@ import {
   Alert,
   Dimensions,
   Image,
+  ScrollView,
   type DimensionValue,
+  ViewStyle,
+  TextStyle,
 } from "react-native"
 import { PanGestureHandler, State, TapGestureHandler } from "react-native-gesture-handler"
-import { Screen, Text, Button } from "../components"
+import { Screen, Text, Button } from "../../components"
 import { useAppTheme } from "@/utils/useAppTheme"
+import { useNavigation } from "@react-navigation/native"
+import { useStores } from "@/models"
+import { observer } from "mobx-react-lite"
+import { Slider } from "tamagui"
+import { containers, buttons, buttonTexts, texts, inputs, chips, separators, shadows } from "@/theme/commonStyles"
+
+import { MainStackParamList } from "@/navigators/MainNavigator"
+import { NativeStackScreenProps } from "@react-navigation/native-stack"
+import { spacing } from "@/theme"
 
 interface Location {
   id: string
@@ -23,7 +35,7 @@ interface Location {
 }
 
 interface NominatimResult {
-  place_id: string
+  place_id: string | number // Can be either string or number from API
   display_name: string
   lat: string
   lon: string
@@ -37,23 +49,32 @@ interface NominatimResult {
 
 const { width } = Dimensions.get("window")
 
-export function LocationPickerScreen() {
+type LocationPickerScreenProps = NativeStackScreenProps<MainStackParamList, "LocationPickerScreen">
+
+export const LocationPickerScreen = observer(function LocationPickerScreen({ route }: LocationPickerScreenProps) {
+  const { nextScreen } = route.params || {}
   const { themed } = useAppTheme()
+  const { requestStore } = useStores()
   const [searchQuery, setSearchQuery] = useState("")
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([])
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
+    requestStore.location
+  )
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [hasSelectedFromSuggestion, setHasSelectedFromSuggestion] = useState(false)
   const [mapRegion, setMapRegion] = useState({
-    latitude: -34.6037, // Buenos Aires default
-    longitude: -58.3816,
+    latitude: requestStore.location?.latitude || -34.6037, // Buenos Aires default
+    longitude: requestStore.location?.longitude || -58.3816,
     latitudeDelta: 0.1,
     longitudeDelta: 0.1,
   })
   const [zoom, setZoom] = useState(13)
+  const [radiusKm, setRadiusKm] = useState(requestStore.radiusKm || 5) // Use store value or default 5km
 
   // Separate marker position from map center
-  const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(null)
+  const [markerPosition, setMarkerPosition] = useState<{ latitude: number; longitude: number } | null>(
+    requestStore.location ? { latitude: requestStore.location.latitude, longitude: requestStore.location.longitude } : null
+  )
 
   // Pan gesture state - simplified
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
@@ -63,6 +84,26 @@ export function LocationPickerScreen() {
   const singleTapRef = useRef<any>()
   const doubleTapRef = useRef<any>()
   const panRef = useRef<any>()
+
+  // Helper function to update both local state and store
+  const updateSelectedLocation = (location: Location | null) => {
+    try {
+      console.log("Updating selected location:", location)
+      setSelectedLocation(location)
+      requestStore.setLocation(location)
+      console.log("Successfully updated location in store")
+    } catch (error) {
+      console.error("Error updating location in store:", error)
+      console.error("Location data that caused error:", location)
+      Alert.alert("Error", "No se pudo guardar la ubicación seleccionada.")
+    }
+  }
+
+  // Helper function to update radius in both local state and store
+  const updateRadius = (radius: number) => {
+    setRadiusKm(radius)
+    requestStore.setRadiusKm(radius)
+  }
 
   // Helper functions for tile calculations
   const deg2rad = (deg: number) => deg * (Math.PI / 180)
@@ -110,6 +151,13 @@ export function LocationPickerScreen() {
       x: mapSize / 2 + pixelX,
       y: mapSize / 2 + pixelY,
     }
+  }
+
+  // Calculate radius in pixels based on kilometers
+  const getRadiusInPixels = (radiusKm: number) => {
+    const metersPerPixel = (40075016.686 * Math.cos(deg2rad(mapRegion.latitude))) / Math.pow(2, zoom + 8)
+    const radiusInMeters = radiusKm * 1000
+    return radiusInMeters / metersPerPixel
   }
 
   const onPanGestureEvent = (event: any) => {
@@ -162,7 +210,6 @@ export function LocationPickerScreen() {
       reverseGeocode(coords.latitude, coords.longitude)
   }
 
-
   const renderMap = () => {
     const centerTileX = getTileX(mapRegion.longitude, zoom)
     const centerTileY = getTileY(mapRegion.latitude, zoom)
@@ -203,16 +250,20 @@ export function LocationPickerScreen() {
 
     // Calculate marker position on screen if we have a selected location
     let markerScreenPosition = null
+    let radiusPixels = 0
     if (markerPosition) {
       const screenPos = getPixelFromLatLon(markerPosition.latitude, markerPosition.longitude)
+      radiusPixels = getRadiusInPixels(radiusKm)
       markerScreenPosition = {
         left: screenPos.x - 12 + panOffset.x, // Center the marker (24px width / 2)
         top: screenPos.y - 24 + panOffset.y, // Position above the point (24px height)
+        radiusLeft: screenPos.x - radiusPixels + panOffset.x, // Center the radius circle
+        radiusTop: screenPos.y - radiusPixels + panOffset.y,
       }
     }
 
     return (
-      <View style={$mapContainer}>
+      <View style={themed($mapContainer)}>
         <PanGestureHandler
           ref={panRef}
           onGestureEvent={onPanGestureEvent}
@@ -224,7 +275,6 @@ export function LocationPickerScreen() {
             onActivated={onDoubleTap}
             numberOfTaps={2}
             minPointers={1}
-            maxPointers={1}
             simultaneousHandlers={[panRef]}
           >
             <TapGestureHandler
@@ -232,7 +282,6 @@ export function LocationPickerScreen() {
               onActivated={onSingleTap}
               numberOfTaps={1}
               minPointers={1}
-              maxPointers={1}
               waitFor={doubleTapRef}
               simultaneousHandlers={[panRef]}
             >
@@ -257,29 +306,43 @@ export function LocationPickerScreen() {
                 </View>
 
                 {/* Center crosshair - only show when no location is selected */}
-                {!markerPosition && <View style={$crosshair} />}
+                {!markerPosition && <View style={themed($crosshair)} />}
 
                 {/* Selected location marker */}
                 {markerPosition && markerScreenPosition && (
-                  <View
-                    style={[
-                      $markerContainer,
-                      {
-                        left: markerScreenPosition.left,
-                        top: markerScreenPosition.top,
-                      },
-                    ]}
-                  >
-                    <View style={$marker} />
-                  </View>
+                  <>
+                    {/* Radius circle */}
+                    <View
+                      style={[
+                        themed($radiusOutlineMarker),
+                        {
+                          left: markerScreenPosition.radiusLeft,
+                          top: markerScreenPosition.radiusTop,
+                          width: radiusPixels * 2,
+                          height: radiusPixels * 2,
+                          borderRadius: radiusPixels,
+                        },
+                      ]}
+                    />
+                    {/* Marker pin */}
+                    <View
+                      style={[
+                        $markerContainer,
+                        {
+                          left: markerScreenPosition.left,
+                          top: markerScreenPosition.top,
+                        },
+                      ]}
+                    >
+                      <View style={themed($marker)} />
+                    </View>
+                  </>
                 )}
 
                 {/* Map info overlay */}
-                <View style={$mapInfo}>
-                  <Text style={$mapInfoText}>
-                    {markerPosition
-                      ? "Arrastra para navegar • Toca para cambiar • Dos dedos para zoom"
-                      : "Arrastra para navegar • Toca para seleccionar • Dos dedos para zoom"}
+                <View style={themed($mapInfo)}>
+                  <Text style={[themed(texts.caption), { color: "#fff" }]}>
+                      Arrastra para navegar • Toca dos veces para seleccionar
                   </Text>
                 </View>
               </View>
@@ -288,24 +351,24 @@ export function LocationPickerScreen() {
         </PanGestureHandler>
 
         {/* Zoom Controls */}
-        <View style={$zoomControls}>
+        <View style={[themed(containers.card), themed($zoomControls)]}>
           <TouchableOpacity
-            style={[$zoomButton, { borderBottomWidth: 1 }]}
+            style={[themed($zoomButton), { borderBottomWidth: 1, borderBottomColor: themed(separators.horizontal).backgroundColor }]}
             onPress={() => {
               const newZoom = Math.min(18, zoom + 1)
               setZoom(newZoom)
             }}
           >
-            <Text style={$zoomButtonText}>+</Text>
+            <Text style={themed($zoomButtonText)}>+</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={$zoomButton}
+            style={themed($zoomButton)}
             onPress={() => {
               const newZoom = Math.max(3, zoom - 1)
               setZoom(newZoom)
             }}
           >
-            <Text style={$zoomButtonText}>-</Text>
+            <Text style={themed($zoomButtonText)}>-</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -359,34 +422,53 @@ export function LocationPickerScreen() {
   }
 
   const handleSuggestionPress = (suggestion: NominatimResult) => {
-    const location: Location = {
-      id: suggestion.place_id,
-      name: suggestion.name || suggestion.display_name.split(",")[0],
-      latitude: Number.parseFloat(suggestion.lat),
-      longitude: Number.parseFloat(suggestion.lon),
-      address: suggestion.display_name,
+    try {
+      console.log("Suggestion data:", suggestion)
+      
+      // Validate lat/lon values
+      const latitude = Number.parseFloat(suggestion.lat)
+      const longitude = Number.parseFloat(suggestion.lon)
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        throw new Error("Invalid latitude or longitude values")
+      }
+      
+      const location: Location = {
+        id: String(suggestion.place_id), // Ensure it's always a string
+        name: suggestion.name || suggestion.display_name.split(",")[0],
+        latitude,
+        longitude,
+        address: suggestion.display_name,
+      }
+      
+      console.log("Created location object:", location)
+      
+      updateSelectedLocation(location)
+      setSearchQuery(suggestion.display_name)
+      setShowSuggestions(false)
+      setHasSelectedFromSuggestion(true)
+
+      // Center map on selected location
+      setMapRegion({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      })
+
+      // Set marker position
+      setMarkerPosition({
+        latitude: location.latitude,
+        longitude: location.longitude,
+      })
+
+      // Reset pan offsets when jumping to new location
+      setPanOffset({ x: 0, y: 0 })
+    } catch (error) {
+      console.error("Error handling suggestion press:", error)
+      console.error("Suggestion that caused error:", suggestion)
+      Alert.alert("Error", "No se pudo seleccionar esta ubicación. Por favor intenta con otra.")
     }
-    setSelectedLocation(location)
-    setSearchQuery(suggestion.display_name)
-    setShowSuggestions(false)
-    setHasSelectedFromSuggestion(true)
-
-    // Center map on selected location
-    setMapRegion({
-      latitude: location.latitude,
-      longitude: location.longitude,
-      latitudeDelta: 0.05,
-      longitudeDelta: 0.05,
-    })
-
-    // Set marker position
-    setMarkerPosition({
-      latitude: location.latitude,
-      longitude: location.longitude,
-    })
-
-    // Reset pan offsets when jumping to new location
-    setPanOffset({ x: 0, y: 0 })
   }
 
   const handleSearchInputChange = (text: string) => {
@@ -405,7 +487,7 @@ export function LocationPickerScreen() {
     setHasSelectedFromSuggestion(false)
     setSuggestions([])
     setShowSuggestions(false)
-    setSelectedLocation(null)
+    updateSelectedLocation(null)
     setMarkerPosition(null)
   }
 
@@ -422,13 +504,13 @@ export function LocationPickerScreen() {
       const data = await response.json()
       if (data && data.display_name) {
         const location: Location = {
-          id: `${latitude}-${longitude}`,
+          id: String(data.place_id || `${latitude}-${longitude}`), // Ensure it's always a string
           name: data.name || data.display_name.split(",")[0] || "Ubicación seleccionada",
           latitude,
           longitude,
           address: data.display_name,
         }
-        setSelectedLocation(location)
+        updateSelectedLocation(location)
         setSearchQuery(data.display_name)
         setHasSelectedFromSuggestion(true)
       }
@@ -441,187 +523,221 @@ export function LocationPickerScreen() {
         longitude,
         address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
       }
-      setSelectedLocation(location)
+      updateSelectedLocation(location)
       setSearchQuery(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
       setHasSelectedFromSuggestion(true)
     }
   }
 
   const handleNext = () => {
+    // Save selected location and radius to the store
     if (selectedLocation) {
-      Alert.alert("Ubicación seleccionada", selectedLocation.address)
-      // navigation.navigate('NextScreen', { location: selectedLocation })
+      requestStore.setLocation(selectedLocation)
+      requestStore.setRadiusKm(radiusKm)
     }
+
+    navigation.navigate("SchedulePickerScreen" as any)
   }
 
   const renderSuggestion = ({ item }: { item: NominatimResult }) => {
     const mainText = item.name || item.display_name.split(",")[0]
     const secondaryText = item.display_name.split(",").slice(1).join(",").trim()
     return (
-      <TouchableOpacity style={$suggestionItem} onPress={() => handleSuggestionPress(item)}>
-        <Text style={$suggestionMain}>{mainText}</Text>
-        <Text style={$suggestionSecondary}>{secondaryText}</Text>
+      <TouchableOpacity style={themed($suggestionItem)} onPress={() => handleSuggestionPress(item)}>
+        <Text style={themed(texts.body)}>{mainText}</Text>
+        <Text style={themed(texts.bodySmall)}>{secondaryText}</Text>
       </TouchableOpacity>
     )
   }
-
+  
+  const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
+  
   return (
     <Screen
       preset="fixed"
-      contentContainerStyle={[$container, $bottomContainerInsets]}
+      contentContainerStyle={[themed(containers.screen)]}
       backgroundColor={themed($screenBackground)}
     >
-      <Text preset="heading" text="Selecciona una ubicación" style={$heading} />
-
-      {/* Search Bar with Clear Button */}
-      <View style={$searchContainer}>
-        <View style={$searchInputContainer}>
-          <TextInput
-            style={$searchInput}
-            placeholder="Buscar ubicación en Argentina..."
-            value={searchQuery}
-            onChangeText={handleSearchInputChange}
-            onFocus={handleSearchFocus}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity style={$clearButton} onPress={handleClearSearch}>
-              <Text style={$clearButtonText}>×</Text>
-            </TouchableOpacity>
-          )}
+      
+      <ScrollView 
+        style={themed($scrollView)}
+        contentContainerStyle={themed($scrollContent)}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={themed($header)}>
+          <Text style={themed(texts.heading)}>
+            ¿Por dónde?
+          </Text>                      
         </View>
 
-        {/* Suggestions List */}
-        {showSuggestions && suggestions.length > 0 && (
-          <View style={$suggestionsContainer}>
-            <FlatList
-              data={suggestions}
-              renderItem={renderSuggestion}
-              keyExtractor={(item) => item.place_id}
-              style={$suggestionsList}
-              keyboardShouldPersistTaps="handled"
+        {/* Search Bar with Clear Button */}
+        <View style={themed($searchContainer)}>
+          <View style={themed($searchInputContainer)}>
+            <TextInput
+              style={[themed(inputs.base), themed(inputs.text)]}
+              placeholder="Buscar ubicación en Argentina..."
+              placeholderTextColor={themed(texts.caption).color}
+              value={searchQuery}
+              onChangeText={handleSearchInputChange}
+              onFocus={handleSearchFocus}
             />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity style={themed($clearButton)} onPress={handleClearSearch}>
+                <Text style={themed($clearButtonText)}>×</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* Custom OpenStreetMap */}
+        {renderMap()}
+
+        {/* Radius Slider */}
+        {selectedLocation && (
+          <View style={[themed(containers.section), themed($radiusContainer)]}>
+            <Text style={themed(texts.label)}>Radio de búsqueda: {radiusKm} km</Text>
+
+            {radiusKm > 10 ? (
+              <Text style={themed(texts.caption)}>Capaz que me tomo un avión</Text>
+            ) : radiusKm > 5 ? (
+              <Text style={themed(texts.caption)}>Viajo en tren también</Text>
+            ) : radiusKm > 1 ? (
+              <Text style={themed(texts.caption)}>Viajo en bondi</Text>
+            ) : null}
+
+            <Slider 
+              size="$2" 
+              width={"100%"} 
+              value={[radiusKm]} 
+              onValueChange={(value) => updateRadius(value[0])}
+              max={15} 
+              min={1}
+              step={1}
+            >
+              <Slider.Track>
+                <Slider.TrackActive />
+              </Slider.Track>
+              <Slider.Thumb circular index={0} />
+            </Slider>
           </View>
         )}
-      </View>
 
-      {/* Custom OpenStreetMap */}
-      {renderMap()}
+        {/* Selected Location Info */}
+        {selectedLocation && (
+          <View style={[themed(containers.card), themed($selectedLocationContainer)]}>
+            <Text style={themed(texts.caption)}>Ubicación seleccionada:</Text>
+            <Text style={themed(texts.title)}>{selectedLocation.name}</Text>
+            <Text style={themed(texts.bodySmall)}>{selectedLocation.address}</Text>
+          </View>
+        )}
 
-      {/* Selected Location Info */}
-      {selectedLocation && (
-        <View style={$selectedLocationContainer}>
-          <Text style={$selectedLocationTitle}>Ubicación seleccionada:</Text>
-          <Text style={$selectedLocationName}>{selectedLocation.name}</Text>
-          <Text style={$selectedLocationAddress}>{selectedLocation.address}</Text>
+        {/* Next Button */}
+        <Button
+          text="Siguiente"
+          style={[
+            themed(buttons.primary),
+            themed($nextButton),
+            !selectedLocation && themed(buttons.primaryDisabled)
+          ]}
+          textStyle={[
+            themed(buttonTexts.primary),
+            !selectedLocation && themed(buttonTexts.primaryDisabled)
+          ]}
+          disabled={!selectedLocation}
+          onPress={handleNext}
+        />
+      </ScrollView>
+
+      {/* Suggestions List - Outside ScrollView to avoid nesting VirtualizedList */}
+      {showSuggestions && suggestions.length > 0 && (
+        <View style={[themed(containers.card), themed(shadows.medium), themed($suggestionsOverlay)]}>
+          <FlatList
+            data={suggestions}
+            renderItem={renderSuggestion}
+            keyExtractor={(item) => String(item.place_id)}
+            style={themed($suggestionsList)}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          />
         </View>
       )}
-
-      {/* Next Button */}
-      <Button
-        text="Siguiente"
-        style={[$nextButton, selectedLocation ? $nextButtonEnabled : $nextButtonDisabled]}
-        textStyle={[$nextButtonText, selectedLocation ? $nextButtonTextEnabled : $nextButtonTextDisabled]}
-        disabled={!selectedLocation}
-        onPress={handleNext}
-      />
     </Screen>
   )
-}
+})
 
-// Styles
-const $container = { padding: 20 }
-const $bottomContainerInsets = {}
+// Styled components using theming
 const $screenBackground = "background"
 
-const $heading = {
-  marginBottom: 20,
-  textAlign: "center" as const,
-}
-
-const $searchContainer = {
-  position: "relative" as const,
-  zIndex: 1000,
-  marginBottom: 16,
-}
-
-const $searchInputContainer = {
-  position: "relative" as const,
-  flexDirection: "row" as const,
-  alignItems: "center" as const,
-}
-
-const $searchInput = {
+const $scrollView = (theme: any): ViewStyle => ({
   flex: 1,
-  height: 50,
-  borderWidth: 1,
-  borderColor: "#ddd",
-  borderRadius: 8,
-  paddingHorizontal: 16,
-  paddingRight: 50, // Make room for clear button
-  backgroundColor: "#fff",
-  fontSize: 16,
-}
+})
 
-const $clearButton = {
-  position: "absolute" as const,
+const $scrollContent = (theme: any): ViewStyle => ({
+  padding: theme.spacing.lg,
+})
+
+const $header = (theme: any): ViewStyle => ({
+  alignItems: "center",
+  marginBottom: theme.spacing.lg,
+})
+
+const $searchContainer = (theme: any): ViewStyle => ({
+  position: "relative",
+  zIndex: 100,
+  marginBottom: theme.spacing.md,
+})
+
+const $searchInputContainer = (theme: any): ViewStyle => ({
+  position: "relative",
+  flexDirection: "row",
+  alignItems: "center",
+})
+
+const $clearButton = (theme: any): ViewStyle => ({
+  position: "absolute",
   right: 12,
   width: 30,
   height: 30,
   borderRadius: 15,
-  backgroundColor: "#E5E5EA",
-  justifyContent: "center" as const,
-  alignItems: "center" as const,
-}
+  backgroundColor: theme.colors.backgroundMuted,
+  justifyContent: "center",
+  alignItems: "center",
+})
 
-const $clearButtonText = {
+const $clearButtonText = (theme: any): TextStyle => ({
   fontSize: 18,
-  color: "#8E8E93",
-  fontWeight: "bold" as const,
-}
+  color: theme.colors.textDim,
+  fontWeight: "bold",
+})
 
-const $suggestionsContainer = {
-  position: "absolute" as const,
-  top: 50,
-  left: 0,
-  right: 0,
-  backgroundColor: "#fff",
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: "#ddd",
-  borderTopWidth: 0,
+const $suggestionsOverlay = (theme: any): ViewStyle => ({
+  position: "absolute",
+  top: 100, // Position below search bar
+  left: theme.spacing.lg,
+  right: theme.spacing.lg,
   maxHeight: 200,
-}
+  zIndex: 1000,
+  elevation: 10,
+})
 
-const $suggestionsList = {
+const $suggestionsList = (theme: any): ViewStyle => ({
   maxHeight: 200,
-}
+})
 
-const $suggestionItem = {
-  padding: 12,
+const $suggestionItem = (theme: any): ViewStyle => ({
+  padding: theme.spacing.sm,
   borderBottomWidth: 1,
-  borderBottomColor: "#eee",
-}
+  borderBottomColor: theme.colors.border,
+})
 
-const $suggestionMain = {
-  fontSize: 16,
-  fontWeight: "500" as const,
-  color: "#333",
-}
-
-const $suggestionSecondary = {
-  fontSize: 14,
-  color: "#666",
-  marginTop: 2,
-}
-
-const $mapContainer = {
+const $mapContainer = (theme: any): ViewStyle => ({
   height: 300,
-  marginBottom: 16,
-  borderRadius: 8,
-  overflow: "hidden" as const,
-  position: "relative" as const,
-  backgroundColor: "#f0f0f0",
-}
+  marginBottom: theme.spacing.md,
+  borderRadius: theme.spacing.sm,
+  overflow: "hidden",
+  position: "relative",
+  backgroundColor: theme.colors.backgroundMuted,
+})
 
 const $mapTouchable = {
   flex: 1,
@@ -636,8 +752,8 @@ const $tilesContainer = {
   bottom: 0,
 }
 
-const $crosshair = {
-  position: "absolute" as const,
+const $crosshair = (theme: any): ViewStyle => ({
+  position: "absolute",
   left: "50%" as DimensionValue,
   top: "50%" as DimensionValue,
   width: 20,
@@ -645,121 +761,80 @@ const $crosshair = {
   marginLeft: -10,
   marginTop: -10,
   borderWidth: 2,
-  borderColor: "#007AFF",
+  borderColor: theme.colors.tint,
   borderRadius: 10,
-  backgroundColor: "rgba(0, 122, 255, 0.3)",
-}
+  backgroundColor: `${theme.colors.tint}33`, // 20% opacity
+})
 
-const $mapInfo = {
-  position: "absolute" as const,
+const $mapInfo = (theme: any): ViewStyle => ({
+  position: "absolute",
   bottom: 10,
   left: 10,
   right: 50,
   backgroundColor: "rgba(0, 0, 0, 0.7)",
-  padding: 8,
-  borderRadius: 6,
-}
-
-const $mapInfoText = {
-  color: "#fff",
-  fontSize: 12,
-  textAlign: "center" as const,
-}
+  padding: theme.spacing.xs,
+  borderRadius: theme.spacing.xs,
+})
 
 const $markerContainer = {
   position: "absolute" as const,
 }
 
-const $marker = {
+const $marker = (theme: any): ViewStyle => ({
   width: 24,
   height: 24,
-  backgroundColor: "#FF3B30",
+  backgroundColor: theme.colors.error,
   borderRadius: 12,
   borderWidth: 3,
-  borderColor: "#fff",
+  borderColor: theme.colors.background,
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.3,
   shadowRadius: 4,
   elevation: 5,
-}
+})
 
-const $zoomControls = {
-  position: "absolute" as const,
-  right: 10,
-  top: 10,
-  backgroundColor: "rgba(255, 255, 255, 0.9)",
-  borderRadius: 8,
+const $radiusOutlineMarker = (theme: any): ViewStyle => ({
+  position: "absolute",
+  backgroundColor: `${theme.colors.error}40`, // 25% opacity
+  borderWidth: 2,
+  borderColor: `${theme.colors.error}80`, // 50% opacity
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
+  shadowOpacity: 0.3,
   shadowRadius: 4,
-  elevation: 3,
-}
+  elevation: 5,
+})
 
-const $zoomButton = {
+const $radiusContainer = (theme: any): ViewStyle => ({
+  marginBottom: theme.spacing.md,
+})
+
+const $zoomControls = (theme: any): ViewStyle => ({
+  position: "absolute",
+  right: 10,
+  top: 10,
+  padding: 0,
+  margin: 0,
+})
+
+const $zoomButton = (theme: any): ViewStyle => ({
   width: 40,
   height: 40,
-  justifyContent: "center" as const,
-  alignItems: "center" as const,
-  borderBottomColor: "#eee",
-}
+  justifyContent: "center",
+  alignItems: "center",
+})
 
-const $zoomButtonText = {
+const $zoomButtonText = (theme: any): TextStyle => ({
   fontSize: 20,
-  fontWeight: "600" as const,
-  color: "#007AFF",
-}
+  fontWeight: "600",
+  color: theme.colors.tint,
+})
 
-const $selectedLocationContainer = {
-  backgroundColor: "#f8f9fa",
-  padding: 16,
-  borderRadius: 8,
-  marginBottom: 20,
-}
+const $selectedLocationContainer = (theme: any): ViewStyle => ({
+  marginBottom: theme.spacing.lg,
+})
 
-const $selectedLocationTitle = {
-  fontSize: 14,
-  fontWeight: "600" as const,
-  color: "#666",
-  marginBottom: 4,
-}
-
-const $selectedLocationName = {
-  fontSize: 18,
-  fontWeight: "600" as const,
-  color: "#333",
-  marginBottom: 4,
-}
-
-const $selectedLocationAddress = {
-  fontSize: 14,
-  color: "#666",
-}
-
-const $nextButton = {
-  marginTop: 20,
-  height: 50,
-  borderRadius: 8,
-}
-
-const $nextButtonEnabled = {
-  backgroundColor: "#007AFF",
-}
-
-const $nextButtonDisabled = {
-  backgroundColor: "#E5E5EA",
-}
-
-const $nextButtonText = {
-  fontSize: 18,
-  fontWeight: "600" as const,
-}
-
-const $nextButtonTextEnabled = {
-  color: "#fff",
-}
-
-const $nextButtonTextDisabled = {
-  color: "#8E8E93",
-}
+const $nextButton = (theme: any): ViewStyle => ({
+  marginTop: theme.spacing.lg,
+})
