@@ -1,7 +1,7 @@
 // MainNavigator.tsx
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, GroupScreen, LocationPickerScreen, SchedulePickerScreen, ActivityPickerScreen, RequestConfirmationScreen } from "@/screens"
+import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, ActivityRequestsScreen, GroupScreen, LocationPickerScreen, SchedulePickerScreen, ActivityPickerScreen, RequestConfirmationScreen } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
@@ -13,6 +13,7 @@ import { SuggestionScreen } from "@/screens/SuggestionScreen"
 export type MainTabParamList = {
   HomeScreen: undefined
   SearchScreen: undefined
+  ActivityRequestsScreen: undefined
   ProfileScreen: undefined
 }
 
@@ -85,6 +86,14 @@ function TabNavigator() {
           tabBarIcon: ({ color, size }) => <AntDesign name="find" size={28} color="#fff" />,
           tabBarLabel: "",
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
+        }}
+      />
+      <Tab.Screen
+        name="ActivityRequestsScreen"
+        component={ActivityRequestsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
+          tabBarLabel: "Búsquedas",
         }}
       />
       <Tab.Screen

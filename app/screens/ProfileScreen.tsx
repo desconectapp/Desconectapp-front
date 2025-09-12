@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  Modal,
 } from "react-native"
 import { Screen, TextField, Button, Text, AutoImage } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
@@ -25,9 +24,7 @@ import { useEditProfile, useProfile } from "@/hooks/Users"
 import { useStores } from "@/models"
 import { Pressable } from "react-native"
 
-// import defaultAvatar from "../../assets/images/default-avatar.png"
-import defaultAvatar from "../../assets/images/logo.png"
-import { ActivityRequestsList } from "@/components/Custom/ActivitiesRequestList"
+const defaultAvatar = require("../../assets/images/default-avatar.png")
 
 const { width, height } = Dimensions.get("window")
 
@@ -45,13 +42,9 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
-  const [modalVisible, setModalVisible] = useState(false)
-
   const { data: profile } = useProfile()
   const { profileImage, handleImagePicker } = useImagePicker()
   const { mutateAsync: editProfileMutateAsync } = useEditProfile()
-
-  const modalStyles = createModalStyles(theme)
 
   const { sessionStore } = useStores()
 
@@ -104,7 +97,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
     <Screen
       preset="scroll"
       contentContainerStyle={[$container, $bottomContainerInsets]}
-      backgroundColor={themed($screenBackground)}
+      backgroundColor={theme.colors.background}
     >
       <Text preset="heading" style={themed({ fontSize: 24, fontWeight: "bold" })}>
         My Profile
@@ -213,33 +206,6 @@ export const ProfileScreen = observer(function ProfileScreen() {
           </View>
         )}
       </Pressable>
-
-      <ActivityRequestsList onItemPress={(item) => setModalVisible(true)} />
-
-      <Modal
-        {...modalAnimationConfig}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={modalStyles.modalOverlay}>
-          <View style={modalStyles.modalContainer}>
-            <View style={modalStyles.modalHeader}>
-              <Text style={themed(modalStyles.modalTitle)}>Are you sure you want cancel this request?</Text>
-              <TouchableOpacity
-                style={modalStyles.modalCloseButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={modalStyles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={modalStyles.modalBody}>
-              <Pressable style={modalStyles.modalPrimaryButton} onPress={() => {}}>
-                <Text style={modalStyles.modalPrimaryButtonText}>Cancel</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       <Pressable
         onPress={() => logOut()}
