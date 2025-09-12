@@ -185,47 +185,56 @@ export function SearchScreen() {
                 <Text style={themed(texts.error)}>Error al cargar actividades</Text>
               </View>
             ) : (
-              <FlatList
-                data={filteredActivities}
-                renderItem={renderActivityItem}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carouselContent}
-                onEndReached={loadMoreActivities}
-                onEndReachedThreshold={0.8}
-                ListEmptyComponent={
-                  searchQuery ? (
-                    <View style={[containers.centered, styles.emptyContainer]}>
-                      <Text style={themed(texts.bodySmall)}>
-                        No se encontró "{searchQuery}"
-                      </Text>
-                      <TouchableOpacity
-                        style={[themed(buttons.secondary), styles.suggestButton]}
-                        onPress={() => {
-                          const customActivityObj: Activity = {
-                            id: -1,
-                            name: searchQuery.trim(),
-                            icon: "✨"
-                          }
-                          setSelectedActivity(customActivityObj)
-                          setSearchQuery("")
-                        }}
-                      >
-                        <Text style={themed(buttonTexts.secondary)}>
-                          ✨ Agregar "{searchQuery}" como actividad
+              <View style={{ position: 'relative' }}>
+                <FlatList
+                  data={filteredActivities}
+                  renderItem={renderActivityItem}
+                  keyExtractor={(item) => item.id.toString()}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.carouselContent}
+                  onEndReached={loadMoreActivities}
+                  onEndReachedThreshold={0.8}
+                  ListEmptyComponent={
+                    searchQuery ? (
+                      <View style={[containers.centered, styles.emptyContainer]}>
+                        <Text style={themed(texts.bodySmall)}>
+                          No se encontró "{searchQuery}"
                         </Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={[containers.centered, styles.emptyContainer]}>
-                      <Text style={themed(texts.bodySmall)}>
-                        No hay actividades disponibles
-                      </Text>
-                    </View>
-                  )
-                }
-              />
+                        <TouchableOpacity
+                          style={[themed(buttons.secondary), styles.suggestButton]}
+                          onPress={() => {
+                            const customActivityObj: Activity = {
+                              id: -1,
+                              name: searchQuery.trim(),
+                              icon: "✨"
+                            }
+                            setSelectedActivity(customActivityObj)
+                            setSearchQuery("")
+                          }}
+                        >
+                          <Text style={themed(buttonTexts.secondary)}>
+                            ✨ Agregar "{searchQuery}" como actividad
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View style={[containers.centered, styles.emptyContainer]}>
+                        <Text style={themed(texts.bodySmall)}>
+                          No hay actividades disponibles
+                        </Text>
+                      </View>
+                    )
+                  }
+                />
+                {filteredActivities.length > 3 && (
+                  <View style={styles.scrollHintContainer}>
+                    <Text style={[themed(texts.caption), styles.scrollHint]}>
+                      ➡️ Desliza para ver más
+                    </Text>
+                  </View>
+                )}
+              </View>
             )}
           </View>
 
@@ -371,5 +380,24 @@ const styles = StyleSheet.create({
   },
   searchButton: {
     marginTop: 8,
+  },
+  activitiesSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  scrollHint: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  scrollHintContainer: {
+    position: "absolute",
+    bottom: -20,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
   },
 })

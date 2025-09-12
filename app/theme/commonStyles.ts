@@ -208,6 +208,12 @@ export const texts = {
     marginTop: theme.spacing.xs,
   }),
 
+  warning: (theme: any): TextStyle => ({
+    fontSize: 14,
+    color: "#FFC107",
+    marginTop: theme.spacing.xs,
+  }),
+
   center: {
     textAlign: "center",
   } as TextStyle,

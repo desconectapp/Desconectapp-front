@@ -36,10 +36,10 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
   // Add slider states with proper initialization
   const [maxParticipants, setMaxParticipants] = useState<number>(requestStore.maxParticipants || 5)
   const [minParticipants, setMinParticipants] = useState<number>(
-  requestStore.minParticipants && requestStore.minParticipants >= 3
-    ? requestStore.minParticipants
-    : 3
-)
+    requestStore.minParticipants && requestStore.minParticipants >= 3
+      ? requestStore.minParticipants
+      : 3,
+  )
 
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
 
@@ -53,14 +53,27 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
         const activities = activitiesOrUpdater(selectedActivities)
         console.log("Function updater, result length:", activities.length)
 
-        // Simple single selection logic
+        // Allow deselection and single selection logic
         if (Array.isArray(activities)) {
-          if (activities.length <= 1) {
+          if (activities.length === 0) {
+            // Allow complete deselection
+            setSelectedActivities([])
+          } else if (activities.length === 1) {
+            // Single selection
             setSelectedActivities(activities)
           } else {
+            // Multiple items - check if we're adding or removing
             const lastItem = activities[activities.length - 1]
-            console.log("Multiple items, keeping last item")
-            setSelectedActivities([lastItem])
+            const isAlreadySelected = selectedActivities.some((item) => item.id === lastItem.id)
+
+            if (isAlreadySelected) {
+              // If clicking on already selected item, deselect it
+              setSelectedActivities([])
+            } else {
+              // Otherwise, select only the new item
+              console.log("Multiple items, keeping last item")
+              setSelectedActivities([lastItem])
+            }
           }
         }
       } else {
@@ -69,12 +82,25 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
         console.log("Direct array, length:", activities.length)
 
         if (Array.isArray(activities)) {
-          if (activities.length <= 1) {
+          if (activities.length === 0) {
+            // Allow complete deselection
+            setSelectedActivities([])
+          } else if (activities.length === 1) {
+            // Single selection
             setSelectedActivities(activities)
           } else {
+            // Multiple items - check if we're adding or removing
             const lastItem = activities[activities.length - 1]
-            console.log("Multiple items, keeping last item")
-            setSelectedActivities([lastItem])
+            const isAlreadySelected = selectedActivities.some((item) => item.id === lastItem.id)
+
+            if (isAlreadySelected) {
+              // If clicking on already selected item, deselect it
+              setSelectedActivities([])
+            } else {
+              // Otherwise, select only the new item
+              console.log("Multiple items, keeping last item")
+              setSelectedActivities([lastItem])
+            }
           }
         }
       }
@@ -86,12 +112,18 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
     try {
       // Save activities to the store
       if (selectedActivities.length > 0) {
-        requestStore.setActivity(selectedActivities[0])
+        // Convert activity name to lowercase before saving
+        const activityToSave = {
+          ...selectedActivities[0],
+          name: selectedActivities[0].name.toLowerCase(),
+        }
+
+        requestStore.setActivity(activityToSave)
 
         // Save participants data to the store
         requestStore.setMinParticipants(minParticipants)
         requestStore.setMaxParticipants(maxParticipants)
-        console.log("selecting activities:", selectedActivities[0])
+        console.log("selecting activities:", activityToSave)
         // Navigate to the next screen using proper navigation structure
         navigation.navigate("LocationPickerScreen" as any)
       } else {
@@ -141,47 +173,45 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
         <View style={styles.sliderContainer}>
           <Text style={styles.sliderLabel}>Mínimo integrantes: {minParticipants}</Text>
           <Slider
-  size="$1.5"
-  width="95%"
-  value={[minParticipants]}
-  onValueChange={handleMinParticipantsChange}
-  max={10}
-  min={3}
-  step={1}
-  animation="quick"
->
-  <Slider.Track>
-    <Slider.TrackActive animation="quick" />
-  </Slider.Track>
-  <Slider.Thumb circular index={0} animation="bouncy" />
-</Slider>
-
+            size="$1.5"
+            width="95%"
+            value={[minParticipants]}
+            onValueChange={handleMinParticipantsChange}
+            max={10}
+            min={3}
+            step={1}
+            animation="quick"
+          >
+            <Slider.Track>
+              <Slider.TrackActive animation="quick" />
+            </Slider.Track>
+            <Slider.Thumb circular index={0} animation="bouncy" />
+          </Slider>
         </View>
 
         <View style={styles.sliderContainer}>
           <Text style={styles.sliderLabel}>Máximo integrantes: {maxParticipants}</Text>
           <Slider
-  size="$1.5"
-  width="95%"
-  value={[maxParticipants]}
-  onValueChange={handleMaxParticipantsChange}
-  max={10}
-  min={3}
-  step={1}
-  animation="quick"
->
-  <Slider.Track>
-    <Slider.TrackActive animation="quick" />
-  </Slider.Track>
-  <Slider.Thumb circular index={0} animation="bouncy" />
-</Slider>
-
+            size="$1.5"
+            width="95%"
+            value={[maxParticipants]}
+            onValueChange={handleMaxParticipantsChange}
+            max={10}
+            min={3}
+            step={1}
+            animation="quick"
+          >
+            <Slider.Track>
+              <Slider.TrackActive animation="quick" />
+            </Slider.Track>
+            <Slider.Thumb circular index={0} animation="bouncy" />
+          </Slider>
         </View>
       </View>
 
       {/* Next Button */}
       <Button
-        text="Siguiente"
+        text={selectedActivities.length > 0 ? "Siguiente" : "Selecciona una actividad"}
         style={[
           $nextButton,
           selectedActivities.length > 0 ? $nextButtonEnabled : $nextButtonDisabled,
@@ -268,4 +298,3 @@ const $nextButtonTextEnabled = {
 const $nextButtonTextDisabled = {
   color: "#8E8E93",
 }
-
