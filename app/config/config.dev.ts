@@ -18,9 +18,9 @@ const isEmulator = Constants.isDevice === false
 // For iOS, use localhost
 const getApiUrl = () => {
   if (isAndroid) {
-    return isEmulator ? "http://10.0.2.2:8080" : "http://192.168.0.31:8080"
+    return isEmulator ? "http://10.0.2.2:8085" : "http://192.168.0.31:8085"
   }
-  return "http://localhost:8080"
+  return "http://localhost:8085"
 }
 
 export default {

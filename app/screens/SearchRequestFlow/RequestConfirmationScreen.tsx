@@ -207,3 +207,17 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
     color: "#8E8E93",
   }
   
+// al escribir actividad, si el back recibe -1, 
+// preguntarle a una ia si ya existe
+// entre las que tenemos. Si no, agregarla a la lista
+// (tambien pedirle emoji)
+// corregir: que me sugiera crearla cuando ya tenga alguna seleccionada
+// tambien deberia poder deseleccionarla
+// agregar una flechita en el slider para mostrar que se pueden ver mas
+// pasar todo a minuscula
+// 
+// aclararle a la ia que si no existe lo mismo, pero hay algo parecido,
+// me quiero quedar con la actividad mas especifica (ej: si busco
+// ceramica pero ya existe manualidades, me quiero quedar con ceramica)
+// 
+
