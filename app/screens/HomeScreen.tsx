@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   View,
   type ViewStyle,
@@ -18,18 +18,13 @@ import { useNavigation } from "@react-navigation/native"
 import { PhotoGallerySlider, type PhotoItem } from "@/components/Custom/PhotoGallerySlider"
 import { useGroups } from "@/hooks/Groups"
 import { spacing } from "@/theme"
+import { GroupFront } from "./GroupsFront.types"
+import { Group } from "@/services/groups/Groups.types"
+
+
 
 const { width } = Dimensions.get("window")
 
-interface Group {
-  id: string
-  name: string
-  lastMessage?: string
-  icon?: string
-  memberCount?: number
-  activity?: string
-  unreadCount?: number
-}
 
 const mockSuggestions: PhotoItem[] = [
   {
@@ -76,18 +71,22 @@ const mockSuggestions: PhotoItem[] = [
   },
 ]
 
-const loadingGroups = Array.from({ length: 3 }, (_, i) => ({
-  id: `${i}`,
-  name: "",
-  icon: "⌛️",
-}))
-
 export const HomeScreen = observer(function HomeScreen() {
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const navigation = useNavigation<AppStackScreenProps<"HomeScreen">["navigation"]>()
-  const { data: groups, isLoading, refetch } = useGroups()
+  const { data: paginatedGroups, isLoading, refetch } = useGroups()
   const [refreshing, setRefreshing] = useState(false)
+  const [allGroups, setAllGroups] = useState<Group[]>([])
+
+  useEffect(() => {
+    if (paginatedGroups?.groups) {
+      setAllGroups(paginatedGroups.groups)
+    }
+  }, [paginatedGroups])
+
+  console.log("Paginated Groups:", paginatedGroups)
+  console.log("All Groups State:", allGroups)
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -98,7 +97,13 @@ export const HomeScreen = observer(function HomeScreen() {
     }
   }, [refetch])
 
-  const renderGroupCard = ({ item }: { item: Group }) => (
+  const loadMoreGroups = useCallback(() => {
+    if (paginatedGroups?.has_more && !isLoading) {
+      refetch() // assumes your hook handles pagination internally
+    }
+  }, [paginatedGroups, isLoading, refetch])
+
+  const renderGroupCard = ({ item }: { item: GroupFront }) => (
     <TouchableOpacity
       style={themed($groupCard)}
       onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
@@ -141,7 +146,11 @@ export const HomeScreen = observer(function HomeScreen() {
   )
 
   const renderGroupsSection = () => {
-    if (!isLoading && !groups?.length) {
+    if (isLoading && allGroups.length === 0) {
+      return <Text>Loading groups...</Text>
+    }
+
+    if (!isLoading && allGroups.length === 0) {
       return (
         <View style={$emptyContainer}>
           <Text style={$emptyIcon}>👥</Text>
@@ -151,75 +160,71 @@ export const HomeScreen = observer(function HomeScreen() {
       )
     }
 
-    const limitedGroups = groups ? groups.slice(0, 3) : []
+    const limitedGroups = allGroups.slice(0, 3) // show only first 3
 
     return (
       <View style={$groupsSection}>
         <View style={$sectionHeader}>
           <Text style={themed($sectionTitle)}>My Groups</Text>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={themed($seeAllText)}>See All</Text>
-          </TouchableOpacity>
+          {allGroups.length > 3 && ( // show See All only if there are more
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate("MyGroupsScreen")}
+            >
+              <Text style={themed($seeAllText)}>See All</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <FlatList
-          data={isLoading ? loadingGroups : limitedGroups}
+          data={limitedGroups}
           renderItem={renderGroupCard}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={$groupsList}
-          scrollEnabled={false}
+          scrollEnabled={false} // fixed, no scrolling for just 3 items
         />
       </View>
     )
   }
 
+
   return (
-    <View style={themed($screenBackground)}>
-      <FlatList
-        data={[{ key: "content" }]}
-        renderItem={() => (
-          <View style={[$container, $topInsets]}>
-            <View style={$header}>
-              <View style={$headerContent}>
-                <Text style={themed($greetingText)}>DesconectApp</Text>
-                <Text style={themed($welcomeText)}>Ready to connect?</Text>
-              </View>
+    <FlatList
+      data={[{ key: "content" }]}
+      renderItem={() => (
+        <View style={[$container, $topInsets]}>
+          {/* Header */}
+          <View style={$header}>{/* ... header content ... */}</View>
 
-              <TouchableOpacity style={themed($profileButton)} activeOpacity={0.8}>
-                <View style={themed($profileAvatar)}>
-                  <Text style={themed($profileAvatarText)}>U</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
+          {/* Groups */}
+          {renderGroupsSection()}
 
-            {renderGroupsSection()}
-
-            <View style={$suggestionsSection}>
-              <PhotoGallerySlider
-                onItemPress={(item) => {
-                  navigation.navigate("SuggestionScreen", { suggestionId: item.id })
-                }}
-                data={mockSuggestions}
-                title="Discover New Groups"
-                itemWidth={width * 0.42}
-              />
-            </View>
+          {/* Suggestions */}
+          <View style={$suggestionsSection}>
+            <PhotoGallerySlider
+              onItemPress={(item) =>
+                navigation.navigate("SuggestionScreen", { suggestionId: item.id })
+              }
+              data={mockSuggestions}
+              title="Discover New Groups"
+              itemWidth={width * 0.42}
+            />
           </View>
-        )}
-        keyExtractor={(item) => item.key}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.tint}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+        </View>
+      )}
+      keyExtractor={(item) => item.key}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.tint} />
+      }
+      onEndReached={loadMoreGroups}
+      onEndReachedThreshold={0.5}
+      showsVerticalScrollIndicator={false}
+    />
   )
 })
+
+
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
@@ -237,46 +242,6 @@ const $header: ViewStyle = {
   marginBottom: spacing.xl,
   paddingTop: spacing.md,
 }
-
-const $headerContent: ViewStyle = {
-  flex: 1,
-}
-
-const $greetingText = (theme: any): TextStyle => ({
-  fontSize: 28,
-  lineHeight: 34,
-  fontWeight: "bold",
-  color: theme.colors.text,
-  marginBottom: spacing.xs,
-})
-
-const $welcomeText = (theme: any): TextStyle => ({
-  fontSize: 16,
-  color: theme.colors.textDim,
-})
-
-const $profileButton = (theme: any): ViewStyle => ({
-  shadowColor: theme.colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 3,
-})
-
-const $profileAvatar = (theme: any): ViewStyle => ({
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  backgroundColor: theme.colors.tint,
-  justifyContent: "center",
-  alignItems: "center",
-})
-
-const $profileAvatarText = (theme: any): TextStyle => ({
-  color: theme.colors.tintInverse,
-  fontSize: 18,
-  fontWeight: "600",
-})
 
 const $groupsSection: ViewStyle = {
   marginBottom: spacing.xl,

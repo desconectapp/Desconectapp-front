@@ -16,7 +16,7 @@ export interface GroupData {
 }
 
 export interface Group {
-  id: string
+  id: number
   name: string
   description: string
   created_at: string
@@ -24,4 +24,9 @@ export interface Group {
   icon: string
   location: string
   members_count: number
+}
+
+export interface PaginatedUserGroups {
+  groups: Group[]
+  has_more: boolean
 }

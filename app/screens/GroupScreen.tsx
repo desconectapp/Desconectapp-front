@@ -2,41 +2,38 @@ import { observer } from "mobx-react-lite"
 import { useState, useRef } from "react"
 import {
   View,
-  type ViewStyle,
-  type TextStyle,
   TouchableOpacity,
   FlatList,
   TextInput,
   Modal,
   Image,
-  type ImageStyle,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
+  type ViewStyle,
+  type TextStyle,
+  type ImageStyle,
 } from "react-native"
 import { Button, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
-import { useNavigation } from "@react-navigation/native"
+
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import { MessageBubble, Message } from "@/components/Custom/Message"
 import { useExitGroup, useGroupById } from "@/hooks/Groups"
 
+import { useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import { AppStackParamList } from "@/navigators/AppNavigator"
+
+type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
+
+
 interface Member {
   id: string
   name: string
   picture?: string
-}
-
-interface GroupData {
-  id: string
-  name: string
-  description: string
-  created_at: string
-  activity: string
-  icon: string
-  location: string
-  members: Member[]
 }
 
 const mockMessages: Message[] = [
@@ -80,7 +77,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const [inputText, setInputText] = useState("")
   const [showMembers, setShowMembers] = useState(false)
   const flatListRef = useRef<FlatList>(null)
-  const navigation = useNavigation()
+  const navigation = useNavigation<NavigationProp>()
   const { showToast } = useAppToast()
 
   const { data: groupData, isLoading } = useGroupById(groupId)
@@ -106,17 +103,17 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   }
 
   const renderMember = ({ item }: { item: Member }) => (
-    <View style={themed($memberItem)}>
-      <View style={$memberAvatar}>
+    <View style={themed(themedStyles.memberItem)}>
+      <View style={styles.memberAvatar}>
         {item.picture ? (
-          <Image source={{ uri: item.picture }} style={$memberAvatarImage} />
+          <Image source={{ uri: item.picture }} style={styles.memberAvatarImage} />
         ) : (
-          <View style={themed($memberAvatarPlaceholder)}>
-            <Text style={themed($memberAvatarText)}>{item.name.charAt(0).toUpperCase()}</Text>
+          <View style={themed(themedStyles.memberAvatarPlaceholder)}>
+            <Text style={themed(themedStyles.memberAvatarText)}>{item.name.charAt(0).toUpperCase()}</Text>
           </View>
         )}
       </View>
-      <Text style={themed($memberName)}>{item.name}</Text>
+      <Text style={themed(themedStyles.memberName)}>{item.name}</Text>
     </View>
   )
 
@@ -138,35 +135,35 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   }
 
   return (
-    <View style={$container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
-        style={$container}
+        style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <View style={[$header, $topInsets, themed($headerBackground)]}>
+        <View style={[styles.header, $topInsets, themed(themedStyles.headerBackground)]}>
           <TouchableOpacity
-            style={$backButton}
+            style={styles.backButton}
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
             hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
           >
-            <Text style={themed($backButtonText)}>←</Text>
+            <Text style={themed(themedStyles.backButtonText)}>←</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={$headerInfo}
+            style={styles.headerInfo}
             onPress={() => setShowMembers(true)}
             activeOpacity={0.7}
           >
-            <Text style={$groupIcon}>{groupData.icon}</Text>
-            <View style={$headerTextContainer}>
-              <Text style={themed($groupName)}>{groupData.name}</Text>
-              <Text style={themed($memberCount)}>{groupData.members.length} members</Text>
+            <Text style={styles.groupIcon}>{groupData.icon}</Text>
+            <View style={styles.headerTextContainer}>
+              <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
+              <Text style={themed(themedStyles.memberCount)}>{groupData.members.length} members</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={$headerAction} activeOpacity={0.7}>
-            <Text style={themed($headerActionText)}>⋮</Text>
+          <TouchableOpacity style={styles.headerAction} activeOpacity={0.7}>
+            <Text style={themed(themedStyles.headerActionText)}>⋮</Text>
           </TouchableOpacity>
         </View>
 
@@ -177,15 +174,15 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             return <MessageBubble item={item} />
           }}
           keyExtractor={(item) => item.id}
-          style={$messagesList}
-          contentContainerStyle={$messagesContent}
+          style={styles.messagesList}
+          contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
-        <View style={[$inputContainer, $bottomInsets, themed($inputContainerBackground)]}>
+        <View style={[styles.inputContainer, $bottomInsets, themed(themedStyles.inputContainerBackground)]}>
           <TextInput
-            style={themed($textInput)}
+            style={themed(themedStyles.textInput)}
             value={inputText}
             onChangeText={setInputText}
             placeholder="Type a message..."
@@ -194,50 +191,50 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             maxLength={500}
           />
           <TouchableOpacity
-            style={[themed($sendButton), !inputText.trim() && themed($sendButtonDisabled)]}
+            style={[themed(themedStyles.sendButton), !inputText.trim() && themed(themedStyles.sendButtonDisabled)]}
             onPress={sendMessage}
             disabled={!inputText.trim()}
             activeOpacity={0.7}
           >
-            <Text style={themed($sendButtonText)}>→</Text>
+            <Text style={themed(themedStyles.sendButtonText)}>→</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
 
       <Modal visible={showMembers} animationType="slide" presentationStyle="pageSheet">
-        <View style={[themed($modalContainer), $topInsets]}>
+        <View style={[themed(themedStyles.modalContainer), $topInsets]}>
           <TouchableOpacity onPress={() => setShowMembers(false)} activeOpacity={0.7}>
-            <View style={themed($modalHeader)}>
-              <Text preset="heading" style={themed($modalTitle)}>
+            <View style={themed(themedStyles.modalHeader)}>
+              <Text preset="heading" style={themed(themedStyles.modalTitle)}>
                 Group Members
               </Text>
-              <Text style={themed($modalCloseText)}>Done</Text>
+              <Text style={themed(themedStyles.modalCloseText)}>Done</Text>
             </View>
           </TouchableOpacity>
 
-          <View style={themed($groupInfoSection)}>
-            <Text style={$groupIcon}>{groupData.icon}</Text>
-            <Text style={themed($modalGroupName)}>{groupData.name}</Text>
-            <Text style={themed($modalGroupLocation)}>{groupData.location}</Text>
-            <Text style={themed($modalGroupDescription)}>{groupData.description}</Text>
+          <View style={themed(themedStyles.groupInfoSection)}>
+            <Text style={styles.groupIcon}>{groupData.icon}</Text>
+            <Text style={themed(themedStyles.modalGroupName)}>{groupData.name}</Text>
+            <Text style={themed(themedStyles.modalGroupLocation)}>{groupData.location}</Text>
+            <Text style={themed(themedStyles.modalGroupDescription)}>{groupData.description}</Text>
           </View>
 
           <FlatList
             data={groupData.members}
             renderItem={renderMember}
             keyExtractor={(item) => item.id}
-            style={$membersList}
+            style={styles.membersList}
             showsVerticalScrollIndicator={false}
           />
 
-          <View style={themed($groupInfoSection)}>
+          <View style={themed(themedStyles.groupInfoSection)}>
             <Button
               text="Leave Group"
               preset="default"
-              style={$leaveButton}
-              textStyle={$leaveButtonText}
-              pressedStyle={$pressedLeaveButton}
-              pressedTextStyle={$pressedLeaveButtonText}
+              style={styles.leaveButton}
+              textStyle={styles.leaveButtonText}
+              pressedStyle={themed(themedStyles.pressedLeaveButton)}
+              pressedTextStyle={themed(themedStyles.pressedLeaveButtonText)}
               onPress={leaveGroup}
             />
           </View>
@@ -247,242 +244,211 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   )
 })
 
-const $leaveButton: ViewStyle = {
-  borderColor: "#e53935",
-  backgroundColor: "transparent",
-  borderWidth: 1.5,
-  borderRadius: 8,
+// ---------------- STYLES ----------------
+
+export const styles = StyleSheet.create({
+  container: { flex: 1 } as ViewStyle,
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  } as ViewStyle,
+
+  backButton: { paddingRight: spacing.md } as ViewStyle,
+
+  headerInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  } as ViewStyle,
+
+  groupIcon: {
+    fontSize: 32,
+    lineHeight: 36,
+    height: 36,
+    textAlignVertical: "center",
+    marginRight: spacing.sm,
+  } as TextStyle,
+
+  headerTextContainer: { flex: 1 } as ViewStyle,
+
+  headerAction: { paddingLeft: spacing.md } as ViewStyle,
+
+  messagesList: { flex: 1 } as ViewStyle,
+
+  messagesContent: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  } as ViewStyle,
+
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+  } as ViewStyle,
+
+  membersList: { flex: 1 } as ViewStyle,
+
+  memberAvatar: { marginRight: spacing.md } as ViewStyle,
+
+  memberAvatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  } as ImageStyle,
+
+  leaveButton: {
+    borderColor: "#e53935",
+    backgroundColor: "transparent",
+    borderWidth: 1.5,
+    borderRadius: 8,
+  } as ViewStyle,
+
+  leaveButtonText: {
+    color: "#e53935",
+    fontWeight: "600",
+  } as TextStyle,
+})
+
+export const themedStyles = {
+  headerBackground: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.background,
+    borderBottomColor: theme.colors.border,
+  }),
+  backButtonText: (theme: any): TextStyle => ({
+    fontSize: 24,
+    color: theme.colors.tint,
+    fontWeight: "600",
+  }),
+  groupName: (theme: any): TextStyle => ({
+    fontSize: 18,
+    fontWeight: "600",
+    color: theme.colors.text,
+  }),
+  memberCount: (theme: any): TextStyle => ({
+    fontSize: 14,
+    color: theme.colors.textDim,
+    marginTop: 2,
+  }),
+  headerActionText: (theme: any): TextStyle => ({
+    fontSize: 20,
+    color: theme.colors.textDim,
+    fontWeight: "600",
+  }),
+  inputContainerBackground: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.background,
+    borderTopColor: theme.colors.border,
+  }),
+  textInput: (theme: any): TextStyle => ({
+    flex: 1,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginRight: spacing.sm,
+    maxHeight: 100,
+    fontSize: 16,
+    color: theme.colors.text,
+    backgroundColor: theme.colors.palette.neutral100,
+  }),
+  sendButton: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.tint,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  }),
+  sendButtonDisabled: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.palette.neutral300,
+  }),
+  sendButtonText: (theme: any): TextStyle => ({
+    color: theme.colors.tintInverse,
+    fontSize: 18,
+    fontWeight: "600",
+  }),
+  modalContainer: (theme: any): ViewStyle => ({
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  }),
+  modalHeader: (theme: any): ViewStyle => ({
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  }),
+  modalTitle: (theme: any): TextStyle => ({
+    color: theme.colors.text,
+  }),
+  modalCloseText: (theme: any): TextStyle => ({
+    color: theme.colors.tint,
+    fontSize: 16,
+    fontWeight: "600",
+  }),
+  groupInfoSection: (theme: any): ViewStyle => ({
+    alignItems: "center",
+    paddingVertical: spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  }),
+  modalGroupName: (theme: any): TextStyle => ({
+    fontSize: 24,
+    fontWeight: "bold",
+    color: theme.colors.text,
+    marginTop: spacing.sm,
+  }),
+  modalGroupLocation: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.textDim,
+    marginTop: spacing.xs,
+  }),
+  modalGroupDescription: (theme: any): TextStyle => ({
+    fontSize: 14,
+    color: theme.colors.textDim,
+    textAlign: "center",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  }),
+  memberItem: (theme: any): ViewStyle => ({
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  }),
+  memberAvatarPlaceholder: (theme: any): ViewStyle => ({
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: theme.colors.tint,
+    justifyContent: "center",
+    alignItems: "center",
+  }),
+  memberAvatarText: (theme: any): TextStyle => ({
+    color: theme.colors.tintInverse,
+    fontSize: 18,
+    fontWeight: "600",
+  }),
+  memberName: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.text,
+    fontWeight: "500",
+  }),
+  pressedLeaveButton: (theme: any): ViewStyle => ({
+    backgroundColor: "rgba(229, 57, 53, 0.08)",
+  }),
+  pressedLeaveButtonText: (theme: any): TextStyle => ({
+    color: "#e53935",
+    opacity: 0.9,
+  }),
 }
-
-const $leaveButtonText: TextStyle = {
-  color: "#e53935",
-  fontWeight: "600",
-}
-
-const $pressedLeaveButton: ViewStyle = {
-  backgroundColor: "rgba(229, 57, 53, 0.08)",
-}
-
-const $pressedLeaveButtonText: TextStyle = {
-  color: "#e53935",
-  opacity: 0.9,
-}
-
-const $container: ViewStyle = {
-  flex: 1,
-}
-
-const $header: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-}
-
-const $headerBackground = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.background,
-  borderBottomColor: theme.colors.border,
-})
-
-const $backButton: ViewStyle = {
-  paddingRight: spacing.md,
-}
-
-const $backButtonText = (theme: any): TextStyle => ({
-  fontSize: 24,
-  color: theme.colors.tint,
-  fontWeight: "600",
-})
-
-const $headerInfo: ViewStyle = {
-  flex: 1,
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $groupIcon: TextStyle = {
-  fontSize: 32,
-  lineHeight: 36,
-  height: 36,
-  textAlignVertical: "center",
-  marginRight: spacing.sm,
-}
-
-const $headerTextContainer: ViewStyle = {
-  flex: 1,
-}
-
-const $groupName = (theme: any): TextStyle => ({
-  fontSize: 18,
-  fontWeight: "600",
-  color: theme.colors.text,
-})
-
-const $memberCount = (theme: any): TextStyle => ({
-  fontSize: 14,
-  color: theme.colors.textDim,
-  marginTop: 2,
-})
-
-const $headerAction: ViewStyle = {
-  paddingLeft: spacing.md,
-}
-
-const $headerActionText = (theme: any): TextStyle => ({
-  fontSize: 20,
-  color: theme.colors.textDim,
-  fontWeight: "600",
-})
-
-const $messagesList: ViewStyle = {
-  flex: 1,
-}
-
-const $messagesContent: ViewStyle = {
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-}
-
-const $inputContainer: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "flex-end",
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-  borderTopWidth: 1,
-}
-
-const $inputContainerBackground = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.background,
-  borderTopColor: theme.colors.border,
-})
-
-const $textInput = (theme: any): TextStyle => ({
-  flex: 1,
-  borderWidth: 1,
-  borderColor: theme.colors.border,
-  borderRadius: spacing.lg,
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-  marginRight: spacing.sm,
-  maxHeight: 100,
-  fontSize: 16,
-  color: theme.colors.text,
-  backgroundColor: theme.colors.palette.neutral100,
-})
-
-const $sendButton = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.tint,
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  justifyContent: "center",
-  alignItems: "center",
-})
-
-const $sendButtonDisabled = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.palette.neutral300,
-})
-
-const $sendButtonText = (theme: any): TextStyle => ({
-  color: theme.colors.tintInverse,
-  fontSize: 18,
-  fontWeight: "600",
-})
-
-const $modalContainer = (theme: any): ViewStyle => ({
-  flex: 1,
-  backgroundColor: theme.colors.background,
-})
-
-const $modalHeader = (theme: any): ViewStyle => ({
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: theme.colors.border,
-})
-
-const $modalTitle = (theme: any): TextStyle => ({
-  color: theme.colors.text,
-})
-
-const $modalCloseText = (theme: any): TextStyle => ({
-  color: theme.colors.tint,
-  fontSize: 16,
-  fontWeight: "600",
-})
-
-const $groupInfoSection = (theme: any): ViewStyle => ({
-  alignItems: "center",
-  paddingVertical: spacing.xl,
-  borderBottomWidth: 1,
-  borderBottomColor: theme.colors.border,
-})
-
-const $modalGroupName = (theme: any): TextStyle => ({
-  fontSize: 24,
-  fontWeight: "bold",
-  color: theme.colors.text,
-  marginTop: spacing.sm,
-})
-
-const $modalGroupLocation = (theme: any): TextStyle => ({
-  fontSize: 16,
-  color: theme.colors.textDim,
-  marginTop: spacing.xs,
-})
-
-const $modalGroupDescription = (theme: any): TextStyle => ({
-  fontSize: 14,
-  color: theme.colors.textDim,
-  textAlign: "center",
-  marginTop: spacing.sm,
-  paddingHorizontal: spacing.lg,
-})
-
-const $membersList: ViewStyle = {
-  flex: 1,
-}
-
-const $memberItem = (theme: any): ViewStyle => ({
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingVertical: spacing.md,
-  borderBottomWidth: 1,
-  borderBottomColor: theme.colors.border,
-})
-
-const $memberAvatar: ViewStyle = {
-  marginRight: spacing.md,
-}
-
-const $memberAvatarImage: ImageStyle = {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
-}
-
-const $memberAvatarPlaceholder = (theme: any): ViewStyle => ({
-  width: 50,
-  height: 50,
-  borderRadius: 25,
-  backgroundColor: theme.colors.tint,
-  justifyContent: "center",
-  alignItems: "center",
-})
-
-const $memberAvatarText = (theme: any): TextStyle => ({
-  color: theme.colors.tintInverse,
-  fontSize: 18,
-  fontWeight: "600",
-})
-
-const $memberName = (theme: any): TextStyle => ({
-  fontSize: 16,
-  color: theme.colors.text,
-  fontWeight: "500",
-})

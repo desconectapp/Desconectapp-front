@@ -1,9 +1,9 @@
 import { api } from "../api"
-import { Group, GroupData } from "./Groups.types"
+import { Group, GroupData, PaginatedUserGroups } from "./Groups.types"
 
 export const groupsService = {
-  getGroups: async (): Promise<Group[] | undefined> => {
-    const response = await api.apisauce.get<Group[]>(`/groups/user`)
+  getGroups: async (): Promise<PaginatedUserGroups | undefined> => {
+    const response = await api.apisauce.get<PaginatedUserGroups>(`/groups/user`)
     if (!response.ok) {
       throw new Error("Error al cargar los grupos")
     }

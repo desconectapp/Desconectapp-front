@@ -8,7 +8,9 @@ import { TouchableOpacity } from "react-native"
 import { View } from "tamagui"
 import { Animated, Pressable } from "react-native"
 import { useRef } from "react"
+import { MyGroupsScreen } from "@/screens/MyGroupsScreen"
 import { SuggestionScreen } from "@/screens/SuggestionScreen"
+
 
 export type MainTabParamList = {
   HomeScreen: undefined
@@ -26,6 +28,7 @@ export type MainStackParamList = {
   SchedulePickerScreen: { nextScreen?: string }
   ActivityPickerScreen: { nextScreen?: string }
   RequestConfirmationScreen: { nextScreen?: string }
+  MyGroupsScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -145,6 +148,11 @@ export function MainNavigator() {
         name="RequestConfirmationScreen"
         component={RequestConfirmationScreen}
         options={{ headerShown: true, title: "Confirmar Busqueda" }}
+      />
+      <Stack.Screen
+        name="MyGroupsScreen"
+        component={MyGroupsScreen}
+        options={{ title: "My Groups" }}
       />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
