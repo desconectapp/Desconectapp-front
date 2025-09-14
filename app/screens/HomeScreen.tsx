@@ -9,6 +9,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
+  StyleSheet,
 } from "react-native"
 import { Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
@@ -105,41 +106,49 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => (
     <TouchableOpacity
-      style={themed($groupCard)}
+      style={themed(styles.groupCardContainer)}
       onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
       disabled={isLoading}
       activeOpacity={0.8}
     >
-      <View style={$groupCardContent}>
-        <View style={themed($groupAvatar)}>
-          <Text style={themed($groupAvatarText)}>
+      <View style={themed(styles.groupCardInner)}>
+        {/* Avatar */}
+        <View style={themed(styles.groupAvatar)}>
+          <Text style={themed(styles.groupAvatarText)}>
             {item.icon || item.name.charAt(0).toUpperCase()}
           </Text>
         </View>
-
-        <View style={$groupInfo}>
-          <View style={$groupHeader}>
-            <Text style={themed($groupName)} numberOfLines={1}>
+  
+        {/* Group Info */}
+        <View style={styles.groupInfo}>
+          <View style={styles.groupHeader}>
+            <Text style={themed(styles.groupName)} numberOfLines={1}>
               {item.name}
             </Text>
+  
             {item.unreadCount && item.unreadCount > 0 && (
-              <View style={themed($unreadBadge)}>
-                <Text style={themed($unreadText)}>
+              <View style={themed(styles.unreadBadge)}>
+                <Text style={themed(styles.unreadText)}>
                   {item.unreadCount > 99 ? "99+" : item.unreadCount}
                 </Text>
               </View>
             )}
           </View>
-
-          <Text style={themed($lastMessage)} numberOfLines={1}>
-            {!isLoading ? item.lastMessage || "No messages yet" : ""}
+  
+          <Text style={themed(styles.description)} numberOfLines={1}>
+            {!isLoading ? item.description || "No description yet" : ""}
           </Text>
-
-          {item.memberCount && <Text style={themed($memberCount)}>{item.memberCount} members</Text>}
+  
+          {item.memberCount && (
+            <Text style={themed(styles.memberCount)}>
+              {item.memberCount} members
+            </Text>
+          )}
         </View>
-
-        <View style={themed($groupArrow)}>
-          <Text style={themed($arrowText)}>›</Text>
+  
+        {/* Arrow */}
+        <View style={styles.groupArrow}>
+          <Text style={themed(styles.arrowText)}>›</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -270,108 +279,6 @@ const $groupsList: ViewStyle = {
   gap: spacing.md,
 }
 
-const $groupCard = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.palette.neutral100,
-  borderRadius: spacing.sm,
-  padding: spacing.sm,
-  margin: spacing.xxs,
-  shadowColor: theme.colors.palette.neutral900,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
-  shadowRadius: 8,
-  elevation: 2,
-  borderWidth: 1,
-  borderColor: theme.colors.border,
-})
-
-const $groupCardContent: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-}
-
-const $groupAvatar = (theme: any): ViewStyle => ({
-  width: 56,
-  height: 56,
-  borderRadius: 28,
-  backgroundColor: theme.colors.tint,
-  justifyContent: "center",
-  alignItems: "center",
-  marginRight: spacing.md,
-})
-
-const $groupAvatarText = (theme: any): TextStyle => ({
-  color: theme.colors.tintInverse,
-  fontSize: 20,
-  fontWeight: "600",
-})
-
-const $groupInfo: ViewStyle = {
-  flex: 1,
-}
-
-const $groupHeader: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  marginBottom: spacing.xs,
-}
-
-const $groupName = (theme: any): TextStyle => ({
-  fontSize: 18,
-  fontWeight: "600",
-  color: theme.colors.text,
-  flex: 1,
-})
-
-const $unreadBadge = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.error,
-  borderRadius: 12,
-  minWidth: 24,
-  height: 24,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingHorizontal: spacing.xs,
-})
-
-const $unreadText = (theme: any): TextStyle => ({
-  color: "#ffffff",
-  fontSize: 12,
-  fontWeight: "600",
-})
-
-const $lastMessage = (theme: any): TextStyle => ({
-  fontSize: 14,
-  color: theme.colors.textDim,
-  marginBottom: spacing.xs,
-})
-
-const $memberCount = (theme: any): TextStyle => ({
-  fontSize: 12,
-  color: theme.colors.textDim,
-  fontWeight: "500",
-})
-
-const $groupArrow = (theme: any): ViewStyle => ({
-  marginLeft: spacing.sm,
-})
-
-const $arrowText = (theme: any): TextStyle => ({
-  fontSize: 24,
-  color: theme.colors.textDim,
-  fontWeight: "300",
-})
-
-const $loadingContainer: ViewStyle = {
-  alignItems: "center",
-  paddingVertical: spacing.xxl,
-}
-
-const $loadingText = (theme: any): TextStyle => ({
-  fontSize: 16,
-  color: theme.colors.textDim,
-  marginTop: spacing.md,
-})
-
 const $emptyContainer: ViewStyle = {
   alignItems: "center",
   paddingVertical: spacing.xxl,
@@ -398,3 +305,76 @@ const $emptySubtitle = (theme: any): TextStyle => ({
 })
 
 const $suggestionsSection: ViewStyle = {}
+
+const styles = StyleSheet.create({
+  groupCardContainer: {
+    marginVertical: 6,
+    marginHorizontal: 0,
+    borderRadius: 13,
+    overflow: 'hidden',
+    backgroundColor: '#fff', // fallback
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  groupCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  groupAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#eee',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  groupAvatarText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  groupName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  unreadBadge: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  unreadText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  description: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  memberCount: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  groupArrow: {
+    marginLeft: 12,
+  },
+  arrowText: {
+    fontSize: 24,
+    color: '#ccc',
+  },
+})

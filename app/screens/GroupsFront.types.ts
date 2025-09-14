@@ -6,4 +6,6 @@ export interface GroupFront {
   memberCount?: number
   activity?: string
   unreadCount?: number
+  description?: string
+  location?: string
 }
