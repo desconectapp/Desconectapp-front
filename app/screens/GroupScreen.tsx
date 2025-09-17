@@ -9,6 +9,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
@@ -75,13 +76,11 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
   const [messages, setMessages] = useState<Message[]>(mockMessages)
   const [inputText, setInputText] = useState("")
-  const [showMembers, setShowMembers] = useState(false)
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation<NavigationProp>()
   const { showToast } = useAppToast()
 
   const { data: groupData, isLoading } = useGroupById(groupId)
-  const { mutateAsync: exitGroupAsync } = useExitGroup()
 
   const sendMessage = () => {
     if (inputText.trim()) {
@@ -102,34 +101,6 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     }
   }
 
-  const renderMember = ({ item }: { item: Member }) => (
-    <View style={themed(themedStyles.memberItem)}>
-      <View style={styles.memberAvatar}>
-        {item.picture ? (
-          <Image source={{ uri: item.picture }} style={styles.memberAvatarImage} />
-        ) : (
-          <View style={themed(themedStyles.memberAvatarPlaceholder)}>
-            <Text style={themed(themedStyles.memberAvatarText)}>{item.name.charAt(0).toUpperCase()}</Text>
-          </View>
-        )}
-      </View>
-      <Text style={themed(themedStyles.memberName)}>{item.name}</Text>
-    </View>
-  )
-
-  function leaveGroup(): void {
-    exitGroupAsync(groupId, {
-      onSuccess: () => {
-        showToast("Success", "You have left the group successfully.")
-        navigation.navigate("Main", { screen: "Tabs" })
-      },
-      onError: (error) => {
-        console.error("Error leaving group:", error)
-        showToast("Error", "Failed to leave the group. Please try again.")
-      },
-    })
-  }
-
   if (isLoading) {
     return <Text>Loading...</Text>
   }
@@ -140,6 +111,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
+        {/* Header */}
         <View style={[styles.header, $topInsets, themed(themedStyles.headerBackground)]}>
           <TouchableOpacity
             style={styles.backButton}
@@ -152,7 +124,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
           <TouchableOpacity
             style={styles.headerInfo}
-            onPress={() => setShowMembers(true)}
+            onPress={() => navigation.navigate("GroupInfoScreen", { groupId })}
             activeOpacity={0.7}
           >
             <Text style={styles.groupIcon}>{groupData.icon}</Text>
@@ -167,12 +139,11 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           </TouchableOpacity>
         </View>
 
+        {/* Messages list */}
         <FlatList
           ref={flatListRef}
           data={messages}
-          renderItem={({ item }: { item: Message }) => {
-            return <MessageBubble item={item} />
-          }}
+          renderItem={({ item }: { item: Message }) => <MessageBubble item={item} />}
           keyExtractor={(item) => item.id}
           style={styles.messagesList}
           contentContainerStyle={styles.messagesContent}
@@ -180,6 +151,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
+        {/* Input */}
         <View style={[styles.inputContainer, $bottomInsets, themed(themedStyles.inputContainerBackground)]}>
           <TextInput
             style={themed(themedStyles.textInput)}
@@ -200,49 +172,10 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-
-      <Modal visible={showMembers} animationType="slide" presentationStyle="pageSheet">
-        <View style={[themed(themedStyles.modalContainer), $topInsets]}>
-          <TouchableOpacity onPress={() => setShowMembers(false)} activeOpacity={0.7}>
-            <View style={themed(themedStyles.modalHeader)}>
-              <Text preset="heading" style={themed(themedStyles.modalTitle)}>
-                Group Members
-              </Text>
-              <Text style={themed(themedStyles.modalCloseText)}>Done</Text>
-            </View>
-          </TouchableOpacity>
-
-          <View style={themed(themedStyles.groupInfoSection)}>
-            <Text style={styles.groupIcon}>{groupData.icon}</Text>
-            <Text style={themed(themedStyles.modalGroupName)}>{groupData.name}</Text>
-            <Text style={themed(themedStyles.modalGroupLocation)}>{groupData.location}</Text>
-            <Text style={themed(themedStyles.modalGroupDescription)}>{groupData.description}</Text>
-          </View>
-
-          <FlatList
-            data={groupData.members}
-            renderItem={renderMember}
-            keyExtractor={(item) => item.id}
-            style={styles.membersList}
-            showsVerticalScrollIndicator={false}
-          />
-
-          <View style={themed(themedStyles.groupInfoSection)}>
-            <Button
-              text="Leave Group"
-              preset="default"
-              style={styles.leaveButton}
-              textStyle={styles.leaveButtonText}
-              pressedStyle={themed(themedStyles.pressedLeaveButton)}
-              pressedTextStyle={themed(themedStyles.pressedLeaveButtonText)}
-              onPress={leaveGroup}
-            />
-          </View>
-        </View>
-      </Modal>
     </View>
   )
 })
+
 
 // ---------------- STYLES ----------------
 

@@ -10,6 +10,7 @@ import { Animated, Pressable } from "react-native"
 import { useRef } from "react"
 import { MyGroupsScreen } from "@/screens/MyGroupsScreen"
 import { SuggestionScreen } from "@/screens/SuggestionScreen"
+import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
 
 
 export type MainTabParamList = {
@@ -29,6 +30,7 @@ export type MainStackParamList = {
   ActivityPickerScreen: { nextScreen?: string }
   RequestConfirmationScreen: { nextScreen?: string }
   MyGroupsScreen: undefined
+  GroupInfoScreen: { groupId: string }
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -153,6 +155,11 @@ export function MainNavigator() {
         name="MyGroupsScreen"
         component={MyGroupsScreen}
         options={{ title: "My Groups" }}
+      />
+       <Stack.Screen
+        name="GroupInfoScreen"
+        component={GroupInfoScreen}
+        options={{ headerShown: false }}
       />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
