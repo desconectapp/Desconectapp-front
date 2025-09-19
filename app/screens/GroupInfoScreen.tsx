@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState, useRef } from "react"
+import { useState, useRef, useCallback } from "react"
 import {
   View,
   TouchableOpacity,
@@ -29,6 +29,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
 import { Member } from "@/services/groups/Groups.types"
 
+import { useQueryClient } from "@tanstack/react-query"
+
 type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
 
 export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any) {
@@ -42,6 +44,8 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
     const [showMembers, setShowMembers] = useState(false)
     const flatListRef = useRef<FlatList>(null)
+
+    const queryClient = useQueryClient()
 
     const { data: groupData, isLoading } = useGroupById(groupId)
     const { mutateAsync: exitGroupAsync } = useExitGroup()
@@ -68,22 +72,52 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         </View>
     )
 
-    function leaveGroup(): void {
-        exitGroupAsync(groupId, {
-            onSuccess: () => {
-            showToast("Success", "You have left the group successfully.")
-            navigation.navigate("Main", { screen: "Tabs" })
-            },
-            onError: (error) => {
-            console.error("Error leaving group:", error)
-            showToast("Error", "Failed to leave the group. Please try again.")
-            },
-        })
-    }
-
     if (isLoading) {
         return <Text>Loading...</Text>
     }
+
+    if (!groupData) {
+        // This is the critical change. If groupData is null or undefined,
+        // it means the group does not exist. We should not render the screen
+        // and instead navigate the user back to a safe place.
+        // You could also show a "Group not found" message.
+        return (
+            <View>
+                <Text>Group not found or has been left.</Text>
+                <Button onPress={() => navigation.goBack()} text="Go Back" />
+            </View>
+        );
+    }
+
+    const leaveGroup = async () => {
+      try {
+        navigation.reset({
+            index: 0,
+            routes: [
+              {
+                name: "Main",
+                params: {
+                  screen: "Tabs",
+                  params: { screen: "SearchScreen" },
+                },
+              },
+            ],
+          });
+          
+          await exitGroupAsync(groupId);
+
+          await queryClient.removeQueries({ queryKey: ["group", groupId] });
+          
+          await queryClient.invalidateQueries({ queryKey: ["groups"] });
+
+          showToast("Success", "You have left the group successfully.");
+      } catch (error) {
+          console.error("Error leaving group:", error);
+          showToast("Error", "Failed to leave the group. Please try again.");
+      }
+  };
+
+
 
     return (
         <SafeAreaView
@@ -103,35 +137,25 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
                 <Text style={themed(themedStyles.headerTitle)}>Group Info</Text>
             </View>
 
-            {/* Member list */}
+            {/* Group Info */}
+            <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
+                <Text style={themed(themedStyles.groupIcon)}>{groupData.icon}</Text>
+                <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
+                <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
+                <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
+            </View>
+            <View style={themed(themedStyles.divider)} />
+
+            {/* Members List */}
             <FlatList
                 ref={flatListRef}
                 data={groupData.members}
                 keyExtractor={(item) => item.id}
                 renderItem={renderMember}
-                ListHeaderComponent={
-                <>
-                    <View
-                    style={[
-                        styles.groupInfoContainer,
-                        themed(themedStyles.groupInfoSection),
-                    ]}
-                    >
-                    <Text style={themed(themedStyles.groupIcon)}>{groupData.icon}</Text>
-                    <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
-                    <Text style={themed(themedStyles.groupLocation)}>
-                        {groupData.location}
-                    </Text>
-                    <Text style={themed(themedStyles.groupDescription)}>
-                        {groupData.description}
-                    </Text>
-                    </View>
-                    <View style={themed(themedStyles.divider)} />
-                </>
-                }
                 contentContainerStyle={{ paddingBottom: 100 }}
                 showsVerticalScrollIndicator={false}
             />
+
 
             {/* Footer */}
             <View style={[styles.footer, themed(themedStyles.footer)]}>
@@ -151,6 +175,8 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
 export const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
+
+  backButton: { paddingRight: spacing.md } as ViewStyle,
 
   // Header
   header: {
@@ -313,8 +339,13 @@ export const themedStyles = {
     borderBottomColor: theme.colors.border,
   }),
   groupIcon: (_theme: any): TextStyle => ({
-    fontSize: 32,
-  }),
+    fontSize: 60,         // bigger font size
+    lineHeight: 72,       // slightly larger lineHeight
+    height: 72,           // match lineHeight
+    textAlignVertical: "center",
+    textAlign: "center",
+    marginBottom: spacing.sm,
+    }),
   groupName: (theme: any): TextStyle => ({
     fontSize: 24,
     fontWeight: "bold",

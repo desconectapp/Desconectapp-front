@@ -19,7 +19,7 @@ export const groupsService = {
   },
 
   exitGroup: async (id: string): Promise<boolean> => {
-    const response = await api.apisauce.post<GroupData>(`/groups/${id}/exit`)
+    const response = await api.apisauce.delete<GroupData>(`/groups/user-from-group/${id}`)
     if (!response.ok) {
       throw new Error("Error al cargar el grupo")
     }

@@ -21,7 +21,7 @@ export type MainTabParamList = {
 }
 
 export type MainStackParamList = {
-  Tabs: undefined
+  Tabs: { screen?: keyof MainTabParamList } | undefined
   PreferencesScreen: undefined
   GroupScreen: { groupId: string }
   SuggestionScreen: { id: string }
