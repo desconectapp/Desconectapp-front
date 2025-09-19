@@ -30,14 +30,16 @@ export const ActivityRequestsScreen = observer(function ActivityRequestsScreen()
 
   const handleCancelRequest = () => {
     // TODO: Implement cancel request logic
-    console.log("Canceling request:", selectedRequest)
+    console.log("Canceling request(TODO):", selectedRequest)
     setModalVisible(false)
     setSelectedRequest(null)
   }
 
   return (
     <Screen
-      preset="scroll"
+      preset="fixed"
+      // asegurar que Screen ocupe toda la pantalla para que los hijos con flex:1 funcionen
+      style={$screen}
       contentContainerStyle={[containers.screen, $container]}
       backgroundColor={themed(() => theme.colors.background)}
     >
@@ -46,8 +48,10 @@ export const ActivityRequestsScreen = observer(function ActivityRequestsScreen()
         Mis Búsquedas 📋
       </Text>
 
-      {/* Activity Requests List */}
-      <ActivityRequestsList onItemPress={handleItemPress} />
+      {/* Activity Requests List: darle un wrapper con flex:1 para que FlatList tenga altura */}
+      <View style={$listWrapper}>
+        <ActivityRequestsList onItemPress={handleItemPress} />
+      </View>
 
       {/* Cancel Request Modal */}
       <Modal
@@ -104,6 +108,14 @@ export const ActivityRequestsScreen = observer(function ActivityRequestsScreen()
 
 const $container: ViewStyle = {
   paddingBottom: spacing.lg,
+}
+
+const $screen: ViewStyle = {
+  flex: 1,
+}
+
+const $listWrapper: ViewStyle = {
+  flex: 1,
 }
 
 const $title: TextStyle = {

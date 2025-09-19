@@ -53,7 +53,7 @@ export const LoginScreen = observer(() => {
       },
       onError: (error) => {
         setLoading(false)
-        showToast("Error al crear usuario", "Por favor, intenta nuevamente.")
+        showToast("Error al iniciar sesion", "Por favor, intenta nuevamente.")
       },
     })
   }

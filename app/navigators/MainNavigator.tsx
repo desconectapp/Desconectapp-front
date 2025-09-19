@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, ActivityRequestsScreen, GroupScreen, LocationPickerScreen, SchedulePickerScreen, ActivityPickerScreen, RequestConfirmationScreen } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
 import { View } from "tamagui"
@@ -34,7 +35,7 @@ export type MainStackParamList = {
 const Tab = createBottomTabNavigator<MainTabParamList>()
 const Stack = createNativeStackNavigator<MainStackParamList>()
 
-const CustomTabBarButton = ({ children, onPress }: any) => {
+const CustomTabBarButton = ({ onPress }: any) => {
   const scaleAnim = useRef(new Animated.Value(1)).current
 
   const handlePressIn = () => {
@@ -47,29 +48,61 @@ const CustomTabBarButton = ({ children, onPress }: any) => {
 
   return (
     <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={onPress}
       style={{
         position: "absolute",
-        bottom: 5, // lo eleva del borde inferior
+        bottom: 5,
         alignSelf: "center",
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: "#4c8bf5",
+        width: 72,
+        height: 72,
+        borderRadius: 24,
         justifyContent: "center",
         alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-        elevation: 8,
+        overflow: "hidden",
         zIndex: 10,
       }}
     >
-      <AntDesign name="find" size={42} color="#fff" />
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleAnim }],
+          width: "100%",
+          height: "100%",
+          borderRadius: 24,
+          backgroundColor: "rgba(200, 220, 180, 0.25)", // más claro
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.4)",
+          filter: "blur(15px)" as any,
+          shadowColor: "#84994F",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.4,
+          shadowRadius: 15,
+          elevation: 12,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        {/* reflejito arriba */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            width: "100%",
+            height: "35%",
+            borderTopLeftRadius: 36,
+            borderTopRightRadius: 36,
+            backgroundColor: "rgba(255,255,255,0.3)", // más brillo
+          }}
+        />
+        
+        <FontAwesome6 name="people-group" size={38} color="#fff" />
+      </Animated.View>
     </Pressable>
   )
 }
+
+
 
 function TabNavigator() {
   return (
