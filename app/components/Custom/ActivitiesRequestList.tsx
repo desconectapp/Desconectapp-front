@@ -198,18 +198,15 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
 
     return (
       <FlatList
+        style={{ flex: 1 }} // asegurar que la lista ocupe el espacio disponible
         data={data}
         renderItem={renderActivityRequest}
         keyExtractor={(item) => item.id}
         contentContainerStyle={$listContainer}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={[theme.colors.tint]}
-          />
-        }
+        // usar las props nativas de FlatList para pull-to-refresh
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
     )
   }
