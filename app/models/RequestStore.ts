@@ -173,7 +173,7 @@ export const RequestStoreModel = types
 
       return {
         user_id: 11,
-        description: "no sabia que iban a tener description jaja xd",
+        description: store.activity ? store.activity.name : "No description",
         activity_id: store.activity ? store.activity.id : 0,
         participants_needed: store.minParticipants,
         max_participants: store.maxParticipants,
