@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import {
   View,
   TouchableOpacity,
@@ -8,6 +8,8 @@ import {
   Image,
   SafeAreaView,
   StyleSheet,
+  TextInput,
+  Pressable,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
@@ -18,7 +20,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import { useExitGroup, useGroupById, useChangeGroupStatus } from "@/hooks/Groups"
+import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription } from "@/hooks/Groups"
 
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -33,6 +35,7 @@ type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
 
 export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any) {
   const { groupId } = route.params
+  
 
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
@@ -42,12 +45,39 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const queryClient = useQueryClient()
 
-  const { data: groupData, isLoading } = useGroupById(groupId)
   const { mutateAsync: exitGroupAsync } = useExitGroup()
   const [modalVisible, setModalVisible] = useState(false)
 
+  const { data: groupData, isLoading } = useGroupById(groupId)
+
   const isPrivate = !groupData?.status;
-  const { mutateAsync: statusChangeAsync } = useChangeGroupStatus();
+  const { mutateAsync: statusChangeAsync } = useChangeGroupStatus()
+
+  const [isModalVisible, setIsModalVisible] = useState(false)
+
+  const { mutate: updateDescription } = updateGroupDescription();
+  const [isEditing, setIsEditing] = useState(false)
+  const [tempName, setTempName] = useState(!groupData?.name)
+  const [tempDescription, setTempDescription] = useState(groupData?.description ?? "")
+
+  const handlePressLeave = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleConfirmLeave = () => {
+    setIsModalVisible(false);
+    leaveGroup();
+  };
+
+  const handleCancelLeave = () => {
+    setIsModalVisible(false);
+  };
+
+  useEffect(() => {
+    if (groupData) {
+      setTempDescription(groupData.description ?? "");
+    }
+  }, [groupData]);
 
   const renderMember = ({ item }: { item: Member }) => (
       <View style={[styles.memberItem, themed(themedStyles.memberItem)]}>
@@ -74,12 +104,12 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   }
 
   if (!groupData) {
-      return (
-          <View>
-              <Text>Group not found or has been left.</Text>
-              <Button onPress={() => navigation.goBack()} text="Go Back" />
-          </View>
-      );
+    return (
+        <View>
+            <Text>Group not found or has been left.</Text>
+            <Button onPress={() => navigation.goBack()} text="Go Back" />
+        </View>
+    );
   }
 
   const leaveGroup = async () => {
@@ -109,6 +139,30 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         showToast("Error", "Failed to leave the group. Please try again.");
     }
   }
+
+  const handleSave = async () => {
+  try {
+    // if (tempName !== groupData.name) {
+    //   await updateGroupName(tempName); 
+    // }
+
+    console.log("Current description:", groupData.description);
+    console.log("Temporary description:", tempDescription);
+
+    if (tempDescription !== groupData.description) {
+      updateDescription({ id: groupData.id, description: tempDescription });
+    }
+    
+    setIsEditing(false);
+    queryClient.setQueryData(['group', groupId], (oldData: GroupData) => ({
+        ...oldData,
+        description: tempDescription,
+      }));
+  } catch (error) {
+    console.error("Failed to save changes:", error);
+  }
+};
+
 
   const handleStatusChange = async (newStatus: boolean) => {
     try {
@@ -189,6 +243,9 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             </TouchableOpacity>
             
             <Text style={themed(themedStyles.headerTitle)}>Group Info</Text>
+            <Pressable onPress={() => setIsEditing(true)}>
+                    <Text style={themed(themedStyles.editButtonText)}>✏️</Text>
+            </Pressable>
             
             {/* Lock Icon */}
             <TouchableOpacity
@@ -227,6 +284,51 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
               <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
           </View>
 
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isEditing}
+            onRequestClose={() => {
+              setIsEditing(!isEditing);
+            }}
+          >
+            <View style={themed(styles.centeredView)}>
+              <View style={themed(themedStyles.modalView)}>
+                <Text style={themed(styles.modalTitle)}>Edit Group Info</Text>
+
+                {/* <TextInput
+                  style={themed(themedStyles.modalInput)}
+                  value={tempName}
+                  onChangeText={setTempName}
+                  placeholder="Group Name"
+                /> */}
+                
+                <TextInput
+                  style={[themed(themedStyles.modalInput), { height: 100 }]}
+                  value={tempDescription}
+                  onChangeText={setTempDescription}
+                  multiline
+                  placeholder="Group Description"
+                />
+
+                <View style={themed(styles.modalButtonsContainer)}>
+                  <TouchableOpacity
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={() => setIsEditing(false)}
+                    >
+                      <Text style={styles.modalButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[themed(styles.modalButton), themed(themedStyles.acceptButton)]}
+                    onPress={handleSave}
+                  >
+                    <Text style={themed(styles.modalButtonText)}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
           {/* Members List */}
           <FlatList
               data={groupData.members}
@@ -239,15 +341,46 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
           {/* Footer */}
           <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
-              <Button
+            <Button
               text="Leave Group"
               preset="default"
               style={[styles.leaveButton, themed(themedStyles.leaveButton)]}
               textStyle={[styles.leaveButtonText, themed(themedStyles.leaveButtonText)]}
               pressedStyle={themed(themedStyles.pressedLeaveButton)}
               pressedTextStyle={themed(themedStyles.pressedLeaveButtonText)}
-              onPress={leaveGroup}
-              />
+              onPress={handlePressLeave}
+            />
+
+            {/* The Modal Component */}
+            <Modal
+              animationType="fade"
+              transparent={true}
+              visible={isModalVisible}
+              onRequestClose={handleCancelLeave}
+            >
+              <View style={styles.centeredView}>
+                <View style={[styles.modalView, themed(themedStyles.modalView)]}>
+                  <Text style={styles.modalTitle}>Leave Group?</Text>
+                  <Text style={styles.modalDescription}>
+                    Are you sure you want to leave this group? This can not be undone.
+                  </Text>
+                  <View style={styles.modalButtonsContainer}>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.cancelButton]}
+                      onPress={handleCancelLeave}
+                    >
+                      <Text style={styles.modalButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalButton, styles.acceptLeaveButton, themed(themedStyles.acceptLeaveButton)]}
+                      onPress={handleConfirmLeave}
+                    >
+                      <Text style={styles.modalButtonText}>Leave</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
           </View>
       </SafeAreaView>
     )
@@ -438,6 +571,10 @@ export const styles = StyleSheet.create({
     color: "#e53935",
     fontWeight: "600",
   } as TextStyle,
+
+  acceptLeaveButton: {
+    borderColor: "#e53935",
+  } as ViewStyle,
 })
 
 
@@ -599,12 +736,32 @@ export const themedStyles = {
     shadowRadius: 4,
     elevation: 5,
   }),
+
+  modalInput: (theme: any): TextStyle => ({
+    width: '100%',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: spacing.sm,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+    color: theme.colors.text,
+  }),
   
   acceptButton: (theme: any): ViewStyle => ({
     backgroundColor: theme.colors.tint,
   }),
 
+  acceptLeaveButton: (theme: any): ViewStyle => ({
+    backgroundColor: "#e53935",
+  }),
+
   cancelButton: (theme: any): ViewStyle => ({
     backgroundColor: '#ddd',
+  }),
+
+  editButtonText: (theme: any): TextStyle => ({
+    fontSize: 20,
+    color: theme.colors.tint,
+    marginLeft: spacing.sm,
   }),
 }

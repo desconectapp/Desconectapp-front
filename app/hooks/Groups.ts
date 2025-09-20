@@ -44,3 +44,14 @@ export const useChangeGroupStatus = () => {
     },
   });
 };
+
+export const updateGroupDescription = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string; description: string }>({
+    mutationFn: ({ id, description }) => groupsService.updateGroupDescription(id, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};

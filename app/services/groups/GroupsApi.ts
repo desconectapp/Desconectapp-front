@@ -33,4 +33,13 @@ export const groupsService = {
     }
     return true;
   },
+
+  updateGroupDescription: async (id: string, description: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/description/${id}`, { description });
+    if (!response.ok) {
+      throw new Error("Error al cambiar la descripcion del grupo");
+    }
+    return true;
+  },
+
 }
