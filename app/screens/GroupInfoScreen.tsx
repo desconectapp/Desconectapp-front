@@ -135,14 +135,14 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
           <Text style={styles.modalDescription}>This will allow others to view and join the group.</Text>
           <View style={styles.modalButtonsContainer}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={[styles.modalButton, themed(themedStyles.cancelButton)]}
               onPress={() => setModalVisible(false)}
             >
               <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.modalButton, styles.acceptButton]}
-              onPress={() => handleStatusChange(true)} // Set status to true (public)
+              style={[styles.modalButton, themed(themedStyles.acceptButton)]}
+              onPress={() => handleStatusChange(true)}
             >
               <Text style={styles.modalButtonText}>Accept</Text>
             </TouchableOpacity>
@@ -156,13 +156,13 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
           <Text style={styles.modalDescription}>This will prevent others from viewing and joining the group.</Text>
           <View style={styles.modalButtonsContainer}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={[styles.modalButton, themed(themedStyles.cancelButton)]}
               onPress={() => setModalVisible(false)}
             >
               <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.modalButton, styles.acceptButton]}
+              style={[styles.modalButton, themed(themedStyles.acceptButton)]}
               onPress={() => handleStatusChange(false)} // Set status to false (private)
             >
               <Text style={styles.modalButtonText}>Accept</Text>
@@ -226,7 +226,6 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
               <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
               <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
           </View>
-          <View style={themed(themedStyles.divider)} />
 
           {/* Members List */}
           <FlatList
@@ -599,5 +598,13 @@ export const themedStyles = {
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-  })
+  }),
+  
+  acceptButton: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.tint,
+  }),
+
+  cancelButton: (theme: any): ViewStyle => ({
+    backgroundColor: '#ddd',
+  }),
 }
