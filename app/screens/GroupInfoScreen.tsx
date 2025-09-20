@@ -4,11 +4,8 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  TextInput,
   Modal,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   SafeAreaView,
   StyleSheet,
   type ViewStyle,
@@ -21,7 +18,6 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import { MessageBubble, Message } from "@/components/Custom/Message"
 import { useExitGroup, useGroupById, useChangeGroupStatus } from "@/hooks/Groups"
 
 import { useNavigation } from "@react-navigation/native"
@@ -38,14 +34,11 @@ type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
 export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any) {
   const { groupId } = route.params
 
-  const { themed } = useAppTheme()
+  const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation<NavigationProp>()
   const { showToast } = useAppToast()
-
-  const [showMembers, setShowMembers] = useState(false)
-  const flatListRef = useRef<FlatList>(null)
 
   const queryClient = useQueryClient()
 
@@ -55,8 +48,6 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const isPrivate = !groupData?.status;
   const { mutateAsync: statusChangeAsync } = useChangeGroupStatus();
-
-  console.log("Group Data:", groupData);
 
   const renderMember = ({ item }: { item: Member }) => (
       <View style={[styles.memberItem, themed(themedStyles.memberItem)]}>
@@ -185,19 +176,19 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   return (
       <SafeAreaView
-          style={[styles.container, themed(themedStyles.container), $topInsets, $bottomInsets]}
+          style={[styles.container, themed(themedStyles.container)]}
           >
-          <View style={styles.header}>
+          <View style={[styles.header, themed(themedStyles.header), $topInsets]}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
               activeOpacity={0.7}
               hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
             >
-              <Text style={styles.headerButton}>←</Text>
+              <Text style={themed(themedStyles.backButtonText)}>←</Text>
             </TouchableOpacity>
             
-            <Text style={styles.headerTitle}>Group Info</Text>
+            <Text style={themed(themedStyles.headerTitle)}>Group Info</Text>
             
             {/* Lock Icon */}
             <TouchableOpacity
@@ -207,7 +198,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
               <FontAwesome
                 name={isPrivate ? "lock" : "unlock"}
                 size={24}
-                color="black"
+                color={theme.colors.tint}
               />
             </TouchableOpacity>
           </View>
@@ -222,7 +213,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             }}
           >
             <View style={styles.centeredView}>
-              <View style={styles.modalView}>
+              <View style={[styles.modalView, themed(themedStyles.modalView)]}>
                 {renderModalContent()}
               </View>
             </View>
@@ -239,17 +230,16 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
           {/* Members List */}
           <FlatList
-              ref={flatListRef}
               data={groupData.members}
               keyExtractor={(item) => item.id}
               renderItem={renderMember}
-              contentContainerStyle={{ paddingBottom: 100 }}
+              contentContainerStyle={styles.membersListContent}
               showsVerticalScrollIndicator={false}
           />
 
 
           {/* Footer */}
-          <View style={[styles.footer, themed(themedStyles.footer)]}>
+          <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
               <Button
               text="Leave Group"
               preset="default"
@@ -267,28 +257,26 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 export const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
 
-  backButton: { paddingRight: spacing.md } as ViewStyle,
-
   // Header
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   } as ViewStyle,
 
+  backButton: { paddingRight: spacing.md } as ViewStyle,
+  headerInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  } as ViewStyle,
+
   headerTitle: {
     fontSize: 20,
     fontWeight: "600",
   } as TextStyle,
-
-  headerButton: {
-    fontSize: 16,
-    fontWeight: "600",
-  } as TextStyle,
-
   lockButton: { paddingLeft: spacing.md } as ViewStyle,
 
   // Modal
@@ -298,7 +286,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   } as ViewStyle,
-
+  
   modalView: {
     margin: 20,
     backgroundColor: 'white',
@@ -394,7 +382,9 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
 
   // Members
-  membersList: { flex: 1 } as ViewStyle,
+  membersListContent: {
+    paddingBottom: 100
+  } as ViewStyle,
 
   memberItem: {
     flexDirection: "row",
@@ -458,7 +448,18 @@ export const themedStyles = {
     flex: 1,
     backgroundColor: theme.colors.background,
   }),
-
+  
+  header: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.background,
+    borderBottomColor: theme.colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  }),
+  
   backButtonText: (theme: any): TextStyle => ({
     fontSize: 24,
     color: theme.colors.tint,
@@ -466,22 +467,13 @@ export const themedStyles = {
   }),
 
   // Header
-  header: (theme: any): ViewStyle => ({
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    backgroundColor: theme.colors.background,
-  }),
   headerTitle: (theme: any): TextStyle => ({
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "600",
     color: theme.colors.text,
     textAlign: "center",
     flex: 1, 
+    marginRight: spacing.md
   }),
   headerButton: (theme: any): TextStyle => ({
     fontSize: 16,
@@ -593,5 +585,19 @@ export const themedStyles = {
     color: "#e53935",
     opacity: 0.9,
   }),
+  
+  modalView: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.background,
+    borderRadius: 20,
+    padding: spacing.xl,
+    alignItems: 'center',
+    shadowColor: theme.colors.text,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  })
 }
-
