@@ -21,8 +21,16 @@ export const groupsService = {
   exitGroup: async (id: string): Promise<boolean> => {
     const response = await api.apisauce.delete<GroupData>(`/groups/user-from-group/${id}`)
     if (!response.ok) {
-      throw new Error("Error al cargar el grupo")
+      throw new Error("Error al salir del grupo")
     }
     return true
+  },
+
+  changeStatus: async (id: string, status: boolean): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/status/${id}`, { status });
+    if (!response.ok) {
+      throw new Error("Error al cambiar el status del grupo");
+    }
+    return true;
   },
 }
