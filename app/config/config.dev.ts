@@ -8,6 +8,9 @@
 import { Platform } from "react-native"
 import Constants from "expo-constants"
 
+const API_IP = process.env.EXPO_PUBLIC_API_IP
+const API_PORT = process.env.EXPO_PUBLIC_API_PORT
+
 const isAndroid = Platform.OS === "android"
 
 // Detect if running on physical device vs emulator
@@ -18,7 +21,7 @@ const isEmulator = Constants.isDevice === false
 // For iOS, use localhost
 const getApiUrl = () => {
   if (isAndroid) {
-    return isEmulator ? "http://10.0.2.2:8085" : "http://192.168.0.129:8080"
+    return isEmulator ? "http://10.0.2.2:8085" : `http://${API_IP}:${API_PORT}`
   }
   return "http://localhost:8085"
 }
