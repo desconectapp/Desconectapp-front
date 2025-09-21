@@ -24,6 +24,8 @@ import { spacing } from "@/theme"
 import { MessageBubble, Message } from "@/components/Custom/Message"
 import { useExitGroup, useGroupById } from "@/hooks/Groups"
 
+import { useStores } from "@/models"
+import { getChatMessages, useObtainToken } from "@/hooks/Chats"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
@@ -74,11 +76,21 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const [messages, setMessages] = useState<Message[]>(mockMessages)
+  const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState("")
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation<NavigationProp>()
   const { showToast } = useAppToast()
+  const { sessionStore } = useStores()
+  const {data} = useObtainToken()
+  if(!sessionStore.supabase_token) {
+    sessionStore.setSupabaseSession(data?.token || "", data?.expiresAt || new Date())
+  }
+  console.log("supabase_token", sessionStore.supabase_token)
+
+
+  const {data: messagesData} = getChatMessages()
+  console.log("messagesData", messagesData)
 
   const { data: groupData, isLoading } = useGroupById(groupId)
 
