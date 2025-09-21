@@ -20,7 +20,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription } from "@/hooks/Groups"
+import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription, updateGroupName as useUpdateGroupName } from "@/hooks/Groups"
 
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -56,8 +56,9 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   const [isModalVisible, setIsModalVisible] = useState(false)
 
   const { mutate: updateDescription } = updateGroupDescription();
+  const { mutate: updateGroupName } = useUpdateGroupName();
   const [isEditing, setIsEditing] = useState(false)
-  const [tempName, setTempName] = useState(!groupData?.name)
+  const [tempName, setTempName] = useState(!groupData?.name || groupData?.name === "" ? "No Name" : groupData?.name)
   const [tempDescription, setTempDescription] = useState(groupData?.description ?? "")
 
   const handlePressLeave = () => {
@@ -142,12 +143,10 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const handleSave = async () => {
   try {
-    // if (tempName !== groupData.name) {
-    //   await updateGroupName(tempName); 
-    // }
 
-    console.log("Current description:", groupData.description);
-    console.log("Temporary description:", tempDescription);
+    if (tempName !== groupData.name) {
+      updateGroupName({ id: groupData.id, name: tempName }); 
+    }
 
     if (tempDescription !== groupData.description) {
       updateDescription({ id: groupData.id, description: tempDescription });
@@ -294,17 +293,17 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
           >
             <View style={themed(styles.centeredView)}>
               <View style={themed(themedStyles.modalView)}>
-                <Text style={themed(styles.modalTitle)}>Edit Group Info</Text>
-
-                {/* <TextInput
+                <Text style={themed(styles.inputLabel)}>Edit Group Name</Text>
+                <TextInput
                   style={themed(themedStyles.modalInput)}
                   value={tempName}
                   onChangeText={setTempName}
                   placeholder="Group Name"
-                /> */}
-                
+                />
+
+                <Text style={themed(styles.inputLabel)}>Edit Group Description</Text>
                 <TextInput
-                  style={[themed(themedStyles.modalInput), { height: 100 }]}
+                  style={themed(themedStyles.modalInput)}
                   value={tempDescription}
                   onChangeText={setTempDescription}
                   multiline
@@ -313,10 +312,10 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
                 <View style={themed(styles.modalButtonsContainer)}>
                   <TouchableOpacity
-                      style={[styles.modalButton, styles.cancelButton]}
-                      onPress={() => setIsEditing(false)}
-                    >
-                      <Text style={styles.modalButtonText}>Cancel</Text>
+                    style={[styles.modalButton, styles.cancelButton]}
+                    onPress={() => setIsEditing(false)}
+                  >
+                    <Text style={styles.modalButtonText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[themed(styles.modalButton), themed(themedStyles.acceptButton)]}
@@ -388,6 +387,20 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
 export const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
+
+  descriptionInput: {
+    minHeight: 60,
+    maxHeight: 120,
+    textAlignVertical: "top",
+  } as TextStyle,
+
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 4,
+    color: "#333",
+    alignSelf: "flex-start",
+  } as TextStyle,
 
   // Header
   header: {

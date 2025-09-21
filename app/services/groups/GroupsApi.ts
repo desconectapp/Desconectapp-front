@@ -42,4 +42,12 @@ export const groupsService = {
     return true;
   },
 
+  updateGroupName: async (id: string, name: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/name/${id}`, { name });
+    if (!response.ok) {
+      throw new Error("Error al cambiar el nombre del grupo");
+    }
+    return true;
+  },
+
 }

@@ -55,3 +55,14 @@ export const updateGroupDescription = () => {
     },
   });
 };
+
+export const updateGroupName = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string; name: string }>({
+    mutationFn: ({ id, name }) => groupsService.updateGroupName(id, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};
