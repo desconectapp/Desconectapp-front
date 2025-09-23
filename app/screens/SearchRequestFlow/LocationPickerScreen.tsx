@@ -23,6 +23,7 @@ import { containers, buttons, buttonTexts, texts, inputs, chips, separators, sha
 
 import { MainStackParamList } from "@/navigators/MainNavigator"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
+import { MapViewComponent } from "@/components/Location/MapView"
 
 interface Location {
   id: string
@@ -188,15 +189,15 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({ rou
     }
   }
 
-  // Handle single tap for location selection
-  const onSingleTap = (event: any) => {
-    if (!isPanning) {
-      // const { x, y } = event.nativeEvent
-      // const coords = getLatLonFromPixel(x, y)
-      // setMarkerPosition(coords)
-      // reverseGeocode(coords.latitude, coords.longitude)
-    }
-  }
+  // // Handle single tap for location selection
+  // const onSingleTap = (event: any) => {
+  //   if (!isPanning) {
+  //     // const { x, y } = event.nativeEvent
+  //     // const coords = getLatLonFromPixel(x, y)
+  //     // setMarkerPosition(coords)
+  //     // reverseGeocode(coords.latitude, coords.longitude)
+  //   }
+  // }
 
   // Handle two-finger tap for zoom
   const onDoubleTap = (event: any) => {
@@ -276,7 +277,6 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({ rou
           >
             <TapGestureHandler
               ref={singleTapRef}
-              onActivated={onSingleTap}
               numberOfTaps={1}
               minPointers={1}
               waitFor={doubleTapRef}
@@ -555,7 +555,8 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({ rou
       contentContainerStyle={[{ flex: 1, padding: 0 }]}
       backgroundColor={themed($screenBackground)}
     >
-      
+      <MapViewComponent/>
+
       <ScrollView 
         style={themed($scrollView)}
         contentContainerStyle={themed($scrollContent)}
@@ -642,6 +643,8 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({ rou
           />
         </View>
       )}
+      
+      
     </Screen>
   )
 })

@@ -139,10 +139,10 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             onPress={() => navigation.navigate("GroupInfoScreen", { groupId })}
             activeOpacity={0.7}
           >
-            <Text style={styles.groupIcon}>{groupData.icon}</Text>
+            <Text style={styles.groupIcon}>{groupData?.icon}</Text>
             <View style={styles.headerTextContainer}>
-              <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
-              <Text style={themed(themedStyles.memberCount)}>{groupData.members.length} members</Text>
+              <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
+              <Text style={themed(themedStyles.memberCount)}>{groupData?.members.length} members</Text>
             </View>
           </TouchableOpacity>
 
