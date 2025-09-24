@@ -23,7 +23,7 @@ import { containers, buttons, buttonTexts, texts, inputs, chips, separators, sha
 
 import { MainStackParamList } from "@/navigators/MainNavigator"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
-import { MapViewComponent } from "@/components/Location/MapView"
+import { MapMarker, MapViewComponent } from "@/components/Location/MapView"
 
 interface Location {
   id: string
@@ -547,17 +547,77 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({ rou
     )
   }
   
+  const [cameraCenter, setCameraCenter] = useState<number[] | null>(null);
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
-  
+  const [markers, setMarkers] = useState<MapMarker[]>([{
+          id: "marker-1",
+          coordinates: [-73.9911, 40.7342],
+          title: "Marker 1",
+          emoji: "📍",
+          color: "#FF0000",
+          data: { additionalInfo: "Some data about Marker 1" }
+        }, 
+      {
+          id: "marker-2",
+          coordinates: [-73.9911, 40.8342],
+          title: "Marker 2",
+          emoji: "📍",
+          color: "#0141f0ff",
+          data: { additionalInfo: "Some data about Marker 2" }
+        }] as any[])
+
+  // Get user's current location and set as cameraCenter on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        // Request permission and get location
+        const permissionStatus = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+        if (permissionStatus.state === "granted" || permissionStatus.state === "prompt") {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const coords: number[] = [position.coords.longitude, position.coords.latitude];
+              setCameraCenter(coords);
+            },
+            (error) => {
+              console.warn("Error getting user location:", error);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 10000 }
+          );
+        }
+      } catch (e) {
+        console.warn("Geolocation not available or permission denied");
+      }
+    })();
+  }, []);
+
   return (
     <Screen
       preset="fixed"
       contentContainerStyle={[{ flex: 1, padding: 0 }]}
       backgroundColor={themed($screenBackground)}
     >
-      <MapViewComponent/>
+      <MapViewComponent
+        markers={markers}
+        cameraCenter={cameraCenter}
+        onMarkerPress={(marker) => Alert.alert("Marker Pressed", `You pressed ${marker.title}`)}
+        allowAddMarkers={true}
+        onLongPress={(coords) => {
+        console.log("Map long pressed at:", coords);
+        const newMarker: MapMarker = {
+          id: `marker-${markers.length + 1}`,
+          coordinates: [coords[0], coords[1]],
+          title: `Marker ${markers.length + 1}`,
+          emoji: "📍",
+          color: "#2bff00ff",
+          data: { additionalInfo: `Some data about Marker ${markers.length + 1}` }
+        };
+        setMarkers([...markers, newMarker]);
+        setCameraCenter(coords); 
+        setTimeout(() => setCameraCenter(null), 1500);
 
-      <ScrollView 
+      }}
+      />
+      <ScrollView
         style={themed($scrollView)}
         contentContainerStyle={themed($scrollContent)}
         keyboardShouldPersistTaps="handled"

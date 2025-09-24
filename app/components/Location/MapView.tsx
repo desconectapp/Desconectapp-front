@@ -1,101 +1,157 @@
 import { useStores } from "@/models"
 import { useRef, useState } from "react"
-import { Text, View } from "react-native"
-import { PanGestureHandler, TapGestureHandler } from "react-native-gesture-handler"
-import Radar, { Map } from 'react-native-radar';
-import RadarMapMarker from 'react-native-radar';
+import { Text, View, StyleSheet } from "react-native"
+import MapLibreGL from '@maplibre/maplibre-react-native'
+import { useEffect } from "react"
 
-import MapLibreGL from '@maplibre/maplibre-react-native';
-import { Camera, Images, ShapeSource, SymbolLayer } from '@maplibre/maplibre-react-native';
+// Initialize MapLibre
+MapLibreGL.setAccessToken(null) // No token needed for OpenStreetMap
 
-
-MapLibreGL.setAccessToken(null); // Deshabilitar el token de MapLibre
-
-Radar.initialize('prj_test_pk_c887ecbd9e95e748a7b945985b709ec5e5bc56ff'); // Reemplazá con tu clave de Radar
-
-
-export const MapViewComponent = () => {
-const [cameraConfig, setCameraConfig] = useState({
-  triggerKey: Date.now(),
-  centerCoordinate: [-73.9911, 40.7342],
-  animationMode: 'flyTo' as const, // Add 'as const' to fix type
-  animationDuration: 600,
-  zoomLevel: 12,
-});
-
-  const onRegionDidChange = () => {
-    // do something on region change
-  }
-
-  const onSelect = () => {
-    // do something with selected address
-  }
-
-  const pointsCollection = {
-    type: "FeatureCollection" as const,
-    features: [
-      {
-        type: "Feature" as const,
-        properties: {
-          _id: '123',
-        },
-        geometry: {
-          type: "Point" as const,
-          coordinates: [-73.9911, 40.7342]
-        }
-      }
-    ]
-  };
-  
-  const pointsCollection2 = {
-    type: "FeatureCollection" as const,
-    features: [
-      {
-        type: "Feature" as const,
-        properties: {
-          _id: '456',
-          emoji: '🍕',
-          titulo: 'Pizza party'
-        },
-        geometry: {
-          type: "Point" as const,
-          coordinates: [-73.9811, 40.7442]
-        }
-      }
-    ]
-  };
-
-  const onPress = (p: typeof pointsCollection2.features[number]) => {
-    console.log("Pressed:", p.properties.titulo);
-  }
-    
-  return (
-   <View style={{ width: '100%', marginTop: '10%', height: '90%' }}>
-    <Map mapOptions={{ onRegionDidChange }}>
-    <MapLibreGL.Camera {...cameraConfig} />
-
-    {pointsCollection2.features.map(p => (
-      <MapLibreGL.PointAnnotation
-        key={p.properties._id}
-        id={p.properties._id}
-        coordinate={p.geometry.coordinates} // [lng, lat]
-        onSelected={() => onPress(p)}
-      >
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 30 }}>{p.properties.emoji}</Text>
-          <Text
-            style={{
-              color: 'black',
-              backgroundColor: 'white',
-              paddingHorizontal: 4,
-              borderRadius: 4,
-            }}
-          >
-            {p.properties.emoji}{p.properties.titulo}
-          </Text>
-        </View>
-      </MapLibreGL.PointAnnotation>
-    ))}
-  </Map>
-</View>);
+export interface MapMarker {
+  id: string
+  coordinates: [number, number] // [longitude, latitude]
+  title?: string
+  emoji?: string
+  color?: string
+  data?: any // additional data you want to store
 }
+
+export interface MapViewProps {
+  // initialCenter?: [] // [longitude, latitude]
+  cameraCenter?: [] // if provided, camera will center here
+  initialZoom?: number
+  markers?: MapMarker[] // markers to display
+  onMarkerPress?: (marker: MapMarker) => void // callback when marker is pressed
+  onLongPress?: (coordinates: [number, number]) => void // callback when map is long pressed
+  allowAddMarkers?: boolean // whether to allow adding markers via long press
+  style?: any
+}
+export const MapViewComponent = ({
+  cameraCenter,
+  initialZoom = 12,
+  markers = [],
+  onMarkerPress,
+  onLongPress,
+  allowAddMarkers = false,
+  style,
+}: MapViewProps) => {
+  const [userMarkers, setUserMarkers] = useState<MapMarker[]>([])
+  const cameraRef = useRef<any>(null)
+  const center = cameraCenter;
+
+  // Combine passed markers with user-added markers
+  const allMarkers = [...markers, ...userMarkers]
+
+  // // Pan camera to last marker if allowAddMarkers is true and userMarkers changes
+  useEffect(() => {
+    if (allowAddMarkers && userMarkers.length > 0 && cameraRef.current) {
+      console.log("Panning to last user-added marker:", userMarkers[userMarkers.length - 1])
+      const lastMarker = userMarkers[userMarkers.length - 1]
+      cameraRef.current.setCamera({
+        centerCoordinate: lastMarker.coordinates,
+        zoomLevel: initialZoom,
+        animationDuration: 100,
+      })
+    }
+  }, [userMarkers, allowAddMarkers, initialZoom])
+
+  const handleMapLongPress = (event: any) => {
+    if (!allowAddMarkers && !onLongPress) return
+
+    const coordinates = event.geometry.coordinates as [number, number]
+
+    if (onLongPress) {
+      // Let parent handle the long press
+      onLongPress(coordinates)
+
+      // cameraRef.current.setCamera({
+      //   centerCoordinate: coordinates,
+      //   zoomLevel: initialZoom,
+      //   animationDuration: 100,
+      // })
+    } else if (allowAddMarkers) {
+      // Add marker automatically
+      const newMarker: MapMarker = {
+        id: Date.now().toString(),
+        coordinates,
+        title: 'New Marker',
+        emoji: '📍',
+        color: '#FF0000',
+      }
+      setUserMarkers(prev => [...prev, newMarker])
+    }
+  }
+
+  const handleMarkerPress = (marker: MapMarker) => {
+    if (onMarkerPress) {
+      onMarkerPress(marker)
+    } else if (allowAddMarkers && userMarkers.some(m => m.id === marker.id)) {
+      // Remove user-added marker if no custom handler
+      setUserMarkers(prev => prev.filter(m => m.id !== marker.id))
+    }
+  }
+
+  const getMarkerStyle = (marker: MapMarker) => ({
+    backgroundColor: marker.color || '#FF0000',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    borderWidth: 2,
+    borderColor: 'white',
+  })
+
+  return (
+    <View style={[styles.container, style]}>
+      <MapLibreGL.MapView
+        style={styles.map}
+        onLongPress={handleMapLongPress}
+        styleURL="https://demotiles.maplibre.org/style.json" // Free OpenStreetMap style
+      >
+        <MapLibreGL.Camera
+          ref={cameraRef}
+          centerCoordinate={center}
+          zoomLevel={initialZoom}
+        />
+
+        {allMarkers.map((marker) => (
+          <MapLibreGL.PointAnnotation
+            key={marker.id}
+            id={marker.id}
+            coordinate={marker.coordinates}
+            onSelected={() => handleMarkerPress(marker)}
+          >
+            <View style={getMarkerStyle(marker)}>
+              {marker.emoji ? (
+                <Text style={styles.markerEmoji}>{marker.emoji}</Text>
+              ) : (
+                <Text style={styles.markerText}>M</Text>
+              )}
+            </View>
+            {marker.title && (
+              <MapLibreGL.Callout title={marker.title} />
+            )}
+          </MapLibreGL.PointAnnotation>
+        ))}
+      </MapLibreGL.MapView>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1 
+  },
+  map: { 
+    flex: 1 
+  },
+  markerEmoji: {
+    fontSize: 16,
+  },
+  markerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+})
