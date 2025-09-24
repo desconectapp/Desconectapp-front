@@ -10,6 +10,7 @@ export const RootStoreModel = types.model("RootStore").props({
   signUpStore: types.optional(SignUpStoreModel, { preferences: [], userInfo: null }),
   sessionStore: types.optional(SessionModel, {
     user_id: 0,
+    user_uuid: "",
     expiresAt: "",
     refreshExpiresAt: "",
     refreshToken: "",

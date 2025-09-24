@@ -2,7 +2,6 @@ import { api } from "../api"
 import { SupabaseToken, Message } from "./Chats.types"
 import { getSupabaseClient, clearSupabaseCache } from "../../supabase-client"
 
-// Helper function to get a Supabase client with JWT token (with caching)
 const getSupabaseClientWithToken = async () => {
   const tokenData = await chatsService.getToken()
   if (!tokenData?.supabase_token) {
@@ -21,14 +20,11 @@ export const chatsService = {
     return response.data
   },
 
-  getMessages: async (): Promise<Message[] | undefined> => {
-    // Get a Supabase client with JWT token
+  getMessages: async (groupId: string): Promise<Message[] | undefined> => {
     const supabase = await getSupabaseClientWithToken()
 
-    // Now make the Supabase query with the JWT token
-    const {error, data} = await supabase.from("messages").select("*")
-    console.log("data", data)
-    
+    const {error, data} = await supabase.from("messages").select("*").eq("group_id", groupId)
+
     if (error) {
       console.error("Supabase error:", error)
       throw new Error(`Error al cargar los mensajes: ${error.message}`)
@@ -41,9 +37,7 @@ export const chatsService = {
     return data as Message[]
   },
 
-  // Example method for creating messages with JWT token
   createMessage: async (groupId: number, content: string): Promise<Message | undefined> => {
-    // Get a Supabase client with JWT token
     const supabase = await getSupabaseClientWithToken()
 
     const {error, data} = await supabase
@@ -64,9 +58,60 @@ export const chatsService = {
     return data as Message
   },
 
-  // Method to clear Supabase cache (useful for logout)
   clearSupabaseCache: () => {
     clearSupabaseCache()
+  },
+
+  subscribeToMessages: async (groupId: string, onMessage: (message: Message) => void, onError?: (error: any) => void) => {
+    const supabase = await getSupabaseClientWithToken()
+
+    const subscription = supabase
+      .channel(`messages:group_id=eq.${groupId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `group_id=eq.${groupId}`
+        },
+        (payload) => {
+          console.log('New message received:', payload.new)
+          onMessage(payload.new as Message)
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `group_id=eq.${groupId}`
+        },
+        (payload) => {
+          console.log('Message updated:', payload.new)
+          onMessage(payload.new as Message)
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log(`Successfully subscribed to messages for group ${groupId}`)
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Channel subscription error')
+          onError?.(new Error('Channel subscription failed'))
+        }
+      })
+
+    return subscription
+  },
+
+  unsubscribeFromMessages: async (subscription: any) => {
+    if (subscription) {
+      const supabase = await getSupabaseClientWithToken()
+      await supabase.removeChannel(subscription)
+      console.log('Unsubscribed from messages')
+    }
   }
 }
 
