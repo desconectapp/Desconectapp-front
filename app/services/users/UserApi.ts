@@ -91,4 +91,13 @@ export const userService = {
     }
     return response.data
   },
+
+  validateEmail: async (code: string, user_id: number): Promise<void> => {
+    const response = await api.apisauce.post<void>("/auth/email/verify", { code, user_id })
+    if (!response.ok) {
+      throw new Error("Error al validar email")
+    }
+    return response.data
+  }
+
 }

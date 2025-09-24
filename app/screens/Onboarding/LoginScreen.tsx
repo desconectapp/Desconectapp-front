@@ -47,8 +47,7 @@ export const LoginScreen = observer(() => {
     LoginFunc.mutateAsync(response, {
       onSuccess: (_) => {
         setLoading(false)
-        // navigation.navigate("Main", { screen: "Tabs" })
-        navigation.navigate("ValidateEmailScreen")
+        navigation.navigate("Main", { screen: "Tabs" })
       },
       onError: () => {
         setLoading(false)

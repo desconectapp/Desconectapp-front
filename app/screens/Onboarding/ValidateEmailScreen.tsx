@@ -8,6 +8,8 @@ import { spacing } from "@/theme"
 // import * as Clipboard from "expo-clipboard"
 import { useNavigation } from "@react-navigation/native"
 import type { AppStackScreenProps } from "@/navigators"
+import { useStores } from "@/models"
+import { userService } from "@/services/users"
 
 const { width } = Dimensions.get("window")
 
@@ -18,11 +20,16 @@ export const ValidateEmailScreen = observer(() => {
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
 
+  const [errorMessage, setErrorMessage] = useState<string>("")
+
   const codeLength = 6
   const [digits, setDigits] = useState<string[]>(Array(codeLength).fill(""))
   const inputsRef = useRef<(any | null)[]>([])
 
+  const { sessionStore } = useStores()
+
   const handleChange = (value: string, index: number) => {
+    setErrorMessage("")
     const newDigits = [...digits]
     newDigits[index] = value.slice(-1).toUpperCase()
     setDigits(newDigits)
@@ -52,9 +59,22 @@ export const ValidateEmailScreen = observer(() => {
 
   const handleSubmit = () => {
     const code = digits.join("")
-    console.log("Validate with code:", code)
-    // TODO: call backend validate endpoint
-    navigation.navigate("Main", { screen: "Tabs" })
+
+    if (!sessionStore.user_id) {
+      console.error("No user_id in sessionStore")
+      return
+    }
+
+    userService
+      .validateEmail(code, sessionStore.user_id)
+      .then(() => {
+        navigation.navigate("MoreInfoScreen")
+      })
+      .catch(() => {
+        setErrorMessage("Invalid code. Please try again.")
+        setDigits(Array(codeLength).fill(""))
+        inputsRef.current[0]?.focus()
+      })
   }
 
   return (
@@ -89,6 +109,8 @@ export const ValidateEmailScreen = observer(() => {
         <Text style={themed($pasteText)}>Paste Code</Text>
       </TouchableOpacity>
 
+      <Text style={themed($errorMessage)}>{errorMessage}</Text>
+
       <Button
         text="Validate"
         onPress={handleSubmit}
@@ -98,6 +120,12 @@ export const ValidateEmailScreen = observer(() => {
       />
     </Screen>
   )
+})
+
+const $errorMessage = (theme: any) => ({
+  color: theme.colors.error,
+  height: 20,
+  marginBottom: spacing.sm,
 })
 
 const $container: ViewStyle = {
