@@ -76,7 +76,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
       .catch((error) => {
         console.error("Error fetching user activities:", error)
       })
-  }, [])
+  }, [showPreferencesModal])
 
   useEffect(() => {
     if (prefsData && prefsData.length > 0) {
@@ -86,12 +86,6 @@ export const ProfileScreen = observer(function ProfileScreen() {
       setHasMore(false)
     }
   }, [prefsData])
-
-  useEffect(() => {
-    if (profile?.preferences) {
-      setSelectedPreferences(profile.preferences.map((p: any) => p.id))
-    }
-  }, [profile])
 
   const togglePreference = (id: number) => {
     setSelectedPreferences((prev) =>

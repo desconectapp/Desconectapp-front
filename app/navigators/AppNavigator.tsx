@@ -14,6 +14,7 @@ export type AppStackParamList = {
   SignUpScreen: undefined
   LoginScreen: undefined
   MoreInfoScreen: undefined
+  ValidateEmailScreen: undefined
   Main: NavigatorScreenParams<MainStackParamList>
 }
 
@@ -43,6 +44,7 @@ const AppStack = observer(function AppStack() {
       {/* <Stack.Screen name="Welcome" component={Screens.WelcomeScreen} /> */}
       <Stack.Screen name="SignUpScreen" component={Screens.SignUpScreen} />
       <Stack.Screen name="MoreInfoScreen" component={Screens.MoreInfoScreen} />
+      <Stack.Screen name="ValidateEmailScreen" component={Screens.ValidateEmailScreen} />
       <Stack.Screen name="LoginScreen" component={Screens.LoginScreen} />
 
       {/* Main con navbar */}

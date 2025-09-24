@@ -47,10 +47,10 @@ export const LoginScreen = observer(() => {
     LoginFunc.mutateAsync(response, {
       onSuccess: (_) => {
         setLoading(false)
-        console.log("PASA POR ACA?")
-        navigation.navigate("Main", { screen: "Tabs" })
+        // navigation.navigate("Main", { screen: "Tabs" })
+        navigation.navigate("ValidateEmailScreen")
       },
-      onError: (error) => {
+      onError: () => {
         setLoading(false)
         showToast("Error al iniciar sesion", "Por favor, intenta nuevamente.")
       },
