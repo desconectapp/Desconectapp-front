@@ -1,12 +1,22 @@
 import { useStores } from "@/models"
 import { useRef, useState } from "react"
-import { Text, View, StyleSheet } from "react-native"
+import { Text, View, StyleSheet, Platform } from "react-native"
 import MapLibreGL from '@maplibre/maplibre-react-native'
 import { useEffect } from "react"
+import Radar, { Map } from 'react-native-radar';
+import { LongPressGestureHandler , State} from "react-native-gesture-handler"
+
 
 // Initialize MapLibre
-MapLibreGL.setAccessToken(null) // No token needed for OpenStreetMap
-
+// MapLibreGL.setAccessToken(null) // No token needed for OpenStreetMap
+const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ''
+if (!apiKey) {
+  console.warn("RADAR_API_KEY is not set. Please set it in your .env file.")
+} else {
+  console.log("RADAR_API_KEY is set.")
+}
+Radar.initialize(apiKey)
+MapLibreGL.setAccessToken(apiKey) // No token needed for OpenStreetMap
 export interface MapMarker {
   id: string
   coordinates: [number, number] // [longitude, latitude]
@@ -28,7 +38,7 @@ export interface MapViewProps {
 }
 export const MapViewComponent = ({
   cameraCenter,
-  initialZoom = 12,
+  initialZoom = 16,
   markers = [],
   onMarkerPress,
   onLongPress,
@@ -103,11 +113,26 @@ export const MapViewComponent = ({
   })
 
   return (
+      <LongPressGestureHandler
+  minDurationMs={700}
+  onHandlerStateChange={(event) => {
+    if (event.nativeEvent.state === State.ACTIVE) {
+      // calcular coordenadas de screen -> map si es necesario
+      console.log('Long press', event.nativeEvent);
+      // acá disparás tu lógica onLongPress
+    }
+  }}
+>
     <View style={[styles.container, style]}>
-      <MapLibreGL.MapView
+      {/* <Map
         style={styles.map}
+        styleURL="https://demotiles.maplibre.org/style.json"
+        onPress={handleMapLongPress} // Radar's Map uses onPress, not onLongPress
+      > */}
+       <MapLibreGL.MapView
+        style={styles.map}
+        mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
         onLongPress={handleMapLongPress}
-        styleURL="https://demotiles.maplibre.org/style.json" // Free OpenStreetMap style
       >
         <MapLibreGL.Camera
           ref={cameraRef}
@@ -124,7 +149,7 @@ export const MapViewComponent = ({
           >
             <View style={getMarkerStyle(marker)}>
               {marker.emoji ? (
-                <Text style={styles.markerEmoji}>{marker.emoji}</Text>
+                <Text style={styles.markerEmoji}>{marker.title}{marker.emoji}</Text>
               ) : (
                 <Text style={styles.markerText}>M</Text>
               )}
@@ -134,8 +159,11 @@ export const MapViewComponent = ({
             )}
           </MapLibreGL.PointAnnotation>
         ))}
-      </MapLibreGL.MapView>
+      {/* </Map> */}
+        </MapLibreGL.MapView> 
+
     </View>
+    </LongPressGestureHandler>
   )
 }
 

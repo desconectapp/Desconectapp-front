@@ -546,8 +546,9 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({ rou
       </TouchableOpacity>
     )
   }
-  
-  const [cameraCenter, setCameraCenter] = useState<number[] | null>(null);
+
+  const bsAsCoords = [-58.4173, -34.6118]
+  const [cameraCenter, setCameraCenter] = useState<number[] | null>(bsAsCoords);
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const [markers, setMarkers] = useState<MapMarker[]>([{
           id: "marker-1",
