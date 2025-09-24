@@ -59,7 +59,7 @@ export const userService = {
 
   createProfile: async (data: CreateProfileData): Promise<void> => {
     console.log("Creando perfil con datos:", data)
-    const response = await api.apisauce.post<void>("/users/1/profile", data)
+    const response = await api.apisauce.post<void>("/users/profile", data)
     if (!response.ok) {
       throw new Error("Error al crear perfil")
     }
@@ -84,8 +84,8 @@ export const userService = {
     return response.data
   },
 
-  addPreferences: async (preferenceIds: number[]): Promise<void> => {
-    const response = await api.apisauce.post<void>("/preferences", preferenceIds)
+  addPreferencesBatch: async (preferenceIds: number[]): Promise<void> => {
+    const response = await api.apisauce.post<void>("/preferences/batch", preferenceIds)
     if (!response.ok) {
       throw new Error("Error al editar perfil")
     }

@@ -22,9 +22,10 @@ import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
 import type { AppStackScreenProps } from "@/navigators"
-import { useAddPreferences, useEditProfile, useProfile, useActivities } from "@/hooks/Users"
+import { useAddPreferencesBatch, useEditProfile, useProfile, useActivities } from "@/hooks/Users"
 import { useStores } from "@/models"
 import { Pressable } from "react-native"
+import { activitiesService } from "@/services/activities"
 
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 
@@ -48,7 +49,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const { data: profile } = useProfile()
   const { profileImage, handleImagePicker } = useImagePicker()
   const { mutateAsync: editProfileMutateAsync } = useEditProfile()
-  const addPreferences = useAddPreferences()
+  const addPreferences = useAddPreferencesBatch()
   const { sessionStore } = useStores()
 
   const [selectedPreferences, setSelectedPreferences] = useState<number[]>([])
@@ -57,6 +58,25 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const [hasMore, setHasMore] = useState(true)
   const limit = 10
   const { data: prefsData, isFetching } = useActivities(limit, offset)
+
+  useEffect(() => {
+    activitiesService
+      .getActivitiesFromUser()
+      .then((response: any) => {
+        if (response) {
+          const ids = response?.preferences?.map((p: any) => p.id) || []
+
+          setSelectedPreferences(ids)
+          setAllPreferences((prev) => [
+            ...response.preferences,
+            ...prev.filter((p) => !ids.includes(p.id)),
+          ])
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user activities:", error)
+      })
+  }, [])
 
   useEffect(() => {
     if (prefsData && prefsData.length > 0) {

@@ -31,7 +31,6 @@ export const LoginScreen = observer(() => {
     if (!sessionStore.token) {
       navigation.navigate("LoginScreen")
     } else {
-      console.log("o por aca??????")
       navigation.navigate("Main", { screen: "Tabs" })
     }
   }, [navigation, sessionStore.token])
