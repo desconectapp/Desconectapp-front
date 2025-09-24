@@ -10,8 +10,10 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Modal,
+  FlatList,
 } from "react-native"
-import { Screen, TextField, Button, Text, AutoImage } from "@/components"
+import { Screen, TextField, Button, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm, Controller } from "react-hook-form"
@@ -20,7 +22,7 @@ import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
 import type { AppStackScreenProps } from "@/navigators"
-import { useEditProfile, useProfile } from "@/hooks/Users"
+import { useAddPreferences, useEditProfile, useProfile, useActivities } from "@/hooks/Users"
 import { useStores } from "@/models"
 import { Pressable } from "react-native"
 
@@ -31,22 +33,76 @@ const { width, height } = Dimensions.get("window")
 interface ProfileFormData {
   name: string
   location: string
-  // workStatus: string
 }
 
 export const ProfileScreen = observer(function ProfileScreen() {
   const { themed, theme } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const [isEditing, setIsEditing] = useState<boolean>(false)
-  const [isSaving, setIsSaving] = useState<boolean>(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false)
+
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
   const { data: profile } = useProfile()
   const { profileImage, handleImagePicker } = useImagePicker()
   const { mutateAsync: editProfileMutateAsync } = useEditProfile()
-
+  const addPreferences = useAddPreferences()
   const { sessionStore } = useStores()
+
+  const [selectedPreferences, setSelectedPreferences] = useState<number[]>([])
+  const [allPreferences, setAllPreferences] = useState<any[]>([])
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const limit = 10
+  const { data: prefsData, isFetching } = useActivities(limit, offset)
+
+  useEffect(() => {
+    if (prefsData && prefsData.length > 0) {
+      setAllPreferences((prev) => [...prev, ...prefsData])
+      if (prefsData.length < limit) setHasMore(false)
+    } else if (prefsData && prefsData.length === 0) {
+      setHasMore(false)
+    }
+  }, [prefsData])
+
+  useEffect(() => {
+    if (profile?.preferences) {
+      setSelectedPreferences(profile.preferences.map((p: any) => p.id))
+    }
+  }, [profile])
+
+  const togglePreference = (id: number) => {
+    setSelectedPreferences((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    )
+  }
+
+  const handleSavePreferences = async () => {
+    try {
+      await addPreferences.mutateAsync(selectedPreferences)
+      showToast("Preferences Updated", "Your preferences were saved successfully")
+      setShowPreferencesModal(false)
+    } catch (err) {
+      console.error(err)
+      showToast("Error", "Failed to save preferences")
+    }
+  }
+
+  const renderItem = ({ item }: any) => {
+    const selected = selectedPreferences.includes(item.id)
+    return (
+      <TouchableOpacity
+        key={item.id}
+        onPress={() => togglePreference(item.id)}
+        style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
+      >
+        <Text style={$emoji}>{item.icon}</Text>
+        <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>{item.name}</Text>
+      </TouchableOpacity>
+    )
+  }
 
   const {
     control,
@@ -65,10 +121,10 @@ export const ProfileScreen = observer(function ProfileScreen() {
   })
 
   const onSubmit = async (data: ProfileFormData) => {
-    console.log(profileImage)
     setIsSaving(true)
     try {
       await editProfileMutateAsync({
+        ...profile,
         ...data,
         image: profileImage,
       })
@@ -95,7 +151,6 @@ export const ProfileScreen = observer(function ProfileScreen() {
 
   return (
     <Screen
-      preset="scroll"
       contentContainerStyle={[$container, $bottomContainerInsets]}
       backgroundColor={theme.colors.background}
     >
@@ -124,7 +179,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
                   activeOpacity={0.8}
                 >
                   <View style={themed($imageEditButton)}>
-                    <Text style={themed($imageEditText)}>📷</Text>
+                    <Text style={themed($imageEditText)}>ðŸ“·</Text>
                   </View>
                 </TouchableOpacity>
               )}
@@ -208,6 +263,19 @@ export const ProfileScreen = observer(function ProfileScreen() {
       </Pressable>
 
       <Pressable
+        onPress={() => setShowPreferencesModal(true)}
+        style={({ pressed }) => [
+          themed($saveButton),
+          {
+            width: "100%",
+            backgroundColor: pressed ? theme.colors.separator : themed($saveButton).backgroundColor,
+          },
+        ]}
+      >
+        <Text style={themed($settingsButtonText)}>{"Edit Preferences"}</Text>
+      </Pressable>
+
+      <Pressable
         onPress={() => logOut()}
         style={({ pressed }) => [
           themed($settingsButton),
@@ -219,9 +287,97 @@ export const ProfileScreen = observer(function ProfileScreen() {
       >
         <Text style={themed($settingsButtonText)}>{"Log out"}</Text>
       </Pressable>
+
+      <Modal
+        visible={showPreferencesModal}
+        onRequestClose={() => setShowPreferencesModal(false)}
+        {...modalAnimationConfig}
+      >
+        <View style={createModalStyles(theme).modalOverlay}>
+          <View style={createModalStyles(theme).modalContainer}>
+            <View style={createModalStyles(theme).modalHeader}>
+              <Text style={createModalStyles(theme).modalTitle}>Select Preferences</Text>
+              <TouchableOpacity
+                onPress={() => setShowPreferencesModal(false)}
+                style={createModalStyles(theme).modalCloseButton}
+              >
+                <Text style={createModalStyles(theme).modalCloseText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={allPreferences}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={2}
+              contentContainerStyle={{ paddingBottom: spacing.lg }}
+              onEndReached={() => {
+                if (!isFetching && hasMore) setOffset((prev) => prev + limit)
+              }}
+              onEndReachedThreshold={0.6}
+            />
+
+            <View style={createModalStyles(theme).modalFooter}>
+              <TouchableOpacity
+                style={createModalStyles(theme).modalSecondaryButton}
+                onPress={() => setShowPreferencesModal(false)}
+              >
+                <Text style={createModalStyles(theme).modalSecondaryButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={createModalStyles(theme).modalPrimaryButton}
+                onPress={handleSavePreferences}
+              >
+                <Text style={createModalStyles(theme).modalPrimaryButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   )
 })
+
+const $chip: ViewStyle = {
+  flex: 1,
+  borderRadius: 25,
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  marginHorizontal: spacing.xs / 2,
+  alignItems: "center",
+  marginBottom: spacing.md,
+}
+
+const $chipSelected = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.tint,
+  borderColor: theme.colors.tint,
+  borderWidth: 2,
+})
+
+const $chipUnselected = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.backgroundMuted,
+  borderColor: theme.colors.border,
+  borderWidth: 2,
+})
+
+const $chipTextSelected = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontWeight: "600",
+  textAlign: "center",
+})
+
+const $chipTextUnselected = (theme: any): TextStyle => ({
+  color: theme.colors.text,
+  fontWeight: "600",
+  textAlign: "center",
+})
+
+const $emoji: TextStyle = {
+  fontSize: 26,
+  lineHeight: 32,
+  marginBottom: 4,
+}
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
@@ -248,15 +404,15 @@ const $settingsButtonText = (theme: any): TextStyle => ({
 const $profileCard = (theme: any): ViewStyle => ({
   marginTop: spacing.md,
 
-  backgroundColor: theme.colors.palette.neutral100,
+  backgroundColor: theme.colors.palette.neutral200,
   borderRadius: spacing.lg,
   padding: spacing.lg,
   marginBottom: spacing.xl,
-  shadowColor: theme.colors.palette.neutral900,
-  shadowOffset: {
-    width: 0,
-    height: 2,
-  },
+  // shadowColor: theme.colors.palette.neutral900,
+  // shadowOffset: {
+  //   width: 0,
+  //   height: 2,
+  // },
   shadowOpacity: 0.1,
   shadowRadius: 8,
   elevation: 4,
@@ -345,9 +501,12 @@ const $buttonContainer: ViewStyle = {
 
 const $saveButton = (theme: any): ViewStyle => ({
   backgroundColor: theme.colors.tint,
-  borderRadius: spacing.md,
-  minHeight: 50,
-  borderWidth: 1.5,
+  marginBottom: 8,
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  justifyContent: "center",
+  alignItems: "center",
 })
 
 const $saveButtonText = (theme: any): TextStyle => ({
@@ -639,4 +798,10 @@ export const bottomSheetAnimationConfig = {
   animationType: "slide" as const,
   transparent: true,
   statusBarTranslucent: true,
+}
+
+const $listWrapper: ViewStyle = {
+  flex: 1,
+  paddingBottom: spacing.lg,
+  backgroundColor: "transparent",
 }

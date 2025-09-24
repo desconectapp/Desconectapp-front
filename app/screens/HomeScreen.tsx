@@ -209,7 +209,7 @@ export const HomeScreen = observer(function HomeScreen() {
           {/* Groups */}
           {renderGroupsSection()}
 
-          {/* Suggestions */}
+          {/* Suggestions 
           <View style={$suggestionsSection}>
             <PhotoGallerySlider
               onItemPress={(item) =>
@@ -220,6 +220,7 @@ export const HomeScreen = observer(function HomeScreen() {
               itemWidth={width * 0.42}
             />
           </View>
+            */}
         </View>
       )}
       keyExtractor={(item) => item.key}
