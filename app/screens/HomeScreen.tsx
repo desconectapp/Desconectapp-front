@@ -17,68 +17,42 @@ import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { PhotoGallerySlider, type PhotoItem } from "@/components/Custom/PhotoGallerySlider"
-import { useGroups } from "@/hooks/Groups"
+import { useGroups, useGroupsRecs } from "@/hooks/Groups"
 import { spacing } from "@/theme"
 import { GroupFront } from "./GroupsFront.types"
-import { Group } from "@/services/groups/Groups.types"
-
+import { Group, OpenGroup } from "@/services/groups/Groups.types"
 
 
 const { width } = Dimensions.get("window")
 
 
-const mockSuggestions: PhotoItem[] = [
-  {
-    id: "1",
-    image:
-      "https://diariohoynet.nyc3.cdn.digitaloceanspaces.com/adjuntos/galerias/000/338/0000338803.jpg",
-    title: "Caminata al Atardecer",
-    subtitle: "Palermo, Buenos Aires",
-  },
-  {
-    id: "2",
-    image:
-      "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png",
-    title: "Futbol 5",
-    subtitle: "Recoleta, Buenos Aires",
-  },
-  {
-    id: "3",
-    image:
-      "https://www.conasi.eu/blog/wp-content/uploads/2020/09/ceramica-y-porcelana-para-cocinar-1111-1.jpg",
-    title: "Ceramica",
-    subtitle: "Plaza Francia, Recoleta",
-  },
-  {
-    id: "4",
-    image:
-      "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png",
-    title: "Tarde de Mate",
-    subtitle: "Costanera Sur",
-  },
-  {
-    id: "5",
-    image:
-      "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png",
-    title: "Clases de Tango",
-    subtitle: "San Telmo",
-  },
-  {
-    id: "6",
-    image:
-      "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png",
-    title: "Picnic en el Parque",
-    subtitle: "Bosques de Palermo",
-  },
-]
-
 export const HomeScreen = observer(function HomeScreen() {
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const navigation = useNavigation<AppStackScreenProps<"HomeScreen">["navigation"]>()
+
+  // Hooks for My Groups
   const { data: paginatedGroups, isLoading, refetch } = useGroups()
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
+
+  // Hooks for Recommended Groups
+  const { data: recommendedGroups, isLoading: isLoadingRecs, refetch: refetchRecs } = useGroupsRecs(0)
+  const [refreshingRecs, setRefreshingRecs] = useState(false)
+
+  console.log("Recommended Groups:", recommendedGroups)
+
+  // Use a single refresh handler for both hooks
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true)
+    setRefreshingRecs(true)
+    try {
+      await Promise.all([refetch(), refetchRecs()])
+    } finally {
+      setRefreshing(false)
+      setRefreshingRecs(false)
+    }
+  }, [refetch, refetchRecs])
 
   useEffect(() => {
     if (paginatedGroups?.groups) {
@@ -86,23 +60,14 @@ export const HomeScreen = observer(function HomeScreen() {
     }
   }, [paginatedGroups])
 
-  console.log("Paginated Groups:", paginatedGroups)
-  console.log("All Groups State:", allGroups)
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true)
-    try {
-      await refetch()
-    } finally {
-      setRefreshing(false)
-    }
-  }, [refetch])
-
-  const loadMoreGroups = useCallback(() => {
-    if (paginatedGroups?.has_more && !isLoading) {
-      refetch() // assumes your hook handles pagination internally
-    }
-  }, [paginatedGroups, isLoading, refetch])
+  // Map recommended groups to the PhotoItem format
+  // This is where we use the OpenGroup type
+  const recommendedPhotoItems: PhotoItem[] = recommendedGroups?.groups?.map((group: OpenGroup) => ({
+    id: String(group.id),
+    title: group.name,
+    subtitle: group.activity_name,
+    image: group.photo,
+  })) || []
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => (
     <TouchableOpacity
@@ -153,82 +118,107 @@ export const HomeScreen = observer(function HomeScreen() {
       </View>
     </TouchableOpacity>
   )
-
-  const renderGroupsSection = () => {
-    if (isLoading && allGroups.length === 0) {
-      return <Text>Loading groups...</Text>
-    }
-
-    if (!isLoading && allGroups.length === 0) {
+  
+  const ListHeaderComponent = () => {
+    // This is the My Groups section
+    const myGroupsSection = () => {
+      if (isLoading && allGroups.length === 0) {
+        return <Text>Loading groups...</Text>
+      }
+  
+      if (!isLoading && allGroups.length === 0) {
+        return (
+          <View style={$emptyContainer}>
+            <Text style={$emptyIcon}>👥</Text>
+            <Text style={themed($emptyTitle)}>No Groups Yet</Text>
+            <Text style={themed($emptySubtitle)}>Make your first search!</Text>
+          </View>
+        )
+      }
+  
+      const limitedGroups = allGroups.slice(0, 3) // show only first 3
+  
       return (
-        <View style={$emptyContainer}>
-          <Text style={$emptyIcon}>👥</Text>
-          <Text style={themed($emptyTitle)}>No Groups Yet</Text>
-          <Text style={themed($emptySubtitle)}>Make your first search!</Text>
+        <View style={$groupsSection}>
+          <View style={$sectionHeader}>
+            <Text style={themed($sectionTitle)}>My Groups</Text>
+            {allGroups.length > 3 && ( // show See All only if there are more
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate("MyGroupsScreen")}
+              >
+                <Text style={themed($seeAllText)}>See All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+  
+          <FlatList
+            data={limitedGroups}
+            renderItem={renderGroupCard}
+            keyExtractor={(item) => String(item.id)}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={$groupsList}
+            scrollEnabled={false} // fixed, no scrolling for just 3 items
+          />
         </View>
       )
     }
 
-    const limitedGroups = allGroups.slice(0, 3) // show only first 3
-
+  const discoverNewGroupsSection = () => {
     return (
-      <View style={$groupsSection}>
+      <View style={$suggestionsSection}>
+        {/* Section Title */}
         <View style={$sectionHeader}>
-          <Text style={themed($sectionTitle)}>My Groups</Text>
-          {allGroups.length > 3 && ( // show See All only if there are more
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate("MyGroupsScreen")}
-            >
-              <Text style={themed($seeAllText)}>See All</Text>
-            </TouchableOpacity>
-          )}
+          <Text style={themed($sectionTitle)}>Discover New Groups</Text>
         </View>
 
-        <FlatList
-          data={limitedGroups}
-          renderItem={renderGroupCard}
-          keyExtractor={(item) => String(item.id)}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={$groupsList}
-          scrollEnabled={false} // fixed, no scrolling for just 3 items
-        />
+        {/* Content depending on state */}
+        {isLoadingRecs ? (
+          <ActivityIndicator style={{ marginVertical: 20 }} size="large" />
+        ) : recommendedPhotoItems.length === 0 ? (
+          <View style={{ alignItems: "center", paddingVertical: 20 }}>
+            <Text style={themed({ fontSize: 16, color: theme.colors.textDim })}>
+              No new groups to recommend right now 👀
+            </Text>
+          </View>
+        ) : (
+          <PhotoGallerySlider
+            onItemPress={(item) =>
+              navigation.navigate("SuggestionScreen", { suggestionId: item.id })
+            }
+            data={recommendedPhotoItems}
+            itemWidth={width * 0.42}
+          />
+        )}
       </View>
     )
   }
 
+    return (
+      <View style={[$container, $topInsets]}>
+        {/* Header */}
+        <View style={$header}>{/* ... header content ... */}</View>
+        {/* My Groups Section */}
+        {myGroupsSection()}
+        {/* Discover New Groups Section */}
+        {discoverNewGroupsSection()}
+      </View>
+    )
+  }
 
+  // The main FlatList is a dummy, as all content is in the header
   return (
     <FlatList
       data={[{ key: "content" }]}
-      renderItem={() => (
-        <View style={[$container, $topInsets]}>
-          {/* Header */}
-          <View style={$header}>{/* ... header content ... */}</View>
-
-          {/* Groups */}
-          {renderGroupsSection()}
-
-          {/* Suggestions */}
-          <View style={$suggestionsSection}>
-            <PhotoGallerySlider
-              onItemPress={(item) =>
-                navigation.navigate("SuggestionScreen", { suggestionId: item.id })
-              }
-              data={mockSuggestions}
-              title="Discover New Groups"
-              itemWidth={width * 0.42}
-            />
-          </View>
-        </View>
-      )}
+      renderItem={() => null} 
       keyExtractor={(item) => item.key}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.tint} />
+        <RefreshControl refreshing={refreshing || refreshingRecs} onRefresh={onRefresh} tintColor={theme.colors.tint} />
       }
-      onEndReached={loadMoreGroups}
-      onEndReachedThreshold={0.5}
+      onEndReached={() => null} 
       showsVerticalScrollIndicator={false}
+      ListHeaderComponent={ListHeaderComponent}
+      ListFooterComponent={isLoadingRecs ? <ActivityIndicator style={{ marginVertical: 20 }} size="large" /> : null}
     />
   )
 })

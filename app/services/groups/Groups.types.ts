@@ -31,3 +31,18 @@ export interface PaginatedUserGroups {
   groups: Group[]
   has_more: boolean
 }
+
+export interface OpenGroup {
+  id:           number
+	name:         string
+	description:  string
+	location:     string
+	activity_name: string
+	member_count:	number
+	photo:	string
+}
+
+export interface PaginatedOpenGroup {
+  groups: OpenGroup[]
+  has_more: boolean
+}

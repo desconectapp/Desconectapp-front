@@ -1,11 +1,19 @@
 import { api } from "../api"
-import { Group, GroupData, PaginatedUserGroups } from "./Groups.types"
+import { Group, GroupData, PaginatedOpenGroup, PaginatedUserGroups } from "./Groups.types"
 
 export const groupsService = {
   getGroups: async (): Promise<PaginatedUserGroups | undefined> => {
     const response = await api.apisauce.get<PaginatedUserGroups>(`/groups/user`)
     if (!response.ok) {
       throw new Error("Error al cargar los grupos")
+    }
+    return response.data
+  },
+
+  getGroupsRecs: async (activity_id: number): Promise<PaginatedOpenGroup | undefined> => {
+    const response = await api.apisauce.get<PaginatedOpenGroup>(`/groups/recs`, {activity_id})
+    if (!response.ok) {
+      throw new Error("Error al cargar las sugerencias para el usuario")
     }
     return response.data
   },

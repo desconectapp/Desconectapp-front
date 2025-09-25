@@ -23,6 +23,17 @@ export const useGroups = () => {
   })
 }
 
+export const useGroupsRecs = (activity_id: number) => {
+  return useQuery({
+    queryKey: ["groupsRecs", activity_id],  // <-- important
+    queryFn: async () => {
+      const response = await groupsService.getGroupsRecs(activity_id)
+      if (!response) throw new Error("Error al cargar grupos")
+      return response
+    },
+  })
+}
+
 export const useGroupById = (id: string) => {
   return useQuery({
     queryKey: ["groups", id],
