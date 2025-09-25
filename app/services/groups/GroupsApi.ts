@@ -50,4 +50,20 @@ export const groupsService = {
     return true;
   },
 
+  updateGroupLocation: async (id: string, location: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/location/${id}`, { location });
+    if (!response.ok) {
+      throw new Error("Error al cambiar la location del grupo");
+    }
+    return true;
+  },
+
+  updateGroupPhoto: async (id: string, photo: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/photo/${id}`, { photo });
+    if (!response.ok) {
+      throw new Error("Error al cambiar la foto del grupo");
+    }
+    return true;
+  },
+
 }

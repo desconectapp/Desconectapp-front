@@ -66,3 +66,25 @@ export const updateGroupName = () => {
     },
   });
 };
+
+export const updateGroupLocation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string; location: string }>({
+    mutationFn: ({ id, location }) => groupsService.updateGroupLocation(id, location),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};
+
+export const updateGroupPhoto = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string; photo: string }>({
+    mutationFn: ({ id, photo }) => groupsService.updateGroupName(id, photo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};

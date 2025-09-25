@@ -20,8 +20,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription, updateGroupName as useUpdateGroupName } from "@/hooks/Groups"
-
+import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription, updateGroupName as useUpdateGroupName, updateGroupLocation as useUpdateGroupLocation} from "@/hooks/Groups"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
@@ -57,9 +56,11 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const { mutate: updateDescription } = updateGroupDescription();
   const { mutate: updateGroupName } = useUpdateGroupName();
+  const { mutate: updateGroupLocation } = useUpdateGroupLocation();
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState("")
   const [tempDescription, setTempDescription] = useState("")
+  const [tempLocation, setTempLocation] = useState("")
 
   const handlePressLeave = () => {
     setIsModalVisible(true);
@@ -78,6 +79,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
     if (groupData) {
       setTempName(groupData.name);
       setTempDescription(groupData.description ?? "");
+      setTempLocation(groupData.location ?? "");
     }
   }, [groupData]);
 
@@ -150,6 +152,10 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
     if (tempDescription !== groupData.description) {
       updateDescription({ id: groupData.id, description: tempDescription });
+    }
+
+    if (tempLocation !== groupData.location) {
+        updateGroupLocation({ id: groupData.id, location: tempLocation });
     }
     
     setIsEditing(false);
@@ -311,7 +317,16 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
                   <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
               )}
 
-              <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
+              {isEditing ? (
+                  <TextInput
+                    style={themed(themedStyles.groupLocationInput)}
+                    value={tempLocation}
+                    onChangeText={setTempLocation}
+                    placeholder="Group Location"
+                  />
+              ) : (
+                  <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
+              )}
 
               {isEditing ? (
                   <TextInput
@@ -698,6 +713,18 @@ export const themedStyles = {
     padding: spacing.sm,
     minHeight: 80,
     textAlignVertical: "top",
+  }),
+
+  groupLocationInput: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.text,
+    textAlign: "center",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.tint,
+    borderRadius: spacing.xs,
+    padding: spacing.sm,
   }),
 
   divider: (theme: any): ViewStyle => ({
