@@ -93,7 +93,7 @@ export const LoginScreen = observer(() => {
         forgotPassword={false}
         isSubmitting={loading}
       />
-      <View style={$logoContainer}>
+      <View>
         <Text
           preset="subheading"
           style={themed({
@@ -104,6 +104,20 @@ export const LoginScreen = observer(() => {
           onPress={() => navigation.navigate("SignUpScreen")}
         >
           Don&apos;t have an account? Sign Up
+        </Text>
+      </View>
+
+      <View>
+        <Text
+          preset="subheading"
+          style={themed({
+            color: "gray",
+            textAlign: "center",
+            opacity: 0.9,
+          })}
+          onPress={() => navigation.navigate("ForgotPasswordScreen")}
+        >
+          Forgot your password? Reset
         </Text>
       </View>
     </Screen>

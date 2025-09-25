@@ -98,6 +98,27 @@ export const userService = {
       throw new Error("Error al validar email")
     }
     return response.data
-  }
+  },
 
+  forgotPassword: async (email: string): Promise<number> => {
+    const response = await api.apisauce.post<void>("/auth/password/forgot", { email })
+    if (!response.ok) {
+      throw new Error("Error al validar email")
+    }
+
+    console.log(response.data)
+    return response.data
+  },
+
+  resetPassword: async (code: string, newPassword: string, userId: number): Promise<void> => {
+    const response = await api.apisauce.post<void>("/auth/password/update", {
+      code,
+      new_password: newPassword,
+      user_id: userId,
+    })
+    if (!response.ok) {
+      throw new Error("Error al resetear password")
+    }
+    return response.data
+  },
 }
