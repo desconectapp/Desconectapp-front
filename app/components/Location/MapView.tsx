@@ -1,17 +1,25 @@
 import { useStores } from "@/models"
 import { useRef, useState } from "react"
 import { Text, View, StyleSheet, Platform } from "react-native"
-import MapLibreGL from '@maplibre/maplibre-react-native'
+import MapLibreGL from "@maplibre/maplibre-react-native"
 import { useEffect } from "react"
-import Radar, { Map, Autocomplete } from 'react-native-radar';
-import { FlatList, LongPressGestureHandler , State, TextInput, TouchableOpacity} from "react-native-gesture-handler"
+import Radar, { Map, Autocomplete } from "react-native-radar"
+import {
+  FlatList,
+  LongPressGestureHandler,
+  State,
+  TextInput,
+  TouchableOpacity,
+} from "react-native-gesture-handler"
 import CustomAutocomplete from "./SearchBar"
 import { selectedLocation } from "types"
-
-
+import { Icon } from "../Icon"
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
+import { LocationInfo } from "./LocationInfo"
+import { CustomSlider } from "../Custom/CustomSlider"
 // Initialize MapLibre
 // MapLibreGL.setAccessToken(null) // No token needed for OpenStreetMap
-const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ''
+const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ""
 if (!apiKey) {
   console.warn("RADAR_API_KEY is not set. Please set it in your .env file.")
 } else {
@@ -19,6 +27,9 @@ if (!apiKey) {
 }
 Radar.initialize(apiKey)
 MapLibreGL.setAccessToken(apiKey) // No token needed for OpenStreetMap
+
+const BSASCOORDS = [-58.4173, -34.6118] // Buenos Aires coords
+
 export interface MapMarker {
   id: string
   coordinates: [number, number] // [longitude, latitude]
@@ -30,92 +41,181 @@ export interface MapMarker {
 }
 
 export interface MapViewProps {
-  location: selectedLocation,
-  setLocation: (location: selectedLocation) => void,
-  zoom: number,
-  setZoom: (zoom: number) => void,
+  selectedLocation?: selectedLocation | null
+  setSelectedLocation?: (location: selectedLocation | null) => void
   initialZoom?: number
-  markerRadius?: number // in degrees, approx 0.01 ~ 1km
-  markers?: MapMarker[] // markers to display
-  onMarkerPress?: (marker: MapMarker) => void // callback when marker is pressed
-  onLongPress?: (coordinates: [number, number]) => void // callback when map is long pressed
-  allowAddMarkers?: boolean // whether to allow adding markers via long press
+  searchRadiusKm?: number // in degrees, approx 0.01 ~ 1km
+  setSearchRadiusKm?: (radiusKm: number) => void
+  groups?: MapMarker[] // markers to display
+  onGroupPress?: (marker: MapMarker) => void // callback when marker is pressed
+  allowSelectLocation?: boolean // whether to allow adding markers via long press
   style?: any
 }
 export const MapViewComponent = ({
-  location,
-  setLocation,
-  zoom,
-  setZoom,
-  markerRadius = 0.01,
-  initialZoom = 13,
-  markers = [],
-  onMarkerPress,
-  onLongPress,
-  allowAddMarkers = false,
+  selectedLocation,
+  setSelectedLocation,
+  searchRadiusKm = 0.01,
+  setSearchRadiusKm,
+  allowSelectLocation = false,
+  groups = [],
+  onGroupPress,
+
   style,
 }: MapViewProps) => {
-  const [userMarkers, setUserMarkers] = useState<MapMarker[]>([])
   const cameraRef = useRef<any>(null)
-
-  // Combine passed markers with user-added markers
-  const allMarkers = [...markers, ...userMarkers]
+  const [cameraCenter, setCameraCenter] = useState<[number, number]>([BSASCOORDS[0], BSASCOORDS[1]]) // Default to Buenos Aires
+  const [zoom, setZoom] = useState(13)
+  
   const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null)
 
-  useEffect(() => {
-    if (allowAddMarkers && userMarkers.length > 0 && cameraRef.current) {
-      const lastMarker = userMarkers[userMarkers.length - 1]
-      cameraRef.current.setCamera({
-        centerCoordinate: lastMarker.coordinates,
-        zoomLevel: initialZoom,
-        animationDuration: 100,
-      })
-    }
-  }, [userMarkers, allowAddMarkers, initialZoom])
+  // useEffect(() => {
+  //   if (allowAddMarker && groups.length > 0 && cameraRef.current) {
+  //     const lastMarker = groups[groups.length - 1]
+  //     cameraRef.current.setCamera({
+  //       centerCoordinate: lastMarker.coordinates,
+  //       zoomLevel: zoom || 13,
+  //       animationDuration: 100,
+  //     })
+  //   }
+  // }, [selectedLocation])
 
   // LongPress selecciona una ubicacion
-  const handleMapLongPress = (event: any) => {
-    if (!allowAddMarkers && !onLongPress) return
+  const handleMapLongPress = async (event: any) => {
+    if (!allowSelectLocation) return
     const coordinates = event.geometry.coordinates as [number, number]
-    onLongPress?.(coordinates)   
+    const address = await Radar.reverseGeocode({
+      location: { latitude: coordinates[1], longitude: coordinates[0] },
+    })
+    setSelectedLocation?.({
+      id: "selected-location",
+      name: "Selected Location",
+      address: address.addresses?.[0]?.formattedAddress || "Selected Location",
+      latitude: coordinates[1],
+      longitude: coordinates[0],
+    })
+    setCameraCenter?.(coordinates)
+    setZoom(zoom < 13 ? 13 : zoom) // Zoom in if too far out
   }
 
-  const handleMarkerPress = (marker: MapMarker) => {
+  // Mostrar info de un marcador (grupo) al tocarlo
+  const handleGroupPress = (marker: MapMarker) => {
     setSelectedMarker(marker)
-    if (onMarkerPress) {
-      onMarkerPress(marker)
-    } else if (allowAddMarkers && userMarkers.some(m => m.id === marker.id)) {
-      setUserMarkers(prev => prev.filter(m => m.id !== marker.id))
+    if (onGroupPress) {
+      onGroupPress(marker)
     }
   }
 
   const getMarkerStyle = (marker: MapMarker) => ({
-    backgroundColor: marker.color || '#FF0000',
+    backgroundColor: marker.color || "#FF0000",
     borderRadius: 15,
     width: marker.radius ? marker.radius * 2000 : 30,
     height: marker.radius ? marker.radius * 2000 : 30,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
     borderWidth: 2,
-    borderColor: 'white',
+    borderColor: "white",
   })
 
+  // Helper function to create a circle geometry from center point and radius in km
+  const createCircleGeoJSON = (center: [number, number], radiusKm: number) => {
+    const points = 64 // Number of points to create the circle
+    const coords = []
+    
+    // Convert km to degrees, accounting for latitude distortion
+    const lat = center[1]
+    const radiusLatDegrees = radiusKm / 111 // 1 degree latitude ≈ 111 km everywhere
+    const radiusLngDegrees = radiusKm / (111 * Math.cos((lat * Math.PI) / 180)) // Longitude degrees vary by latitude
+    
+    for (let i = 0; i < points; i++) {
+      const angle = (i * 360) / points
+      const x = center[0] + radiusLngDegrees * Math.cos((angle * Math.PI) / 180)
+      const y = center[1] + radiusLatDegrees * Math.sin((angle * Math.PI) / 180)
+      coords.push([x, y])
+    }
+    
+    // Close the polygon
+    coords.push(coords[0])
+    
+    return {
+      type: "Feature" as const,
+      properties: {},
+      geometry: {
+        type: "Polygon" as const,
+        coordinates: [coords],
+      },
+    }
+  }
 
+  console.log("selected loc:",selectedLocation)
   return (
     <View style={[styles.container, style]}>
       <MapLibreGL.MapView
-      style={styles.map}
-      mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
-      onLongPress={handleMapLongPress}
-      onPress={() => setSelectedMarker(null)} // Deselect marker when clicking on map
+        style={styles.map}
+        onLongPress={handleMapLongPress}
+        mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
+        onPress={() => {
+          setSelectedLocation?.(null)
+          setSelectedMarker(null)
+        }} // Deselect marker when clicking on map
       >
-      <MapLibreGL.Camera
-        ref={cameraRef}
-        centerCoordinate={[location.longitude, location.latitude]}
-        zoomLevel={zoom}
-      />
+        <MapLibreGL.Camera
+          ref={cameraRef}
+          centerCoordinate={[cameraCenter[0], cameraCenter[1]]}
+          zoomLevel={zoom}
+        />
+        {selectedLocation && (
+          <>
+            {/* Search radius circle */}
+            <MapLibreGL.ShapeSource
+              id="search-radius-source"
+              shape={createCircleGeoJSON(
+                [selectedLocation.longitude, selectedLocation.latitude], 
+                searchRadiusKm
+              )}
+            >
+              <MapLibreGL.FillLayer
+                id="search-radius-fill"
+                style={{
+                  fillColor: "rgba(85, 255, 136, 0.15)",
+                  fillOpacity: 0.6,
+                }}
+              />
+              <MapLibreGL.LineLayer
+                id="search-radius-stroke"
+                style={{
+                  lineColor: "rgba(85, 255, 136, 0.8)",
+                  lineWidth: 2,
+                  lineOpacity: 0.8,
+                }}
+              />
+            </MapLibreGL.ShapeSource>
+            
+            {/* Center marker */}
+            <MapLibreGL.PointAnnotation
+              key="user-location"
+              id="user-location"
+              coordinate={[selectedLocation.longitude, selectedLocation.latitude]}
+            >
+              <View
+                style={{
+                  backgroundColor: "rgba(85, 255, 136, 1)",
+                  borderRadius: 15,
+                  width: 30,
+                  height: 30,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderWidth: 2,
+                  borderColor: "white",
+                }}
+              >
+                <Text style={{ fontSize: 16 }}>📍</Text>
+              </View>
+            </MapLibreGL.PointAnnotation>
+          </>
+        )}
 
-      {allMarkers.map((marker) => (
+        {/* Para ver grupos cercanos */}
+        {/* {markers?.map((marker) => (
         <MapLibreGL.PointAnnotation
         key={marker.id}
         id={marker.id}
@@ -133,93 +233,96 @@ export const MapViewComponent = ({
           <MapLibreGL.Callout title={marker.title} />
         ) : <></>}
         </MapLibreGL.PointAnnotation>
-      ))}
+      ))} */}
       </MapLibreGL.MapView>
-     { /* Bottom overlay for selected marker info */}
-      {selectedMarker && (
-        <View style={styles.bottomOverlayContainer}>
-        <View style={[styles.gradientOverlay]}/>
-        <View style={styles.selectedMarkerInfo}>
-          {/* Container for close button and info */}
-          <View style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
-            <TouchableOpacity
-              style={{
-          margin: 8,
-          backgroundColor: 'rgba(155, 155, 155, 0.32)',
-          width: 26,
-          height: 26,
-          borderRadius: 13,
-          alignItems: 'center',
-          right:-80,
-          top: 35,
-          
-              }}
-              onPress={() => setSelectedMarker(null)}
-            >
-              <Text style={{ color: 'white', fontSize: 18,  }}>x</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ marginTop: 32, alignItems: 'center' }}>
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-              {selectedMarker.title || 'Marker'}
-            </Text>
-            {selectedMarker.emoji && (
-              <Text style={{ fontSize: 24 }}>{selectedMarker.emoji}</Text>
-            )}
-            <Text style={{ color: 'white', fontSize: 12 }}>
-              Lat: {selectedMarker.coordinates[1].toFixed(5)}, Lon: {selectedMarker.coordinates[0].toFixed(5)}
-            </Text>
-            {selectedMarker.data && (
-              <Text style={{ color: 'white', fontSize: 12 }}>
-          {JSON.stringify(selectedMarker.data)}
-              </Text>
-            )}
-          </View>
-        </View>
-        </View>
+      {/* Para cuando selecciono ubicacion en la search */}
+      {selectedLocation && (
+        <LocationInfo height={180}>
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16, paddingBottom: 15 }}>
+            {selectedLocation.address || "Selected Location"}
+          </Text>
+          <View
+            style={{
+              width: 375,
+              height: 100,
+
+            }}
+          >
+
+            <CustomSlider
+              value={searchRadiusKm}
+              min={0.5}
+              max={10}
+              step={0.5}
+              label="Radio de búsqueda"
+              formatValue={(value) => `${value} km`}
+              onValueChange={setSearchRadiusKm ?? (() => {})}
+              showButtons={false}
+              />
+              </View>
+        </LocationInfo>
       )}
 
+      {/* Para cuando selecciono un grupo */}
+      {/* Para el grupo, poner boton de entrar al grupo y eso */}
+      {selectedMarker && (
+        <LocationInfo>
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+            {selectedMarker.title || "Marker"}
+          </Text>
+          {selectedMarker.emoji && <Text style={{ fontSize: 24 }}>{selectedMarker.emoji}</Text>}
+          <Text style={{ color: "white", fontSize: 12 }}>
+            Lat: {selectedMarker.coordinates[1].toFixed(5)}, Lon:{" "}
+            {selectedMarker.coordinates[0].toFixed(5)}
+          </Text>
+          {selectedMarker.data && (
+            <Text style={{ color: "white", fontSize: 12 }}>
+              {JSON.stringify(selectedMarker.data)}
+            </Text>
+          )}
+        </LocationInfo>
+      )}
     </View>
   )
 }
 
 // Add styles for overlay and gradient
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
+  container: {
+    flex: 1,
   },
-  map: { 
-    flex: 1 
+  map: {
+    flex: 1,
   },
   markerEmoji: {
     fontSize: 16,
   },
   markerText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 12,
   },
   bottomOverlayContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     minHeight: 100,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    justifyContent: "flex-end",
+    alignItems: "center",
   },
   gradientOverlay: {
-    position: 'absolute',
+    position: "absolute",
     left: 5,
     right: 5,
     bottom: 2.5,
     height: 100,
     borderRadius: 16,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: "rgba(0,0,0,0.85)",
   },
   selectedMarkerInfo: {
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     zIndex: 2,
   },
 })

@@ -12,6 +12,7 @@ import {
   type DimensionValue,
   ViewStyle,
   TextStyle,
+  Keyboard,
 } from "react-native"
 import { PanGestureHandler, State, TapGestureHandler } from "react-native-gesture-handler"
 import { Screen, Text, Button, CustomSlider } from "../../components"
@@ -57,21 +58,12 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
   route,
 }: LocationPickerScreenProps) {
   const { nextScreen } = route.params || {}
+  const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
-  const [searchQuery, setSearchQuery] = useState("")
   // const [suggestions, setSuggestions] = useState<NominatimResult[]>([])
-  const [selectedLocation, setSelectedLocation] = useState<selectedLocation | null>(requestStore.location)
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [hasSelectedFromSuggestion, setHasSelectedFromSuggestion] = useState(false)
-  const [mapRegion, setMapRegion] = useState({
-    latitude: requestStore.location?.latitude || -34.6037, // Buenos Aires default
-    longitude: requestStore.location?.longitude || -58.3816,
-    latitudeDelta: 0.1,
-    longitudeDelta: 0.1,
-  })
-  const [zoom, setZoom] = useState(13)
-  const [radiusKm, setRadiusKm] = useState(requestStore.radiusKm || 5) // Use store value or default 5km
+  const [selectedLocation, setSelectedLocation] = useState<selectedLocation | null>(requestStore.location??null)
+  const [searchRadiusKm, setSearchRadiusKm] = useState(requestStore.radiusKm || 5) // Use store value or default 5km
 
   // // Separate marker position from map center
   // const [markerPosition, setMarkerPosition] = useState<{
@@ -100,17 +92,11 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
   //   }
   // }
 
-  // Helper function to update radius in both local state and store
-  const updateRadius = (radius: number) => {
-    markers.find
-    setRadiusKm(radius)
-    requestStore.setRadiusKm(radius)
-  }
   const handleNext = () => {
     // Save selected location and radius to the store
     if (selectedLocation) {
       requestStore.setLocation(selectedLocation)
-      requestStore.setRadiusKm(radiusKm)
+      requestStore.setRadiusKm(searchRadiusKm)
     }
 
     navigation.navigate("SchedulePickerScreen" as any)
@@ -127,9 +113,6 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
   //   )
   // }
 
-  const bsAsCoords: [number, number] = [-58.4173, -34.6118]
-  const [cameraCenter, setCameraCenter] = useState<[number, number] | null>(bsAsCoords)
-  const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const [markers, setMarkers] = useState<MapMarker[]>([
     {
       id: "marker-1",
@@ -149,43 +132,10 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
     },
   ] as any[])
 
-  // Get user's current location and set as cameraCenter on mount
-  useEffect(() => {
-    ;(async () => {
-      try {
-        // Request permission and get location
-        const permissionStatus = await navigator.permissions.query({
-          name: "geolocation" as PermissionName,
-        })
-        if (permissionStatus.state === "granted" || permissionStatus.state === "prompt") {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const coords: number[] = [position.coords.longitude, position.coords.latitude]
-              setCameraCenter(coords)
-              setSelectedLocation({
-                id: "user-location",
-                name: "Mi ubicación",
-                latitude: coords[1],
-                longitude: coords[0],
-                address: "Ubicación actual",
-              })
-            },
-            (error) => {
-              console.warn("Error getting user location:", error)
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 10000 },
-          )
-        }
-      } catch (e) {
-        console.warn("Geolocation not available or permission denied")
-      }
-    })()
-  }, [])
-
   return (
     <Screen
       preset="fixed"
-      contentContainerStyle={[{ flex: 1, padding: 0 }]}
+      contentContainerStyle={[{ flex: 1, padding: 1 }]}
       backgroundColor={themed($screenBackground)}
     >
       <View style={themed($header)}>
@@ -197,25 +147,16 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
          {/* Search Input */}
          <CustomAutocomplete
            placeholder="Buscar ubicación en Argentina..."
-           onSelection={(address) => {
+           onSelection={(address: any) => {
              console.log('Selected address:', address);
-             setZoom(13) 
+             Keyboard.dismiss();
              setSelectedLocation({
                id: address.place_id ? String(address.place_id) : "unknown",
                name: address.name || address.formattedAddress.split(",")[0],
                latitude: address.latitude,
                longitude: address.longitude,
                address: address.formattedAddress,
-             })
-             const newMarker: MapMarker = {
-               id: `marker-${markers.length + 1}`,
-               coordinates: [address.longitude, address.latitude],
-               title: address.name || address.formattedAddress.split(",")[0],
-               emoji: "📍",
-                color: "#FF0000",
-                data: { additionalInfo: `Some data about Marker ${markers.length + 1}` },
-              }
-              setMarkers(prev => [...prev, newMarker]) 
+             })             
             }
            }
          />
@@ -223,65 +164,36 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
       </View>
 
       <MapViewComponent
-        markers={markers}
-        location={selectedLocation}
-        setLocation={setSelectedLocation}
-        markerRadius={radiusKm * 0.01} // Convert km to degrees approx
-        zoom={zoom}
-        setZoom={setZoom}
-        cameraCenter={cameraCenter}
-        // onMarkerPress={(marker) => Alert.alert("Marker Pressed", `You pressed ${marker.title}`)}
-        allowAddMarkers={true}
-        onLongPress={(coords) => {
-          console.log("Map long pressed at:", coords)
-          const newMarker: MapMarker = {
-            id: `marker-${markers.length + 1}`,
-            coordinates: [coords[0], coords[1]],
-            title: `Marker ${markers.length + 1}`,
-            emoji: "📍",
-            color: "#2bff00ff",
-            data: { additionalInfo: `Some data about Marker ${markers.length + 1}` },
-          }
-          const markerRadius: MapMarker = {
-            id: `radius-${markers.length + 1}`,
-            coordinates: [coords[0], coords[1]],
-            radius: radiusKm * 0.01, // in degrees
-            color: "#0000ff22",
-            data: { additionalInfo: `Radius for Marker ${markers.length + 1}` },
-          }
-          setMarkers([...markers, newMarker, markerRadius])
-          setCameraCenter(coords)
-          setTimeout(() => setCameraCenter(null), 1500)
-        }}
+        selectedLocation={selectedLocation}
+        setSelectedLocation={setSelectedLocation}
+        allowSelectLocation={true}
+        searchRadiusKm={searchRadiusKm} // Pass km directly
+        setSearchRadiusKm={setSearchRadiusKm}
+
+        groups={markers}
+       
+        
+        onGroupPress={(marker) => Alert.alert("Marker Pressed", `You pressed ${marker.title}`)}
+
       />
-      <ScrollView
+      {/* <ScrollView
         style={themed($scrollView)}
         contentContainerStyle={themed($scrollContent)}
         keyboardShouldPersistTaps="handled"
-      >
+      > */}
         {/* Radius Slider */}
-        {selectedLocation && (
+        {/* {selectedLocation && (
           <CustomSlider
-            value={radiusKm}
+            value={searchRadiusKm}
             min={1}
             max={15}
             step={1}
             label="Radio de búsqueda"
             formatValue={(value) => `${value} km`}
-            onValueChange={updateRadius}
+            onValueChange={setSearchRadiusKm}
             showButtons={true}
           />
-        )}
-
-        {/* Selected Location Info */}
-        {selectedLocation && (
-          <View style={[themed(containers.card), themed($selectedLocationContainer)]}>
-            <Text style={themed(texts.caption)}>Ubicación seleccionada:</Text>
-            <Text style={themed(texts.title)}>{selectedLocation.name}</Text>
-            <Text style={themed(texts.bodySmall)}>{selectedLocation.address}</Text>
-          </View>
-        )}
-
+        )}     */}
         {/* Next Button */}
         <Button
           text="Siguiente"
@@ -297,7 +209,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
           disabled={!selectedLocation}
           onPress={handleNext}
         />
-      </ScrollView>
+      {/* </ScrollView> */}
 
       {/* Suggestions List - Outside ScrollView to avoid nesting VirtualizedList */}
       {/* {showSuggestions && suggestions.length > 0 && (
@@ -389,4 +301,5 @@ const $selectedLocationContainer = (theme: any): ViewStyle => ({
 
 const $nextButton = (theme: any): ViewStyle => ({
   marginTop: theme.spacing.md,
+  marginBottom: theme.spacing.sm,
 })

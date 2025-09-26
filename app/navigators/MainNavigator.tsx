@@ -97,7 +97,6 @@ const CustomTabBarButton = ({ onPress }: any) => {
             backgroundColor: "rgba(255,255,255,0.3)", // más brillo
           }}
         />
-        
         <FontAwesome6 name="people-group" size={38} color="#fff" />
       </Animated.View>
     </Pressable>
