@@ -3,8 +3,10 @@ import { useRef, useState } from "react"
 import { Text, View, StyleSheet, Platform } from "react-native"
 import MapLibreGL from '@maplibre/maplibre-react-native'
 import { useEffect } from "react"
-import Radar, { Map } from 'react-native-radar';
-import { LongPressGestureHandler , State} from "react-native-gesture-handler"
+import Radar, { Map, Autocomplete } from 'react-native-radar';
+import { FlatList, LongPressGestureHandler , State, TextInput, TouchableOpacity} from "react-native-gesture-handler"
+import CustomAutocomplete from "./SearchBar"
+import { selectedLocation } from "types"
 
 
 // Initialize MapLibre
@@ -24,12 +26,16 @@ export interface MapMarker {
   emoji?: string
   color?: string
   data?: any // additional data you want to store
+  radius?: number // in degrees, approx 0.01 ~ 1km
 }
 
 export interface MapViewProps {
-  // initialCenter?: [] // [longitude, latitude]
-  cameraCenter?: [] // if provided, camera will center here
+  location: selectedLocation,
+  setLocation: (location: selectedLocation) => void,
+  zoom: number,
+  setZoom: (zoom: number) => void,
   initialZoom?: number
+  markerRadius?: number // in degrees, approx 0.01 ~ 1km
   markers?: MapMarker[] // markers to display
   onMarkerPress?: (marker: MapMarker) => void // callback when marker is pressed
   onLongPress?: (coordinates: [number, number]) => void // callback when map is long pressed
@@ -37,8 +43,12 @@ export interface MapViewProps {
   style?: any
 }
 export const MapViewComponent = ({
-  cameraCenter,
-  initialZoom = 16,
+  location,
+  setLocation,
+  zoom,
+  setZoom,
+  markerRadius = 0.01,
+  initialZoom = 13,
   markers = [],
   onMarkerPress,
   onLongPress,
@@ -47,15 +57,13 @@ export const MapViewComponent = ({
 }: MapViewProps) => {
   const [userMarkers, setUserMarkers] = useState<MapMarker[]>([])
   const cameraRef = useRef<any>(null)
-  const center = cameraCenter;
 
   // Combine passed markers with user-added markers
   const allMarkers = [...markers, ...userMarkers]
+  const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null)
 
-  // // Pan camera to last marker if allowAddMarkers is true and userMarkers changes
   useEffect(() => {
     if (allowAddMarkers && userMarkers.length > 0 && cameraRef.current) {
-      console.log("Panning to last user-added marker:", userMarkers[userMarkers.length - 1])
       const lastMarker = userMarkers[userMarkers.length - 1]
       cameraRef.current.setCamera({
         centerCoordinate: lastMarker.coordinates,
@@ -65,38 +73,18 @@ export const MapViewComponent = ({
     }
   }, [userMarkers, allowAddMarkers, initialZoom])
 
+  // LongPress selecciona una ubicacion
   const handleMapLongPress = (event: any) => {
     if (!allowAddMarkers && !onLongPress) return
-
     const coordinates = event.geometry.coordinates as [number, number]
-
-    if (onLongPress) {
-      // Let parent handle the long press
-      onLongPress(coordinates)
-
-      // cameraRef.current.setCamera({
-      //   centerCoordinate: coordinates,
-      //   zoomLevel: initialZoom,
-      //   animationDuration: 100,
-      // })
-    } else if (allowAddMarkers) {
-      // Add marker automatically
-      const newMarker: MapMarker = {
-        id: Date.now().toString(),
-        coordinates,
-        title: 'New Marker',
-        emoji: '📍',
-        color: '#FF0000',
-      }
-      setUserMarkers(prev => [...prev, newMarker])
-    }
+    onLongPress?.(coordinates)   
   }
 
   const handleMarkerPress = (marker: MapMarker) => {
+    setSelectedMarker(marker)
     if (onMarkerPress) {
       onMarkerPress(marker)
     } else if (allowAddMarkers && userMarkers.some(m => m.id === marker.id)) {
-      // Remove user-added marker if no custom handler
       setUserMarkers(prev => prev.filter(m => m.id !== marker.id))
     }
   }
@@ -104,69 +92,98 @@ export const MapViewComponent = ({
   const getMarkerStyle = (marker: MapMarker) => ({
     backgroundColor: marker.color || '#FF0000',
     borderRadius: 15,
-    width: 30,
-    height: 30,
+    width: marker.radius ? marker.radius * 2000 : 30,
+    height: marker.radius ? marker.radius * 2000 : 30,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     borderWidth: 2,
     borderColor: 'white',
   })
 
-  return (
-      <LongPressGestureHandler
-  minDurationMs={700}
-  onHandlerStateChange={(event) => {
-    if (event.nativeEvent.state === State.ACTIVE) {
-      // calcular coordenadas de screen -> map si es necesario
-      console.log('Long press', event.nativeEvent);
-      // acá disparás tu lógica onLongPress
-    }
-  }}
->
-    <View style={[styles.container, style]}>
-      {/* <Map
-        style={styles.map}
-        styleURL="https://demotiles.maplibre.org/style.json"
-        onPress={handleMapLongPress} // Radar's Map uses onPress, not onLongPress
-      > */}
-       <MapLibreGL.MapView
-        style={styles.map}
-        mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
-        onLongPress={handleMapLongPress}
-      >
-        <MapLibreGL.Camera
-          ref={cameraRef}
-          centerCoordinate={center}
-          zoomLevel={initialZoom}
-        />
 
-        {allMarkers.map((marker) => (
-          <MapLibreGL.PointAnnotation
-            key={marker.id}
-            id={marker.id}
-            coordinate={marker.coordinates}
-            onSelected={() => handleMarkerPress(marker)}
-          >
-            <View style={getMarkerStyle(marker)}>
-              {marker.emoji ? (
-                <Text style={styles.markerEmoji}>{marker.title}{marker.emoji}</Text>
-              ) : (
-                <Text style={styles.markerText}>M</Text>
-              )}
-            </View>
-            {marker.title && (
-              <MapLibreGL.Callout title={marker.title} />
+  return (
+    <View style={[styles.container, style]}>
+      <MapLibreGL.MapView
+      style={styles.map}
+      mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
+      onLongPress={handleMapLongPress}
+      onPress={() => setSelectedMarker(null)} // Deselect marker when clicking on map
+      >
+      <MapLibreGL.Camera
+        ref={cameraRef}
+        centerCoordinate={[location.longitude, location.latitude]}
+        zoomLevel={zoom}
+      />
+
+      {allMarkers.map((marker) => (
+        <MapLibreGL.PointAnnotation
+        key={marker.id}
+        id={marker.id}
+        coordinate={marker.coordinates}
+        onSelected={() => handleMarkerPress(marker)}
+        >
+        <View style={getMarkerStyle(marker)}>
+          {marker.emoji ? (
+          <Text style={styles.markerEmoji}>{marker.title}{marker.emoji}</Text>
+          ) : (
+          <Text style={styles.markerText}>M</Text>
+          )}
+        </View>
+        {marker.title ? (
+          <MapLibreGL.Callout title={marker.title} />
+        ) : <></>}
+        </MapLibreGL.PointAnnotation>
+      ))}
+      </MapLibreGL.MapView>
+     { /* Bottom overlay for selected marker info */}
+      {selectedMarker && (
+        <View style={styles.bottomOverlayContainer}>
+        <View style={[styles.gradientOverlay]}/>
+        <View style={styles.selectedMarkerInfo}>
+          {/* Container for close button and info */}
+          <View style={{ position: 'absolute', top: 0, right: 0, zIndex: 10 }}>
+            <TouchableOpacity
+              style={{
+          margin: 8,
+          backgroundColor: 'rgba(155, 155, 155, 0.32)',
+          width: 26,
+          height: 26,
+          borderRadius: 13,
+          alignItems: 'center',
+          right:-80,
+          top: 35,
+          
+              }}
+              onPress={() => setSelectedMarker(null)}
+            >
+              <Text style={{ color: 'white', fontSize: 18,  }}>x</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={{ marginTop: 32, alignItems: 'center' }}>
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
+              {selectedMarker.title || 'Marker'}
+            </Text>
+            {selectedMarker.emoji && (
+              <Text style={{ fontSize: 24 }}>{selectedMarker.emoji}</Text>
             )}
-          </MapLibreGL.PointAnnotation>
-        ))}
-      {/* </Map> */}
-        </MapLibreGL.MapView> 
+            <Text style={{ color: 'white', fontSize: 12 }}>
+              Lat: {selectedMarker.coordinates[1].toFixed(5)}, Lon: {selectedMarker.coordinates[0].toFixed(5)}
+            </Text>
+            {selectedMarker.data && (
+              <Text style={{ color: 'white', fontSize: 12 }}>
+          {JSON.stringify(selectedMarker.data)}
+              </Text>
+            )}
+          </View>
+        </View>
+        </View>
+      )}
 
     </View>
-    </LongPressGestureHandler>
   )
 }
 
+// Add styles for overlay and gradient
 const styles = StyleSheet.create({
   container: { 
     flex: 1 
@@ -181,5 +198,28 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 12,
+  },
+  bottomOverlayContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    minHeight: 100,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    left: 5,
+    right: 5,
+    bottom: 2.5,
+    height: 100,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+  },
+  selectedMarkerInfo: {
+    padding: 16,
+    alignItems: 'center',
+    zIndex: 2,
   },
 })
