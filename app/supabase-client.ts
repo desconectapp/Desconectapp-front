@@ -13,7 +13,7 @@ export function getSupabaseClient(jwtToken: string): SupabaseClient {
   if (cachedClient && 
       cachedToken === jwtToken && 
       tokenExpiresAt && 
-      now < tokenExpiresAt - 60) { // Refresh 1 minute before expiry
+      now < tokenExpiresAt - 60) { 
     return cachedClient
   }
   
@@ -25,14 +25,13 @@ export function getSupabaseClient(jwtToken: string): SupabaseClient {
     tokenExpiresAt = now + 900 
   }
   
-  // Create new client
   cachedClient = createClient(
     SUPABASE_URL!,
     SUPABASE_ANON_KEY!,
     {
       auth: {
-        autoRefreshToken: false, // We'll handle token refresh manually
-        persistSession: false,   // We'll manage sessions via our backend
+        autoRefreshToken: false,
+        persistSession: false,  
       },
       global: {
         headers: {
@@ -46,17 +45,15 @@ export function getSupabaseClient(jwtToken: string): SupabaseClient {
   return cachedClient
 }
 
-// Function to clear the cached client (useful for logout)
 export function clearSupabaseCache() {
   cachedClient = null
   cachedToken = null
   tokenExpiresAt = null
 }
 
-// For backward compatibility, export a default client (but it should not be used without a token)
 export const supabase = createClient(
   SUPABASE_URL!,
-  'dummy-key', // This should not be used - always use getSupabaseClient with JWT
+  'dummy-key',
   {
     auth: {
       autoRefreshToken: false,

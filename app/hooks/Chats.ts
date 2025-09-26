@@ -49,7 +49,6 @@ export const useMessageSubscription = (groupId: string, onNewMessage?: (message:
   const queryClient = useQueryClient()
 
   const handleNewMessage = useCallback((message: Message) => {
-    console.log('New message in subscription:', message)
     
     queryClient.setQueryData(["chat", "messages"], (oldData: any) => {
       if (!oldData) return { messages: [message] }
@@ -73,7 +72,6 @@ export const useMessageSubscription = (groupId: string, onNewMessage?: (message:
   useEffect(() => {
     const setupSubscription = async () => {
       try {
-        console.log(`Setting up message subscription for group ${groupId}`)
         subscriptionRef.current = await chatsService.subscribeToMessages(
           groupId,
           handleNewMessage,
@@ -88,7 +86,6 @@ export const useMessageSubscription = (groupId: string, onNewMessage?: (message:
 
     return () => {
       if (subscriptionRef.current) {
-        console.log(`Cleaning up message subscription for group ${groupId}`)
         chatsService.unsubscribeFromMessages(subscriptionRef.current)
         subscriptionRef.current = null
       }

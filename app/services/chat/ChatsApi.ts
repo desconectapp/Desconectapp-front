@@ -13,7 +13,6 @@ const getSupabaseClientWithToken = async () => {
 export const chatsService = {
   getToken: async (): Promise<SupabaseToken | undefined> => {
     const response = await api.apisauce.get<SupabaseToken>(`/chats/token`)
-    console.log("response", response)
     if (!response.ok) {
       throw new Error("Error al cargar el token de supabase")
     }
@@ -76,7 +75,6 @@ export const chatsService = {
           filter: `group_id=eq.${groupId}`
         },
         (payload) => {
-          console.log('New message received:', payload.new)
           onMessage(payload.new as Message)
         }
       )
@@ -89,14 +87,11 @@ export const chatsService = {
           filter: `group_id=eq.${groupId}`
         },
         (payload) => {
-          console.log('Message updated:', payload.new)
           onMessage(payload.new as Message)
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status)
         if (status === 'SUBSCRIBED') {
-          console.log(`Successfully subscribed to messages for group ${groupId}`)
         } else if (status === 'CHANNEL_ERROR') {
           console.error('Channel subscription error')
           onError?.(new Error('Channel subscription failed'))
@@ -110,7 +105,6 @@ export const chatsService = {
     if (subscription) {
       const supabase = await getSupabaseClientWithToken()
       await supabase.removeChannel(subscription)
-      console.log('Unsubscribed from messages')
     }
   }
 }
