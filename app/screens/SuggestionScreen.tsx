@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  StyleSheet, // Import StyleSheet
+  StyleSheet,
 } from "react-native"
 import { Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
@@ -17,7 +17,6 @@ import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import Animated from "react-native-reanimated"
 import { useJoinGroup } from "@/hooks/Groups"
-import { parseISO, format } from 'date-fns';
 
 
 const { height } = Dimensions.get("window")
@@ -25,6 +24,7 @@ const { height } = Dimensions.get("window")
 export const SuggestionScreen = observer(({ route }: any) => {
   const group = route.params?.group
   const { themed } = useAppTheme()
+  const $topInsets = useSafeAreaInsetsStyle(["top"])
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
   const navigation = useNavigation()
   const { showToast } = useAppToast()
@@ -64,9 +64,25 @@ export const SuggestionScreen = observer(({ route }: any) => {
       day: 'numeric',
     });
   };
+
+  console.log("Group Activity:", group.activity_name);
   
   return (
     <View style={styles.container}>
+      <View style={[styles.header, themed(themedStyles.header), $topInsets]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
+        >
+          <Text style={themed(themedStyles.backButtonText)}>←</Text>
+        </TouchableOpacity>
+        
+        <Text style={themed(themedStyles.headerTitle)}>{group.name}</Text>
+
+      </View>
+
       <View style={styles.heroImageContainer}>
         <Animated.Image
           source={{
@@ -79,7 +95,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
         />
         <View style={themed(themedStyles.heroOverlay)} />
         <View style={styles.heroContent}>
-          <Text style={styles.heroIcon}>{group.icon}</Text>
+          <Text style={themed(themedStyles.heroIcon)}>{group.icon}</Text>
           <Text style={themed(themedStyles.heroTitle)}>{group.name}</Text>
           <Text style={themed(themedStyles.heroLocation)}>{group.location}</Text>
         </View>
@@ -88,15 +104,15 @@ export const SuggestionScreen = observer(({ route }: any) => {
       <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.infoSection}>
           <View style={themed(themedStyles.activityBadge)}>
-            <Text style={themed(themedStyles.activityBadgeText)}>{group.activity}</Text>
+            <Text style={themed(themedStyles.activityBadgeText)}>{group.activity_name}</Text>
           </View>
 
           <Text style={themed(themedStyles.descriptionText)}>{group.description}</Text>
 
           <View style={themed(themedStyles.statsContainer)}>
             <View style={styles.statItem}>
-              <Text style={themed(themedStyles.statNumber)}>Since</Text>
-              <Text style={themed(themedStyles.statLabel)}>{formatDate(group.created_at)}</Text>
+              <Text style={themed(themedStyles.statLabel)}>Since</Text>
+              <Text style={themed(themedStyles.statNumber)}>{formatDate(group.created_at)}</Text>
             </View>
           </View>
         </View>
@@ -104,12 +120,12 @@ export const SuggestionScreen = observer(({ route }: any) => {
 
       <View style={[themed(themedStyles.bottomContainer), $bottomInsets]}>
         <TouchableOpacity
-          style={styles.joinButton}
+          style={themed(themedStyles.joinButton)}
           onPress={handleJoinGroup}
           disabled={isJoining}
           activeOpacity={0.8}
         >
-          <Text style={styles.joinButtonText}>{isJoining ? "Joining..." : "Join Group"}</Text>
+          <Text style={themed(themedStyles.joinButtonText)}>{isJoining ? "Joining..." : "Join Group"}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -120,6 +136,34 @@ export const SuggestionScreen = observer(({ route }: any) => {
 export const styles = StyleSheet.create({
   // SuggestionScreen Styles
   container: { flex: 1 } as ViewStyle,
+
+  // Header Styles
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  } as ViewStyle,
+
+  headerButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: spacing.md,
+  } as ViewStyle,
+
+  backButton: { paddingRight: spacing.md } as ViewStyle,
+  headerInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  } as ViewStyle,
+
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+  } as TextStyle,
+  lockButton: { paddingLeft: spacing.md } as ViewStyle,
 
   // Hero Section
   heroImageContainer: {
@@ -139,12 +183,6 @@ export const styles = StyleSheet.create({
     left: spacing.lg,
     right: spacing.lg,
   } as ViewStyle,
-
-  heroIcon: { 
-    fontSize: 32, 
-    lineHeight: 48, 
-    height: 48 
-  } as TextStyle,
 
   // Content Section
   contentContainer: { flex: 1 } as ViewStyle,
@@ -180,27 +218,11 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1,
   } as ViewStyle,
 
-  joinButton: {
-    borderWidth: 2,
-    borderColor: "#22c55e",
-    backgroundColor: "transparent",
-    borderRadius: spacing.md,
-    paddingVertical: spacing.md,
-    margin: spacing.sm,
-    marginHorizontal: spacing.xl,
-    alignItems: "center",
-    justifyContent: "center",
-  } as ViewStyle,
-
-  joinButtonText: {
-    color: "#22c55e",
-    fontSize: 18,
-    fontWeight: "600",
-  } as TextStyle,
+  joinButton: {} as ViewStyle,
+  joinButtonText: {} as TextStyle,
 })
 
 export const themedStyles = {
-  // Hero Section
   heroOverlay: (theme: any): ViewStyle => ({
     position: "absolute",
     bottom: 0,
@@ -210,32 +232,80 @@ export const themedStyles = {
     backgroundColor: "rgba(0, 0, 0, 0.4)",
   }),
 
+  header: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.background,
+    borderBottomColor: theme.colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  }),
+  
+  backButtonText: (theme: any): TextStyle => ({
+    fontSize: 24,
+    color: theme.colors.tint,
+    fontWeight: "600",
+  }),
+
+  // Header
+  headerTitle: (theme: any): TextStyle => ({
+    fontSize: 18,
+    fontWeight: "600",
+    color: theme.colors.text,
+    textAlign: "center",
+    flex: 1, 
+    marginRight: spacing.md
+  }),
+  headerButton: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.tint,
+    fontWeight: "600",
+  }),
+  headerCancelButton: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: "#e53935",
+    fontWeight: "600",
+  }),
+
+  heroIcon: (theme: any): TextStyle => ({
+    fontSize: 60,
+    lineHeight: 72,
+    height: 72,
+    textAlignVertical: "center",
+    marginBottom: spacing.sm,
+    color: theme.colors.palette.neutral100, 
+  }),
+
   heroTitle: (theme: any): TextStyle => ({
-    fontSize: 32,
-    lineHeight: 48,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#ffffff",
+    color: theme.colors.palette.neutral100, 
     marginBottom: spacing.xs,
   }),
 
   heroLocation: (theme: any): TextStyle => ({
-    fontSize: 18,
-    color: "#ffffff",
-    opacity: 0.9,
+    fontSize: 16, 
+    color: theme.colors.palette.neutral200, 
+    opacity: 1, 
+    marginTop: spacing.xs, 
   }),
 
   // Info Section
+  // UPDATED: Muted background color, primary tint text color for a better badge look
   activityBadge: (theme: any): ViewStyle => ({
     alignSelf: "flex-start",
-    backgroundColor: theme.colors.tint,
+    backgroundColor: theme.colors.palette.neutral300, // Muted background (lighter gray)
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: spacing.lg,
     marginBottom: spacing.lg,
   }),
 
+  // UPDATED: Use tint color for the badge text
   activityBadgeText: (theme: any): TextStyle => ({
-    color: theme.colors.tintInverse,
+    color: theme.colors.tint, // Primary color for text
     fontSize: 14,
     fontWeight: "600",
   }),
@@ -249,7 +319,7 @@ export const themedStyles = {
 
   statsContainer: (theme: any): ViewStyle => ({
     flexDirection: "row",
-    backgroundColor: theme.colors.palette.neutral100, // Assuming a light background for the stats block
+    backgroundColor: theme.colors.surface ?? theme.colors.palette.neutral100, 
     borderRadius: spacing.md,
     padding: spacing.lg,
     marginBottom: spacing.xl,
@@ -277,7 +347,7 @@ export const themedStyles = {
 
   joinButton: (theme: any): ViewStyle => ({
     borderWidth: 2,
-    borderColor: theme.colors.palette.success500 || "#22c55e",
+    borderColor: theme.colors.tint,
     backgroundColor: "transparent",
     borderRadius: spacing.md,
     paddingVertical: spacing.md,
@@ -288,7 +358,7 @@ export const themedStyles = {
   }),
 
   joinButtonText: (theme: any): TextStyle => ({
-    color: theme.colors.palette.success500 || "#22c55e",
+    color: theme.colors.tint,
     fontSize: 18,
     fontWeight: "600",
   }),

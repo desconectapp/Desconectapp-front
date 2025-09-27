@@ -119,7 +119,6 @@ export const HomeScreen = observer(function HomeScreen() {
   )
   
   const ListHeaderComponent = () => {
-    // This is the My Groups section
     const myGroupsSection = () => {
       if (isLoading && allGroups.length === 0) {
         return <Text>Loading groups...</Text>
@@ -135,13 +134,13 @@ export const HomeScreen = observer(function HomeScreen() {
         )
       }
   
-      const limitedGroups = allGroups.slice(0, 3) // show only first 3
+      const limitedGroups = allGroups.slice(0, 3)
   
       return (
         <View style={$groupsSection}>
           <View style={$sectionHeader}>
             <Text style={themed($sectionTitle)}>My Groups</Text>
-            {allGroups.length > 3 && ( // show See All only if there are more
+            {allGroups.length > 3 && (
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate("MyGroupsScreen")}
@@ -166,7 +165,6 @@ export const HomeScreen = observer(function HomeScreen() {
   const discoverNewGroupsSection = () => {
     return (
       <View style={$suggestionsSection}>
-        {/* Section Title */}
         <View style={$sectionHeader}>
           <Text style={themed($sectionTitle)}>Discover New Groups</Text>
         </View>
@@ -183,7 +181,6 @@ export const HomeScreen = observer(function HomeScreen() {
         ) : (
           <PhotoGallerySlider
             onItemPress={(item) => {
-              // Find the full group object that matches the pressed photo item
               const selectedGroup = recommendedGroups?.groups.find(
                 (g) => String(g.id) === item.id
               )
@@ -212,7 +209,6 @@ export const HomeScreen = observer(function HomeScreen() {
     )
   }
 
-  // The main FlatList is a dummy, as all content is in the header
   return (
     <FlatList
       data={[{ key: "content" }]}

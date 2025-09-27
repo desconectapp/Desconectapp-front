@@ -159,6 +159,7 @@ export function MainNavigator() {
         component={SuggestionScreen}
         options={{
           animation: "fade",
+          headerShown: false,
         }}
       />
       <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
