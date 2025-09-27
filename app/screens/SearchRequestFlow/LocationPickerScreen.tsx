@@ -135,8 +135,12 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
   return (
     <Screen
       preset="fixed"
-      contentContainerStyle={[{ flex: 1, padding: 1 }]}
+      contentContainerStyle={themed($screenContent)}
       backgroundColor={themed($screenBackground)}
+      KeyboardAvoidingViewProps={{
+        behavior: "padding",
+        keyboardVerticalOffset: 0,
+      }}
     >
       <View style={themed($header)}>
         <Text style={themed(texts.heading)}>Ubicación 📍</Text>
@@ -150,51 +154,38 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
            onSelection={(address: any) => {
              console.log('Selected address:', address);
              Keyboard.dismiss();
-             setSelectedLocation({
-               id: address.place_id ? String(address.place_id) : "unknown",
-               name: address.name || address.formattedAddress.split(",")[0],
-               latitude: address.latitude,
-               longitude: address.longitude,
-               address: address.formattedAddress,
-             })             
+             
+             // Small delay to ensure proper state management
+             setTimeout(() => {
+               setSelectedLocation({
+                 id: address.place_id ? String(address.place_id) : "unknown",
+                 name: address.name || address.formattedAddress.split(",")[0],
+                 latitude: address.latitude,
+                 longitude: address.longitude,
+                 address: address.formattedAddress,
+               });
+             }, 100);
             }
            }
          />
         </View>
       </View>
 
-      <MapViewComponent
-        selectedLocation={selectedLocation}
-        setSelectedLocation={setSelectedLocation}
-        allowSelectLocation={true}
-        searchRadiusKm={searchRadiusKm} // Pass km directly
-        setSearchRadiusKm={setSearchRadiusKm}
+      {/* Map Container - takes up available space */}
+      <View style={themed($mapContainer)}>
+        <MapViewComponent
+          selectedLocation={selectedLocation}
+          setSelectedLocation={setSelectedLocation}
+          allowSelectLocation={true}
+          searchRadiusKm={searchRadiusKm} // Pass km directly
+          setSearchRadiusKm={setSearchRadiusKm}
+          groups={markers}
+          onGroupPress={(marker) => Alert.alert("Marker Pressed", `You pressed ${marker.title}`)}
+        />
+      </View>
 
-        groups={markers}
-       
-        
-        onGroupPress={(marker) => Alert.alert("Marker Pressed", `You pressed ${marker.title}`)}
-
-      />
-      {/* <ScrollView
-        style={themed($scrollView)}
-        contentContainerStyle={themed($scrollContent)}
-        keyboardShouldPersistTaps="handled"
-      > */}
-        {/* Radius Slider */}
-        {/* {selectedLocation && (
-          <CustomSlider
-            value={searchRadiusKm}
-            min={1}
-            max={15}
-            step={1}
-            label="Radio de búsqueda"
-            formatValue={(value) => `${value} km`}
-            onValueChange={setSearchRadiusKm}
-            showButtons={true}
-          />
-        )}     */}
-        {/* Next Button */}
+      {/* Fixed Button Container - always at bottom */}
+      <View style={themed($buttonContainer)}>
         <Button
           text="Siguiente"
           style={[
@@ -209,7 +200,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
           disabled={!selectedLocation}
           onPress={handleNext}
         />
-      {/* </ScrollView> */}
+      </View>
 
       {/* Suggestions List - Outside ScrollView to avoid nesting VirtualizedList */}
       {/* {showSuggestions && suggestions.length > 0 && (
@@ -233,12 +224,9 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
 // Styled components using theming
 const $screenBackground = "background"
 
-const $scrollView = (theme: any): ViewStyle => ({
+const $screenContent = (theme: any): ViewStyle => ({
   flex: 1,
-})
-
-const $scrollContent = (theme: any): ViewStyle => ({
-  padding: theme.spacing.sm, // Reducido de md a sm para menos padding
+  padding: 1,
 })
 
 const $header = (theme: any): ViewStyle => ({
@@ -258,48 +246,22 @@ const $searchInputContainer = (theme: any): ViewStyle => ({
   alignItems: "center",
 })
 
-const $clearButton = (theme: any): ViewStyle => ({
-  position: "absolute",
-  right: 12,
-  width: 30,
-  height: 30,
-  borderRadius: 15,
-  backgroundColor: theme.colors.backgroundMuted,
-  justifyContent: "center",
-  alignItems: "center",
+
+const $mapContainer = (theme: any): ViewStyle => ({
+  flex: 1,
+  minHeight: 300, // Ensure minimum height for map
 })
 
-const $clearButtonText = (theme: any): TextStyle => ({
-  fontSize: 18,
-  color: theme.colors.textDim,
-  fontWeight: "bold",
-})
-
-const $suggestionsOverlay = (theme: any): ViewStyle => ({
-  position: "absolute",
-  top: 80, // Reducido de 100 para que esté más cerca del input
-  left: theme.spacing.sm, // Reducido de md a sm
-  right: theme.spacing.sm, // Reducido de md a sm
-  maxHeight: 200,
-  zIndex: 1000,
-  elevation: 10,
-})
-
-const $suggestionsList = (theme: any): ViewStyle => ({
-  maxHeight: 200,
-})
-
-const $suggestionItem = (theme: any): ViewStyle => ({
-  padding: theme.spacing.sm,
-  borderBottomWidth: 1,
-  borderBottomColor: theme.colors.border,
-})
-
-const $selectedLocationContainer = (theme: any): ViewStyle => ({
-  marginBottom: theme.spacing.md,
+const $buttonContainer = (theme: any): ViewStyle => ({
+  paddingHorizontal: theme.spacing.md,
+  paddingTop: theme.spacing.sm,
+  paddingBottom: theme.spacing.lg,
+  backgroundColor: theme.colors.background,
+  borderTopWidth: 1,
+  borderTopColor: theme.colors.border,
 })
 
 const $nextButton = (theme: any): ViewStyle => ({
-  marginTop: theme.spacing.md,
-  marginBottom: theme.spacing.sm,
+  marginTop: 0,
+  marginBottom: 0,
 })

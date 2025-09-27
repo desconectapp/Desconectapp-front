@@ -67,17 +67,24 @@ export const MapViewComponent = ({
   const [zoom, setZoom] = useState(13)
   
   const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null)
+  const [isSettingFromSearch, setIsSettingFromSearch] = useState(false)
 
-  // useEffect(() => {
-  //   if (allowAddMarker && groups.length > 0 && cameraRef.current) {
-  //     const lastMarker = groups[groups.length - 1]
-  //     cameraRef.current.setCamera({
-  //       centerCoordinate: lastMarker.coordinates,
-  //       zoomLevel: zoom || 13,
-  //       animationDuration: 100,
-  //     })
-  //   }
-  // }, [selectedLocation])
+  // Watch for selectedLocation changes and move camera
+  useEffect(() => {
+    if (selectedLocation && cameraRef.current) {
+      // Set flag to prevent map onPress from clearing the selection
+      setIsSettingFromSearch(true)
+      
+      // Move camera to new location
+      setCameraCenter([selectedLocation.longitude, selectedLocation.latitude])
+      setZoom(zoom < 14 ? 14 : zoom)
+      
+      // Clear the flag after a short delay
+      setTimeout(() => {
+        setIsSettingFromSearch(false)
+      }, 500)
+    }
+  }, [selectedLocation])
 
   // LongPress selecciona una ubicacion
   const handleMapLongPress = async (event: any) => {
@@ -154,14 +161,18 @@ export const MapViewComponent = ({
         onLongPress={handleMapLongPress}
         mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
         onPress={() => {
-          setSelectedLocation?.(null)
-          setSelectedMarker(null)
+          // Don't clear selection if it's being set from search
+          if (!isSettingFromSearch) {
+            setSelectedLocation?.(null)
+            setSelectedMarker(null)
+          }
         }} // Deselect marker when clicking on map
       >
         <MapLibreGL.Camera
           ref={cameraRef}
           centerCoordinate={[cameraCenter[0], cameraCenter[1]]}
           zoomLevel={zoom}
+          animationDuration={1000}
         />
         {selectedLocation && (
           <>
