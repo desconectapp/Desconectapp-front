@@ -49,7 +49,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const { data: groupData, isLoading } = useGroupById(groupId)
 
-  const isPrivate = !groupData?.status;
+  const isPrivate = !groupData?.public;
   const { mutateAsync: statusChangeAsync } = useChangeGroupStatus()
 
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -179,7 +179,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const handleStatusChange = async (newStatus: boolean) => {
     try {
-      await statusChangeAsync({ id: groupId, status: newStatus });
+      await statusChangeAsync({ id: groupId, public_g: newStatus });
       setModalVisible(false);
       queryClient.setQueryData(['group', groupId], (oldData: GroupData) => ({
         ...oldData,

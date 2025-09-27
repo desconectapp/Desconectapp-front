@@ -48,8 +48,8 @@ export const useGroupById = (id: string) => {
 export const useChangeGroupStatus = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<boolean, Error, { id: string; status: boolean }>({
-    mutationFn: ({ id, status }) => groupsService.changeStatus(id, status),
+  return useMutation<boolean, Error, { id: string; public_g: boolean }>({
+    mutationFn: ({ id, public_g }) => groupsService.changeStatus(id, public_g),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
     },

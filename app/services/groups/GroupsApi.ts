@@ -42,8 +42,8 @@ export const groupsService = {
     return true
   },
 
-  changeStatus: async (id: string, status: boolean): Promise<boolean> => {
-    const response = await api.apisauce.put(`/groups/status/${id}`, { status });
+  changeStatus: async (id: string, public_g: boolean): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/public/${id}`, { public_g });
     if (!response.ok) {
       throw new Error("Error al cambiar el status del grupo");
     }

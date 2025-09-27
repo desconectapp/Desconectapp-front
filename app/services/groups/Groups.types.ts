@@ -12,7 +12,7 @@ export interface GroupData {
   activity: string
   icon: string
   location: string
-  status: boolean
+  public: boolean
   members: Member[]
 }
 
