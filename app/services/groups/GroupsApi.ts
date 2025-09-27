@@ -18,6 +18,14 @@ export const groupsService = {
     return response.data
   },
 
+  joinGroup: async (id: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/add-user/${id}`);
+    if (!response.ok) {
+      throw new Error("Error al unirse al grupo");
+    }
+    return true;
+  },
+
   getGroupById: async (id: string): Promise<GroupData | undefined> => {
     const response = await api.apisauce.get<GroupData>(`/groups/${id}`)
     if (!response.ok) {

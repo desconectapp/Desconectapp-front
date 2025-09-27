@@ -25,7 +25,7 @@ export const useGroups = () => {
 
 export const useGroupsRecs = (activity_id: number) => {
   return useQuery({
-    queryKey: ["groupsRecs", activity_id],  // <-- important
+    queryKey: ["groupsRecs", activity_id],
     queryFn: async () => {
       const response = await groupsService.getGroupsRecs(activity_id)
       if (!response) throw new Error("Error al cargar grupos")
@@ -94,6 +94,17 @@ export const updateGroupPhoto = () => {
 
   return useMutation<boolean, Error, { id: string; photo: string }>({
     mutationFn: ({ id, photo }) => groupsService.updateGroupName(id, photo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};
+
+export const useJoinGroup = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string }>({
+    mutationFn: ({ id }) => groupsService.joinGroup(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
     },

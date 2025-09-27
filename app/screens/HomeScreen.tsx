@@ -60,8 +60,7 @@ export const HomeScreen = observer(function HomeScreen() {
     }
   }, [paginatedGroups])
 
-  // Map recommended groups to the PhotoItem format
-  // This is where we use the OpenGroup type
+
   const recommendedPhotoItems: PhotoItem[] = recommendedGroups?.groups?.map((group: OpenGroup) => ({
     id: String(group.id),
     title: group.name,
@@ -183,9 +182,16 @@ export const HomeScreen = observer(function HomeScreen() {
           </View>
         ) : (
           <PhotoGallerySlider
-            onItemPress={(item) =>
-              navigation.navigate("SuggestionScreen", { suggestionId: item.id })
-            }
+            onItemPress={(item) => {
+              // Find the full group object that matches the pressed photo item
+              const selectedGroup = recommendedGroups?.groups.find(
+                (g) => String(g.id) === item.id
+              )
+
+              if (selectedGroup) {
+                navigation.navigate("SuggestionScreen", { group: selectedGroup })
+              }
+            }}
             data={recommendedPhotoItems}
             itemWidth={width * 0.42}
           />
