@@ -17,6 +17,8 @@ import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import Animated from "react-native-reanimated"
 import { useJoinGroup } from "@/hooks/Groups"
+import { parseISO, format } from 'date-fns';
+
 
 const { height } = Dimensions.get("window")
 
@@ -46,14 +48,23 @@ export const SuggestionScreen = observer(({ route }: any) => {
 
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
+    let cleanString = dateString;
+    cleanString = cleanString.replace(' ', 'T');
+    cleanString = cleanString.replace(/ \+0000 UTC$/, 'Z');
+    
+    const dateObject = new Date(cleanString);
 
+    if (isNaN(dateObject.getTime())) {
+      return "N/A";
+    }
+    
+    return dateObject.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+  
   return (
     <View style={styles.container}>
       <View style={styles.heroImageContainer}>
@@ -112,7 +123,7 @@ export const styles = StyleSheet.create({
 
   // Hero Section
   heroImageContainer: {
-    height: height * 0.5,
+    height: height * 0.48,
     position: "relative",
   } as ViewStyle,
 
