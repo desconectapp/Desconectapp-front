@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import {
   View,
   TouchableOpacity,
@@ -25,16 +25,17 @@ import { MessageBubble, Message } from "@/components/Custom/Message"
 import { useExitGroup, useGroupById } from "@/hooks/Groups"
 
 import { useStores } from "@/models"
-import { getChatMessages, useObtainToken } from "@/hooks/Chats"
+import { useCreateMessage, useGetChatMessages, useObtainToken, useMessageSubscription } from "@/hooks/Chats"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { AppStackParamList } from "@/navigators/AppNavigator"
+import { MainStackParamList } from "@/navigators/MainNavigator"
 
-type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
+type NavigationProp = NativeStackNavigationProp<MainStackParamList>
 
 
 interface Member {
   id: string
+  uuid: string
   name: string
   picture?: string
 }
@@ -44,39 +45,39 @@ const mockMessages: Message[] = [
     id: "1",
     text: "Hey everyone! Ready for tomorrow's match?",
     sender: { id: "user123", name: "John Doe", picture: "https://example.com/profile/johndoe.jpg" },
-    timestamp: "2023-10-01T10:30:00Z",
+    timestamp: new Date("2023-10-01T10:30:00Z"),
     isOwn: false,
   },
   {
     id: "2",
     text: "What time are we meeting?",
     sender: { id: "currentUser", name: "You" },
-    timestamp: "2023-10-01T10:32:00Z",
+    timestamp: new Date("2023-10-01T10:32:00Z"),
     isOwn: true,
   },
   {
     id: "3",
     text: "Let's meet at 3 PM at the usual spot",
     sender: { id: "user456", name: "Maria Garcia" },
-    timestamp: "2023-10-01T10:35:00Z",
+    timestamp: new Date("2023-10-01T10:35:00Z"),
     isOwn: false,
   },
   {
     id: "4",
     text: "Perfect! See you all there",
     sender: { id: "currentUser", name: "You" },
-    timestamp: "2023-10-01T10:36:00Z",
+    timestamp: new Date("2023-10-01T10:36:00Z"),
     isOwn: true,
   },
 ]
 
 export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const { groupId } = route.params
-
+  const { data: groupData, isLoading } = useGroupById(groupId)
+  const [messages, setMessages] = useState<Message[]>([])
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState("")
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation<NavigationProp>()
@@ -86,30 +87,65 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   if(!sessionStore.supabase_token) {
     sessionStore.setSupabaseSession(data?.token || "", data?.expiresAt || new Date())
   }
-  console.log("supabase_token", sessionStore.supabase_token)
 
+  const { data: messagesData } = useGetChatMessages(groupId)
+  
+  const createMessageMutation = useCreateMessage()
 
-  const {data: messagesData} = getChatMessages()
-  console.log("messagesData", messagesData)
+  const getUserName = useCallback((userUuid: string) => {
+    const member = groupData?.members.find(m => m.uuid === userUuid)
+    return member?.name || userUuid 
+  }, [groupData?.members])
 
-  const { data: groupData, isLoading } = useGroupById(groupId)
+  const handleNewMessage = useCallback((newMessage: any) => {
+    const formattedMessage: Message = {
+      id: newMessage.id.toString(),
+      text: newMessage.content,
+      sender: { 
+        id: newMessage.user_id, 
+        name: getUserName(newMessage.user_id),
+        picture: groupData?.members.find(m => m.uuid === newMessage.user_id)?.picture
+      },
+      timestamp: new Date(newMessage.sent_at),
+      isOwn: newMessage.user_id === sessionStore.user_uuid,
+    }
+    console.log("uuid", sessionStore.user_uuid)
+    
+    setMessages(prev => {
+      const exists = prev.some(msg => msg.id === formattedMessage.id)
+      if (exists) return prev
+      
+      return [...prev, formattedMessage]
+    })
+  }, [sessionStore.user_uuid, getUserName, groupData?.members])
+
+  const { isSubscribed } = useMessageSubscription(groupId, handleNewMessage)
+
+  useEffect(() => {
+    if (messagesData?.messages) {
+      setMessages(messagesData.messages.map((message) => ({
+        id: message.id.toString(),
+        text: message.content,
+        sender: { 
+          id: message.user_id, 
+          name: getUserName(message.user_id),
+          picture: groupData?.members.find(m => m.uuid === message.user_id)?.picture
+        },
+        timestamp: new Date(message.sent_at),
+        isOwn: message.user_id === sessionStore.user_uuid,
+      })))
+      
+    console.log("uuid", sessionStore.user_uuid)
+    }
+  }, [messagesData, sessionStore.user_uuid, getUserName, groupData?.members])
 
   const sendMessage = () => {
     if (inputText.trim()) {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: inputText.trim(),
-        sender: { id: "currentUser", name: "You" },
-        timestamp: new Date().toISOString(),
-        isOwn: true,
-      }
-
-      setMessages((prev) => [...prev, newMessage])
-      setInputText("")
-
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true })
-      }, 100)
+      createMessageMutation.mutate({
+        groupId: parseInt(groupId),
+        message: inputText.trim()
+      })
+      setInputText("") // Clear input after sending
     }
   }
 
@@ -139,10 +175,10 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             onPress={() => navigation.navigate("GroupInfoScreen", { groupId })}
             activeOpacity={0.7}
           >
-            <Text style={styles.groupIcon}>{groupData.icon}</Text>
+            <Text style={styles.groupIcon}>{groupData?.icon}</Text>
             <View style={styles.headerTextContainer}>
-              <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
-              <Text style={themed(themedStyles.memberCount)}>{groupData.members.length} members</Text>
+              <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
+              <Text style={themed(themedStyles.memberCount)}>{groupData?.members.length} members</Text>
             </View>
           </TouchableOpacity>
 
