@@ -59,11 +59,11 @@ export const useEditProfile = () => {
   })
 }
 
-export const useAddPreferences = () => {
+export const useAddPreferencesBatch = () => {
   const queryClient = useQueryClient()
 
   return useMutation<any, Error, any>({
-    mutationFn: (data) => userService.addPreferences(data),
+    mutationFn: (data) => userService.addPreferencesBatch(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] })
     },
@@ -81,11 +81,11 @@ export const useProfile = () => {
   })
 }
 
-export const useActivities = (limit: number = 10, offset: number = 0) => {
+export const useActivities = (limit: number = 10, offset: number = 0, query: string = "") => {
   return useQuery({
-    queryKey: ["activities", limit, offset],
+    queryKey: ["activities", limit, offset, query],
     queryFn: async () => {
-      const response = await activitiesService.getActivities(limit, offset)
+      const response = await activitiesService.getActivities(limit, offset, query)
       if (!response) throw new Error("Error al cargar preferencias")
       return response
     },

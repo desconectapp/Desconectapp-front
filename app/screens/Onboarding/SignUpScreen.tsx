@@ -75,7 +75,7 @@ export const SignUpScreen = observer(() => {
           user_uuid: dataSuccess.user_uuid,
         })
 
-        navigation.navigate("MoreInfoScreen")
+        navigation.navigate("ValidateEmailScreen")
       },
       onError: (error) => {
         setLoading(false)

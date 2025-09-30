@@ -30,7 +30,6 @@ export function AuthForm<T>({
   onSubmit,
   submitText = "Submit",
   isSubmitting = false,
-  forgotPassword = false,
 }: AuthFormProps<T>) {
   const {
     control,
@@ -63,20 +62,6 @@ export function AuthForm<T>({
           />
         </View>
       ))}
-
-      {forgotPassword && (
-        <View style={$forgotPasswordContainer}>
-          <Text
-            preset="formHelper"
-            style={themed($forgotPasswordText)}
-            onPress={() => {
-              console.log("Forgot password pressed")
-            }}
-          >
-            Forgot your password?
-          </Text>
-        </View>
-      )}
 
       <Button
         text={isSubmitting ? "Submitting..." : submitText}
@@ -119,15 +104,4 @@ const $submitButtonText = (theme: any): TextStyle => ({
   color: theme.colors.tintInverse,
   fontWeight: "600",
   fontSize: 16,
-})
-
-const $forgotPasswordContainer: ViewStyle = {
-  alignItems: "flex-end",
-  marginBottom: spacing.lg,
-  marginTop: -spacing.xs,
-}
-
-const $forgotPasswordText = (theme: any): TextStyle => ({
-  color: theme.colors.tint,
-  textDecorationLine: "underline",
 })
