@@ -13,16 +13,15 @@ export interface Message {
     name: string
     picture?: string
   }
-  timestamp: string
+  timestamp: Date
   isOwn: boolean
 }
 
 export const MessageBubble = ({ item }: { item: Message }) => {
   const { themed } = useAppTheme()
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp)
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  const formatTime = (timestamp: Date) => {
+    return timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
   return (

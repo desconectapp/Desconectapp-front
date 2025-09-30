@@ -2,17 +2,19 @@ import { types } from "mobx-state-tree"
 
 export interface UserSession {
   user_id: number
+  user_uuid: string
   expiresAt: string
   refreshExpiresAt: string
   refreshToken: string
   token: string
-  supabase_token: string
-  supabase_expires_at: string
+  supabase_token?: string
+  supabase_expires_at?: string
 }
 
 export const SessionModel = types
   .model("SessionModel", {
     user_id: types.maybeNull(types.number),
+    user_uuid: types.maybeNull(types.string),
     expiresAt: types.maybeNull(types.string),
     refreshExpiresAt: types.maybeNull(types.string),
     refreshToken: types.maybeNull(types.string),
@@ -25,6 +27,7 @@ export const SessionModel = types
       console.log("Setting session:", session)
       store.user_id = session?.user_id || null
       store.token = session?.token || null
+      store.user_uuid = session?.user_uuid || null
       store.expiresAt = session?.expiresAt || null
       store.refreshToken = session?.refreshToken || null
       store.refreshExpiresAt = session?.refreshExpiresAt || null

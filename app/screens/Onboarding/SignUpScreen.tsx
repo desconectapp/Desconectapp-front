@@ -72,6 +72,7 @@ export const SignUpScreen = observer(() => {
           refreshToken: dataSuccess.refresh_token,
           token: dataSuccess.token,
           user_id: dataSuccess.user_id,
+          user_uuid: dataSuccess.user_uuid,
         })
 
         navigation.navigate("ValidateEmailScreen")

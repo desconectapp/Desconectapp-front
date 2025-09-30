@@ -39,4 +39,5 @@ export interface SessionData {
   expires_at: string
   refresh_expires_at: string
   user_id: string
+  user_uuid: string
 }

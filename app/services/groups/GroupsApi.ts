@@ -1,5 +1,5 @@
 import { api } from "../api"
-import { Group, GroupData, PaginatedUserGroups } from "./Groups.types"
+import { Group, GroupData, PaginatedOpenGroup, PaginatedUserGroups } from "./Groups.types"
 
 export const groupsService = {
   getGroups: async (): Promise<PaginatedUserGroups | undefined> => {
@@ -8,6 +8,22 @@ export const groupsService = {
       throw new Error("Error al cargar los grupos")
     }
     return response.data
+  },
+
+  getGroupsRecs: async (activity_id: number): Promise<PaginatedOpenGroup | undefined> => {
+    const response = await api.apisauce.get<PaginatedOpenGroup>(`/groups/recs`, {activity_id})
+    if (!response.ok) {
+      throw new Error("Error al cargar las sugerencias para el usuario")
+    }
+    return response.data
+  },
+
+  joinGroup: async (id: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/add-user/${id}`);
+    if (!response.ok) {
+      throw new Error("Error al unirse al grupo");
+    }
+    return true;
   },
 
   getGroupById: async (id: string): Promise<GroupData | undefined> => {
@@ -26,8 +42,8 @@ export const groupsService = {
     return true
   },
 
-  changeStatus: async (id: string, status: boolean): Promise<boolean> => {
-    const response = await api.apisauce.put(`/groups/status/${id}`, { status });
+  changeStatus: async (id: string, public_g: boolean): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/public/${id}`, { public_g });
     if (!response.ok) {
       throw new Error("Error al cambiar el status del grupo");
     }
@@ -46,6 +62,22 @@ export const groupsService = {
     const response = await api.apisauce.put(`/groups/name/${id}`, { name });
     if (!response.ok) {
       throw new Error("Error al cambiar el nombre del grupo");
+    }
+    return true;
+  },
+
+  updateGroupLocation: async (id: string, location: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/location/${id}`, { location });
+    if (!response.ok) {
+      throw new Error("Error al cambiar la location del grupo");
+    }
+    return true;
+  },
+
+  updateGroupPhoto: async (id: string, photo: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/photo/${id}`, { photo });
+    if (!response.ok) {
+      throw new Error("Error al cambiar la foto del grupo");
     }
     return true;
   },
