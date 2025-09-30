@@ -218,7 +218,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
                   activeOpacity={0.8}
                 >
                   <View style={themed($imageEditButton)}>
-                    <Text style={themed($imageEditText)}>ðŸ“·</Text>
+                    <Text style={themed($imageEditText)}>✏️</Text>
                   </View>
                 </TouchableOpacity>
               )}
@@ -304,10 +304,12 @@ export const ProfileScreen = observer(function ProfileScreen() {
       <Pressable
         onPress={() => setShowPreferencesModal(true)}
         style={({ pressed }) => [
-          themed($saveButton),
+          themed($editPreferencesButton),
           {
             width: "100%",
-            backgroundColor: pressed ? theme.colors.separator : themed($saveButton).backgroundColor,
+            backgroundColor: pressed
+              ? theme.colors.separator
+              : themed($editPreferencesButton).backgroundColor,
           },
         ]}
       >
@@ -551,6 +553,14 @@ const $buttonContainer: ViewStyle = {
 }
 
 const $saveButton = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.tint,
+  marginBottom: 8,
+  borderRadius: 20,
+  justifyContent: "center",
+  alignItems: "center",
+})
+
+const $editPreferencesButton = (theme: any): ViewStyle => ({
   backgroundColor: theme.colors.tint,
   marginBottom: 8,
   width: 40,
