@@ -81,11 +81,11 @@ export const useProfile = () => {
   })
 }
 
-export const useActivities = (limit: number = 10, offset: number = 0) => {
+export const useActivities = (limit: number = 10, offset: number = 0, query: string = "") => {
   return useQuery({
-    queryKey: ["activities", limit, offset],
+    queryKey: ["activities", limit, offset, query],
     queryFn: async () => {
-      const response = await activitiesService.getActivities(limit, offset)
+      const response = await activitiesService.getActivities(limit, offset, query)
       if (!response) throw new Error("Error al cargar preferencias")
       return response
     },

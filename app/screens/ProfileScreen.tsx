@@ -1,7 +1,7 @@
 "use client"
 
 import { observer } from "mobx-react-lite"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   View,
   type ViewStyle,
@@ -57,7 +57,10 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const limit = 10
-  const { data: prefsData, isFetching } = useActivities(limit, offset)
+  const [query, setQuery] = useState("")
+  const prevQuery = useRef("")
+
+  const { data: prefsData, isFetching } = useActivities(limit, offset, query)
 
   useEffect(() => {
     activitiesService
@@ -79,6 +82,22 @@ export const ProfileScreen = observer(function ProfileScreen() {
   }, [showPreferencesModal])
 
   useEffect(() => {
+    console.log("query", query, prevQuery.current)
+    if (query != prevQuery.current) {
+      prevQuery.current = query
+
+      if (prefsData) {
+        setAllPreferences((prev) => prefsData)
+        setHasMore(prefsData.length >= limit)
+        setOffset(prefsData.length)
+      } else {
+        setHasMore(false)
+        setAllPreferences([])
+      }
+
+      return
+    }
+
     if (prefsData && prefsData.length > 0) {
       setAllPreferences((prev) => [...prev, ...prefsData])
       if (prefsData.length < limit) setHasMore(false)
@@ -86,6 +105,12 @@ export const ProfileScreen = observer(function ProfileScreen() {
       setHasMore(false)
     }
   }, [prefsData])
+
+  const handleEndReached = () => {
+    if (!isFetching && hasMore) {
+      setOffset((prev) => prev + limit)
+    }
+  }
 
   const togglePreference = (id: number) => {
     setSelectedPreferences((prev) =>
@@ -319,6 +344,18 @@ export const ProfileScreen = observer(function ProfileScreen() {
               </TouchableOpacity>
             </View>
 
+            <TextField
+              value={query}
+              style={createModalStyles(theme).modalSearchInput}
+              containerStyle={createModalStyles(theme).modalSearchInputContainer}
+              onChangeText={(text) => {
+                setOffset(0)
+                setQuery(text)
+              }}
+              placeholder="Search preferences..."
+              autoCapitalize="none"
+            />
+
             <FlatList
               data={allPreferences}
               renderItem={renderItem}
@@ -326,7 +363,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
               numColumns={2}
               contentContainerStyle={{ paddingBottom: spacing.lg }}
               onEndReached={() => {
-                if (!isFetching && hasMore) setOffset((prev) => prev + limit)
+                handleEndReached()
               }}
               onEndReachedThreshold={0.6}
             />
@@ -799,6 +836,14 @@ export const createModalStyles = (theme: any) => ({
     fontSize: 16,
     color: theme.colors.textDim,
     marginTop: spacing.md,
+  } as TextStyle,
+
+  modalSearchInputContainer: {
+    marginBottom: spacing.md,
+  } as ViewStyle,
+
+  modalSearchInput: {
+    fontSize: 16,
   } as TextStyle,
 })
 
