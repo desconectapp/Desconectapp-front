@@ -63,7 +63,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
   const { requestStore } = useStores()
   // const [suggestions, setSuggestions] = useState<NominatimResult[]>([])
   const [selectedLocation, setSelectedLocation] = useState<selectedLocation | null>(requestStore.location??null)
-  const [searchRadiusKm, setSearchRadiusKm] = useState(requestStore.radiusKm || 5) // Use store value or default 5km
+  const [searchRadiusKm, setSearchRadiusKm] = useState(requestStore.radiusKm || 1) // Use store value or default 5km
 
   // // Separate marker position from map center
   // const [markerPosition, setMarkerPosition] = useState<{
@@ -142,9 +142,6 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
         keyboardVerticalOffset: 0,
       }}
     >
-      <View style={themed($header)}>
-        <Text style={themed(texts.heading)}>Ubicación 📍</Text>
-      </View>
       {/* Search Bar with Clear Button */}
       <View style={themed($searchContainer)}>
         <View style={themed($searchInputContainer)}>
@@ -186,6 +183,9 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
 
       {/* Fixed Button Container - always at bottom */}
       <View style={themed($buttonContainer)}>
+        <Text style={[themed(texts.bodySmall), {textAlign: 'center', marginBottom: 6}]}>
+           Manten presionado en el mapa para seleccionar una ubicación
+        </Text>
         <Button
           text="Siguiente"
           style={[
@@ -237,6 +237,7 @@ const $header = (theme: any): ViewStyle => ({
 const $searchContainer = (theme: any): ViewStyle => ({
   position: "relative",
   zIndex: 100,
+  marginTop: theme.spacing.sm,
   marginBottom: theme.spacing.sm,
 })
 

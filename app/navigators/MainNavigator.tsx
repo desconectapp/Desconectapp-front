@@ -166,7 +166,7 @@ export function MainNavigator() {
       <Stack.Screen
         name="LocationPickerScreen"
         component={LocationPickerScreen}
-        options={{ headerShown: true, title: "Ubicación" }}
+        options={{ headerShown: true, title: "Ubicación 📍" }}
       />
       <Stack.Screen
         name="SchedulePickerScreen"
