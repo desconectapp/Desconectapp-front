@@ -23,7 +23,7 @@ import { useRef } from "react"
 import { MyGroupsScreen } from "@/screens/MyGroupsScreen"
 import { SuggestionScreen } from "@/screens/SuggestionScreen"
 import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
-
+import { NearbyGroupsScreen } from "@/screens/NearbyGroupsScreen"
 export type MainTabParamList = {
   HomeScreen: undefined
   SearchScreen: undefined
@@ -42,6 +42,7 @@ export type MainStackParamList = {
   RequestConfirmationScreen: { nextScreen?: string }
   MyGroupsScreen: undefined
   GroupInfoScreen: { groupId: string }
+  NearbyGroupsScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -107,7 +108,6 @@ const CustomTabBarButton = ({ onPress }: any) => {
             backgroundColor: "rgba(255,255,255,0.3)", // más brillo
           }}
         />
-
         <FontAwesome6 name="people-group" size={38} color="#fff" />
       </Animated.View>
     </Pressable>
@@ -178,7 +178,7 @@ export function MainNavigator() {
       <Stack.Screen
         name="LocationPickerScreen"
         component={LocationPickerScreen}
-        options={{ headerShown: true, title: "Ubicación" }}
+        options={{ headerShown: true, title: "Ubicación 📍" }}
       />
       <Stack.Screen
         name="SchedulePickerScreen"
@@ -205,6 +205,7 @@ export function MainNavigator() {
         component={GroupInfoScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Nearby Groups" }} />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
   )
