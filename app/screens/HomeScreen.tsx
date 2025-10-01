@@ -9,7 +9,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
-  StyleSheet,
 } from "react-native"
 import { Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
@@ -70,49 +69,49 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => (
     <TouchableOpacity
-      style={themed(styles.groupCardContainer)}
+      style={themed($groupCardContainer)}
       onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
       disabled={isLoading}
       activeOpacity={0.8}
     >
-      <View style={themed(styles.groupCardInner)}>
+      <View style={$groupCardInner}>
         {/* Avatar */}
-        <View style={themed(styles.groupAvatar)}>
-          <Text style={themed(styles.groupAvatarText)}>
+        <View style={themed($groupAvatar)}>
+          <Text style={themed($groupAvatarText)}>
             {item.icon || item.name.charAt(0).toUpperCase()}
           </Text>
         </View>
-  
+
         {/* Group Info */}
-        <View style={styles.groupInfo}>
-          <View style={styles.groupHeader}>
-            <Text style={themed(styles.groupName)} numberOfLines={1}>
+        <View style={$groupInfo}>
+          <View style={$groupHeader}>
+            <Text style={themed($groupName)} numberOfLines={1}>
               {item.name}
             </Text>
-  
+
             {item.unreadCount && item.unreadCount > 0 && (
-              <View style={themed(styles.unreadBadge)}>
-                <Text style={themed(styles.unreadText)}>
+              <View style={themed($unreadBadge)}>
+                <Text style={themed($unreadText)}>
                   {item.unreadCount > 99 ? "99+" : item.unreadCount}
                 </Text>
               </View>
             )}
           </View>
-  
-          <Text style={themed(styles.description)} numberOfLines={1}>
+
+          <Text style={themed($description)} numberOfLines={1}>
             {!isLoading ? item.description || "No description yet" : ""}
           </Text>
-  
+
           {item.memberCount && (
-            <Text style={themed(styles.memberCount)}>
+            <Text style={themed($memberCount)}>
               {item.memberCount} members
             </Text>
           )}
         </View>
-  
+
         {/* Arrow */}
-        <View style={styles.groupArrow}>
-          <Text style={themed(styles.arrowText)}>›</Text>
+        <View style={$groupArrow}>
+          <Text style={themed($arrowText)}>›</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -121,9 +120,9 @@ export const HomeScreen = observer(function HomeScreen() {
   const ListHeaderComponent = () => {
     const myGroupsSection = () => {
       if (isLoading && allGroups.length === 0) {
-        return <Text>Loading groups...</Text>
+        return <Text style={themed($loadingText)}>Loading groups...</Text>
       }
-  
+
       if (!isLoading && allGroups.length === 0) {
         return (
           <View style={$emptyContainer}>
@@ -171,10 +170,10 @@ export const HomeScreen = observer(function HomeScreen() {
 
         {/* Content depending on state */}
         {isLoadingRecs ? (
-          <ActivityIndicator style={{ marginVertical: 20 }} size="large" />
+          <ActivityIndicator style={$loadingIndicator} size="large" color={theme.colors.tint} />
         ) : recommendedPhotoItems.length === 0 ? (
-          <View style={{ alignItems: "center", paddingVertical: 20 }}>
-            <Text style={themed({ fontSize: 16, color: theme.colors.textDim })}>
+          <View style={$centeredInfo}>
+            <Text style={themed($mutedInfoText)}>
               No new groups to recommend right now 👀
             </Text>
           </View>
@@ -210,18 +209,35 @@ export const HomeScreen = observer(function HomeScreen() {
   }
 
   return (
-    <FlatList
-      data={[{ key: "content" }]}
-      renderItem={() => null} 
-      keyExtractor={(item) => item.key}
-      refreshControl={
-        <RefreshControl refreshing={refreshing || refreshingRecs} onRefresh={onRefresh} tintColor={theme.colors.tint} />
-      }
-      onEndReached={() => null} 
-      showsVerticalScrollIndicator={false}
-      ListHeaderComponent={ListHeaderComponent}
-      ListFooterComponent={isLoadingRecs ? <ActivityIndicator style={{ marginVertical: 20 }} size="large" /> : null}
-    />
+    <Screen
+      preset="fixed"
+      style={$screenStyle}
+      contentContainerStyle={$screenContent}
+      backgroundColor={theme.colors.background}
+      safeAreaEdges={["top"]}
+    >
+      <FlatList
+        style={$listStyle}
+        data={[{ key: "content" }]}
+        renderItem={() => null}
+        keyExtractor={(item) => item.key}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing || refreshingRecs}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.tint}
+          />
+        }
+        onEndReached={() => null}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={
+          isLoadingRecs ? (
+            <ActivityIndicator style={$loadingIndicator} size="large" color={theme.colors.tint} />
+          ) : null
+        }
+      />
+    </Screen>
   )
 })
 
@@ -231,10 +247,6 @@ const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
   paddingBottom: spacing.xl,
 }
-
-const $screenBackground = (theme: any) => ({
-  backgroundColor: theme.colors.background,
-})
 
 const $header: ViewStyle = {
   flexDirection: "row",
@@ -296,77 +308,117 @@ const $emptySubtitle = (theme: any): TextStyle => ({
   paddingHorizontal: spacing.lg,
 })
 
-const $suggestionsSection: ViewStyle = {}
+const $suggestionsSection: ViewStyle = {
+  marginBottom: spacing.xl,
+}
 
-const styles = StyleSheet.create({
-  groupCardContainer: {
-    marginVertical: 6,
-    marginHorizontal: 0,
-    borderRadius: 13,
-    overflow: 'hidden',
-    backgroundColor: '#fff', // fallback
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  groupCardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-  },
-  groupAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#eee',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  groupAvatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  groupInfo: {
-    flex: 1,
-  },
-  groupHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  groupName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  unreadBadge: {
-    backgroundColor: '#FF3B30',
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  unreadText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  memberCount: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-  groupArrow: {
-    marginLeft: 12,
-  },
-  arrowText: {
-    fontSize: 24,
-    color: '#ccc',
-  },
+const $loadingIndicator: ViewStyle = {
+  marginVertical: spacing.lg,
+}
+
+const $screenStyle: ViewStyle = { flex: 1 }
+const $screenContent: ViewStyle = { flex: 1 }
+const $listStyle: ViewStyle = { flex: 1 }
+
+const $loadingText = (theme: any): TextStyle => ({
+  fontSize: 16,
+  color: theme.colors.text,
+})
+
+const $centeredInfo: ViewStyle = {
+  alignItems: "center",
+  paddingVertical: spacing.lg,
+}
+
+const $mutedInfoText = (theme: any): TextStyle => ({
+  fontSize: 16,
+  color: theme.colors.textDim,
+  textAlign: "center",
+})
+
+const $groupCardContainer = (theme: any): ViewStyle => ({
+  marginVertical: spacing.xs / 2,
+  marginHorizontal: 0,
+  borderRadius: spacing.lg,
+  overflow: "hidden",
+  backgroundColor: theme.colors.background,
+  borderWidth: 1,
+  borderColor: theme.colors.border,
+  shadowColor: theme.colors.palette.neutral900,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 6,
+  elevation: 3,
+})
+
+const $groupCardInner: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  padding: spacing.sm,
+}
+
+const $groupAvatar = (theme: any): ViewStyle => ({
+  width: 50,
+  height: 50,
+  borderRadius: 25,
+  backgroundColor: theme.colors.backgroundMuted,
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: spacing.sm,
+})
+
+const $groupAvatarText = (theme: any): TextStyle => ({
+  fontSize: 20,
+  fontWeight: "700",
+  color: theme.colors.text,
+})
+
+const $groupInfo: ViewStyle = { flex: 1 }
+
+const $groupHeader: ViewStyle = {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+}
+
+const $groupName = (theme: any): TextStyle => ({
+  fontSize: 16,
+  fontWeight: "600",
+  color: theme.colors.text,
+})
+
+const $unreadBadge = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.error,
+  borderRadius: spacing.xs,
+  paddingHorizontal: spacing.xs,
+  paddingVertical: spacing.xs / 2,
+  minWidth: spacing.md,
+  alignItems: "center",
+})
+
+const $unreadText = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontSize: 12,
+  fontWeight: "700",
+})
+
+const $description = (theme: any): TextStyle => ({
+  fontSize: 14,
+  color: theme.colors.textDim,
+  marginTop: spacing.xs / 2,
+})
+
+const $memberCount = (theme: any): TextStyle => ({
+  fontSize: 12,
+  color: theme.colors.textDim,
+  marginTop: spacing.xs / 2,
+})
+
+const $groupArrow: ViewStyle = {
+  marginLeft: spacing.sm,
+}
+
+const $arrowText = (theme: any): TextStyle => ({
+  fontSize: 24,
+  color: theme.colors.tintInactive,
 })

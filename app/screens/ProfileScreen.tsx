@@ -208,7 +208,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
             <View style={$imageWrapper}>
               <Image
                 source={profileImage ? { uri: profileImage } : defaultAvatar}
-                style={$profileImage}
+                style={themed($profileImage)}
                 resizeMode="cover"
               />
               {isEditing && (
@@ -301,33 +301,21 @@ export const ProfileScreen = observer(function ProfileScreen() {
         )}
       </Pressable>
 
-      <Pressable
+      <Button
+        text="Edit Preferences"
         onPress={() => setShowPreferencesModal(true)}
-        style={({ pressed }) => [
-          themed($editPreferencesButton),
-          {
-            width: "100%",
-            backgroundColor: pressed
-              ? theme.colors.separator
-              : themed($editPreferencesButton).backgroundColor,
-          },
-        ]}
-      >
-        <Text style={themed($settingsButtonText)}>{"Edit Preferences"}</Text>
-      </Pressable>
+        style={themed($primaryActionButton)}
+        pressedStyle={themed($primaryActionButtonPressed)}
+        textStyle={themed($primaryActionButtonText)}
+      />
 
-      <Pressable
-        onPress={() => logOut()}
-        style={({ pressed }) => [
-          themed($settingsButton),
-          {
-            width: "100%",
-            backgroundColor: pressed ? "#8B0000" : themed($settingsButton).backgroundColor,
-          },
-        ]}
-      >
-        <Text style={themed($settingsButtonText)}>{"Log out"}</Text>
-      </Pressable>
+      <Button
+        text="Log out"
+        onPress={logOut}
+        style={themed($dangerActionButton)}
+        pressedStyle={themed($dangerActionButtonPressed)}
+        textStyle={themed($dangerActionButtonText)}
+      />
 
       <Modal
         visible={showPreferencesModal}
@@ -441,19 +429,6 @@ const $screenBackground = (theme: any) => ({
   backgroundColor: theme.colors.background,
 })
 
-const $settingsButton = (theme: any): ViewStyle => ({
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: theme.colors.palette.neutral200,
-  justifyContent: "center",
-  alignItems: "center",
-})
-
-const $settingsButtonText = (theme: any): TextStyle => ({
-  fontSize: 18,
-})
-
 const $profileCard = (theme: any): ViewStyle => ({
   marginTop: spacing.md,
 
@@ -486,20 +461,20 @@ const $imageWrapper: ViewStyle = {
   position: "relative",
 }
 
-const $profileImage: ImageStyle = {
+const $profileImage = (theme: any): ImageStyle => ({
   width: 80,
   height: 80,
   borderRadius: 40,
   borderWidth: 3,
-  borderColor: "#ffffff",
-  shadowColor: "#000",
+  borderColor: theme.colors.tintInverse,
+  shadowColor: theme.colors.palette.neutral900,
   shadowOffset: {
     width: 0,
     height: 2,
   },
   shadowOpacity: 0.1,
   shadowRadius: 4,
-}
+})
 
 const $imageEditOverlay: ViewStyle = {
   position: "absolute",
@@ -554,18 +529,8 @@ const $buttonContainer: ViewStyle = {
 
 const $saveButton = (theme: any): ViewStyle => ({
   backgroundColor: theme.colors.tint,
-  marginBottom: 8,
-  borderRadius: 20,
-  justifyContent: "center",
-  alignItems: "center",
-})
-
-const $editPreferencesButton = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.tint,
-  marginBottom: 8,
-  width: 40,
-  height: 40,
-  borderRadius: 20,
+  marginBottom: spacing.sm,
+  borderRadius: spacing.md,
   justifyContent: "center",
   alignItems: "center",
 })
@@ -588,6 +553,46 @@ const $cancelButtonText = (theme: any): TextStyle => ({
   color: theme.colors.textDim,
   fontWeight: "600",
   fontSize: 14,
+})
+
+const $actionButtonBase = (theme: any): ViewStyle => ({
+  width: "100%",
+  minHeight: 52,
+  borderRadius: spacing.md,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingHorizontal: spacing.md,
+})
+
+const $primaryActionButton = (theme: any): ViewStyle => ({
+  ...$actionButtonBase(theme),
+  backgroundColor: theme.colors.tint,
+  marginBottom: spacing.sm,
+})
+
+const $primaryActionButtonPressed = (_theme: any): ViewStyle => ({
+  opacity: 0.9,
+})
+
+const $primaryActionButtonText = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontWeight: "600",
+  fontSize: 16,
+})
+
+const $dangerActionButton = (theme: any): ViewStyle => ({
+  ...$actionButtonBase(theme),
+  backgroundColor: theme.colors.error,
+})
+
+const $dangerActionButtonPressed = (_theme: any): ViewStyle => ({
+  opacity: 0.9,
+})
+
+const $dangerActionButtonText = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontWeight: "600",
+  fontSize: 16,
 })
 
 export const createModalStyles = (theme: any) => ({
@@ -765,7 +770,7 @@ export const createModalStyles = (theme: any) => ({
   } as ViewStyle,
 
   modalDangerButtonText: {
-    color: "#ffffff",
+    color: theme.colors.tintInverse,
     fontSize: 16,
     fontWeight: "600",
   } as TextStyle,

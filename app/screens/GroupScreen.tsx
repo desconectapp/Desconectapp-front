@@ -5,17 +5,12 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
-  Modal,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
 } from "react-native"
-import { Button, Text } from "@/components"
+import { Screen, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 
@@ -39,37 +34,6 @@ interface Member {
   name: string
   picture?: string
 }
-
-const mockMessages: Message[] = [
-  {
-    id: "1",
-    text: "Hey everyone! Ready for tomorrow's match?",
-    sender: { id: "user123", name: "John Doe", picture: "https://example.com/profile/johndoe.jpg" },
-    timestamp: new Date("2023-10-01T10:30:00Z"),
-    isOwn: false,
-  },
-  {
-    id: "2",
-    text: "What time are we meeting?",
-    sender: { id: "currentUser", name: "You" },
-    timestamp: new Date("2023-10-01T10:32:00Z"),
-    isOwn: true,
-  },
-  {
-    id: "3",
-    text: "Let's meet at 3 PM at the usual spot",
-    sender: { id: "user456", name: "Maria Garcia" },
-    timestamp: new Date("2023-10-01T10:35:00Z"),
-    isOwn: false,
-  },
-  {
-    id: "4",
-    text: "Perfect! See you all there",
-    sender: { id: "currentUser", name: "You" },
-    timestamp: new Date("2023-10-01T10:36:00Z"),
-    isOwn: true,
-  },
-]
 
 export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const { groupId } = route.params
@@ -154,11 +118,15 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   }
 
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
+    <Screen
+      preset="fixed"
+      style={styles.container}
+      contentContainerStyle={styles.container}
+      backgroundColor={theme.colors.background}
+      safeAreaEdges={["top", "bottom"]}
+      keyboardOffset={spacing.lg}
+    >
+      <View style={styles.chatWrapper}>
         {/* Header */}
         <View style={[styles.header, $topInsets, themed(themedStyles.headerBackground)]}>
           <TouchableOpacity
@@ -219,8 +187,8 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             <Text style={themed(themedStyles.sendButtonText)}>→</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+      </View>
+    </Screen>
   )
 })
 
@@ -229,6 +197,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
 export const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
+  chatWrapper: { flex: 1 } as ViewStyle,
 
   header: {
     flexDirection: "row",
@@ -283,17 +252,6 @@ export const styles = StyleSheet.create({
     borderRadius: 25,
   } as ImageStyle,
 
-  leaveButton: {
-    borderColor: "#e53935",
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderRadius: 8,
-  } as ViewStyle,
-
-  leaveButtonText: {
-    color: "#e53935",
-    fontWeight: "600",
-  } as TextStyle,
 })
 
 export const themedStyles = {
@@ -425,11 +383,21 @@ export const themedStyles = {
     color: theme.colors.text,
     fontWeight: "500",
   }),
+  leaveButton: (theme: any): ViewStyle => ({
+    borderColor: theme.colors.error,
+    backgroundColor: "transparent",
+    borderWidth: 1.5,
+    borderRadius: spacing.md,
+  }),
+  leaveButtonText: (theme: any): TextStyle => ({
+    color: theme.colors.error,
+    fontWeight: "600",
+  }),
   pressedLeaveButton: (theme: any): ViewStyle => ({
-    backgroundColor: "rgba(229, 57, 53, 0.08)",
+    backgroundColor: theme.colors.errorBackground,
   }),
   pressedLeaveButtonText: (theme: any): TextStyle => ({
-    color: "#e53935",
+    color: theme.colors.error,
     opacity: 0.9,
   }),
 }
