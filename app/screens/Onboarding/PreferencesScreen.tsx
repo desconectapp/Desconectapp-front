@@ -14,7 +14,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 import { spacing } from "@/theme"
 import { useStores } from "@/models"
-import { useEditProfile, useActivities, useAddPreferences } from "@/hooks/Users"
+import { useEditProfile, useActivities, useAddPreferencesBatch } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { AppStackScreenProps } from "@/navigators"
 import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
@@ -38,7 +38,7 @@ export const PreferencesScreen = observer(() => {
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
 
   const { data, isLoading, isError, isFetching } = useActivities(limit, offset)
-  const addPreferences = useAddPreferences()
+  const addPreferences = useAddPreferencesBatch()
 
   useEffect(() => {
     if (data && data.length > 0) {

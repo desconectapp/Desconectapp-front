@@ -20,8 +20,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription, updateGroupName as useUpdateGroupName } from "@/hooks/Groups"
-
+import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription, updateGroupName as useUpdateGroupName, updateGroupLocation as useUpdateGroupLocation} from "@/hooks/Groups"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
@@ -50,16 +49,18 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const { data: groupData, isLoading } = useGroupById(groupId)
 
-  const isPrivate = !groupData?.status;
+  const isPrivate = !groupData?.public;
   const { mutateAsync: statusChangeAsync } = useChangeGroupStatus()
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
   const { mutate: updateDescription } = updateGroupDescription();
   const { mutate: updateGroupName } = useUpdateGroupName();
+  const { mutate: updateGroupLocation } = useUpdateGroupLocation();
   const [isEditing, setIsEditing] = useState(false)
-  const [tempName, setTempName] = useState(!groupData?.name || groupData?.name === "" ? "No Name" : groupData?.name)
-  const [tempDescription, setTempDescription] = useState(groupData?.description ?? "")
+  const [tempName, setTempName] = useState("")
+  const [tempDescription, setTempDescription] = useState("")
+  const [tempLocation, setTempLocation] = useState("")
 
   const handlePressLeave = () => {
     setIsModalVisible(true);
@@ -76,7 +77,9 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   useEffect(() => {
     if (groupData) {
+      setTempName(groupData.name);
       setTempDescription(groupData.description ?? "");
+      setTempLocation(groupData.location ?? "");
     }
   }, [groupData]);
 
@@ -143,7 +146,6 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const handleSave = async () => {
   try {
-
     if (tempName !== groupData.name) {
       updateGroupName({ id: groupData.id, name: tempName }); 
     }
@@ -151,10 +153,15 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
     if (tempDescription !== groupData.description) {
       updateDescription({ id: groupData.id, description: tempDescription });
     }
+
+    if (tempLocation !== groupData.location) {
+        updateGroupLocation({ id: groupData.id, location: tempLocation });
+    }
     
     setIsEditing(false);
     queryClient.setQueryData(['group', groupId], (oldData: GroupData) => ({
         ...oldData,
+        name: tempName,
         description: tempDescription,
       }));
   } catch (error) {
@@ -162,10 +169,17 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   }
 };
 
+  const handleCancelEdit = () => {
+    // Reset temp state to original values
+    setTempName(groupData.name);
+    setTempDescription(groupData.description ?? "");
+    setIsEditing(false);
+  };
+
 
   const handleStatusChange = async (newStatus: boolean) => {
     try {
-      await statusChangeAsync({ id: groupId, status: newStatus });
+      await statusChangeAsync({ id: groupId, public_g: newStatus });
       setModalVisible(false);
       queryClient.setQueryData(['group', groupId], (oldData: GroupData) => ({
         ...oldData,
@@ -242,9 +256,22 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             </TouchableOpacity>
             
             <Text style={themed(themedStyles.headerTitle)}>Group Info</Text>
-            <Pressable onPress={() => setIsEditing(true)}>
+            
+            {/* Conditional Edit/Save/Cancel Buttons */}
+            {isEditing ? (
+                <View style={styles.headerButtonContainer}>
+                    <Pressable onPress={handleCancelEdit}>
+                        <Text style={themed(themedStyles.headerCancelButton)}>Cancel</Text>
+                    </Pressable>
+                    <Pressable onPress={handleSave} style={{ marginLeft: spacing.sm }}>
+                        <Text style={themed(themedStyles.headerButton)}>Save</Text>
+                    </Pressable>
+                </View>
+            ) : (
+                <Pressable onPress={() => setIsEditing(true)}>
                     <Text style={themed(themedStyles.editButtonText)}>✏️</Text>
-            </Pressable>
+                </Pressable>
+            )}
             
             {/* Lock Icon */}
             <TouchableOpacity
@@ -275,58 +302,44 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             </View>
           </Modal>
 
-          {/* Group Info */}
+          {/* Group Info (Conditionally Rendered) */}
           <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
               <Text style={themed(themedStyles.groupIcon)}>{groupData.icon}</Text>
-              <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
-              <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
-              <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
+              
+              {isEditing ? (
+                  <TextInput
+                    style={themed(themedStyles.groupNameInput)}
+                    value={tempName}
+                    onChangeText={setTempName}
+                    placeholder="Group Name"
+                  />
+              ) : (
+                  <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
+              )}
+
+              {isEditing ? (
+                  <TextInput
+                    style={themed(themedStyles.groupLocationInput)}
+                    value={tempLocation}
+                    onChangeText={setTempLocation}
+                    placeholder="Group Location"
+                  />
+              ) : (
+                  <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
+              )}
+
+              {isEditing ? (
+                  <TextInput
+                    style={themed(themedStyles.groupDescriptionInput)}
+                    value={tempDescription}
+                    onChangeText={setTempDescription}
+                    multiline
+                    placeholder="Group Description"
+                  />
+              ) : (
+                  <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
+              )}
           </View>
-
-          <Modal
-            animationType="slide"
-            transparent={true}
-            visible={isEditing}
-            onRequestClose={() => {
-              setIsEditing(!isEditing);
-            }}
-          >
-            <View style={themed(styles.centeredView)}>
-              <View style={themed(themedStyles.modalView)}>
-                <Text style={themed(styles.inputLabel)}>Edit Group Name</Text>
-                <TextInput
-                  style={themed(themedStyles.modalInput)}
-                  value={tempName}
-                  onChangeText={setTempName}
-                  placeholder="Group Name"
-                />
-
-                <Text style={themed(styles.inputLabel)}>Edit Group Description</Text>
-                <TextInput
-                  style={themed(themedStyles.modalInput)}
-                  value={tempDescription}
-                  onChangeText={setTempDescription}
-                  multiline
-                  placeholder="Group Description"
-                />
-
-                <View style={themed(styles.modalButtonsContainer)}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, styles.cancelButton]}
-                    onPress={() => setIsEditing(false)}
-                  >
-                    <Text style={styles.modalButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[themed(styles.modalButton), themed(themedStyles.acceptButton)]}
-                    onPress={handleSave}
-                  >
-                    <Text style={themed(styles.modalButtonText)}>Save</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
 
           {/* Members List */}
           <FlatList
@@ -409,6 +422,12 @@ export const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
+  } as ViewStyle,
+
+  headerButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: spacing.md,
   } as ViewStyle,
 
   backButton: { paddingRight: spacing.md } as ViewStyle,
@@ -629,6 +648,11 @@ export const themedStyles = {
     color: theme.colors.tint,
     fontWeight: "600",
   }),
+  headerCancelButton: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: "#e53935",
+    fontWeight: "600",
+  }),
 
   // Group info
   groupInfoSection: (theme: any): ViewStyle => ({
@@ -651,11 +675,24 @@ export const themedStyles = {
     color: theme.colors.text,
     marginTop: spacing.sm,
   }),
+
+  groupNameInput: (theme: any): TextStyle => ({
+    fontSize: 24,
+    fontWeight: "bold",
+    marginTop: spacing.sm,
+    color: theme.colors.text,
+    textAlign: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.tint,
+    paddingVertical: spacing.xs,
+  }),
+
   groupLocation: (theme: any): TextStyle => ({
     fontSize: 16,
     color: theme.colors.textDim,
     marginTop: spacing.xs,
   }),
+
   groupDescription: (theme: any): TextStyle => ({
     fontSize: 14,
     color: theme.colors.textDim,
@@ -663,6 +700,33 @@ export const themedStyles = {
     marginTop: spacing.sm,
     paddingHorizontal: spacing.lg,
   }),
+
+  groupDescriptionInput: (theme: any): TextStyle => ({
+    fontSize: 14,
+    color: theme.colors.text,
+    textAlign: "center",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.tint,
+    borderRadius: spacing.xs,
+    padding: spacing.sm,
+    minHeight: 80,
+    textAlignVertical: "top",
+  }),
+
+  groupLocationInput: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.text,
+    textAlign: "center",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.tint,
+    borderRadius: spacing.xs,
+    padding: spacing.sm,
+  }),
+
   divider: (theme: any): ViewStyle => ({
     height: 1,
     backgroundColor: theme.colors.border,

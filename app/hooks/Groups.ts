@@ -23,6 +23,17 @@ export const useGroups = () => {
   })
 }
 
+export const useGroupsRecs = (activity_id: number) => {
+  return useQuery({
+    queryKey: ["groupsRecs", activity_id],
+    queryFn: async () => {
+      const response = await groupsService.getGroupsRecs(activity_id)
+      if (!response) throw new Error("Error al cargar grupos")
+      return response
+    },
+  })
+}
+
 export const useGroupById = (id: string) => {
   return useQuery({
     queryKey: ["groups", id],
@@ -37,8 +48,8 @@ export const useGroupById = (id: string) => {
 export const useChangeGroupStatus = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<boolean, Error, { id: string; status: boolean }>({
-    mutationFn: ({ id, status }) => groupsService.changeStatus(id, status),
+  return useMutation<boolean, Error, { id: string; public_g: boolean }>({
+    mutationFn: ({ id, public_g }) => groupsService.changeStatus(id, public_g),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
     },
@@ -61,6 +72,39 @@ export const updateGroupName = () => {
 
   return useMutation<boolean, Error, { id: string; name: string }>({
     mutationFn: ({ id, name }) => groupsService.updateGroupName(id, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};
+
+export const updateGroupLocation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string; location: string }>({
+    mutationFn: ({ id, location }) => groupsService.updateGroupLocation(id, location),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};
+
+export const updateGroupPhoto = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string; photo: string }>({
+    mutationFn: ({ id, photo }) => groupsService.updateGroupName(id, photo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};
+
+export const useJoinGroup = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<boolean, Error, { id: string }>({
+    mutationFn: ({ id }) => groupsService.joinGroup(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
     },

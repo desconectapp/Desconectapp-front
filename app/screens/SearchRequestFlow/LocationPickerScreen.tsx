@@ -1,34 +1,20 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import {
   View,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
   Alert,
-  Dimensions,
-  Image,
-  ScrollView,
-  type DimensionValue,
   ViewStyle,
-  TextStyle,
   Keyboard,
 } from "react-native"
-import { PanGestureHandler, State, TapGestureHandler } from "react-native-gesture-handler"
-import { Screen, Text, Button, CustomSlider } from "../../components"
+import { Screen, Text, Button } from "../../components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
 import { observer } from "mobx-react-lite"
 import {
-  containers,
   buttons,
   buttonTexts,
   texts,
-  inputs,
-  chips,
-  separators,
-  shadows,
 } from "@/theme/commonStyles"
 
 import { MainStackParamList } from "@/navigators/MainNavigator"
@@ -36,21 +22,6 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { MapMarker, MapViewComponent } from "@/components/Location/MapView"
 import CustomAutocomplete from "@/components/Location/SearchBar"
 import { selectedLocation } from "types"
-
-
-
-// interface NominatimResult {
-//   place_id: string | number // Can be either string or number from API
-//   display_name: string
-//   lat: string
-//   lon: string
-//   name?: string
-//   address?: {
-//     city?: string
-//     state?: string
-//     country?: string
-//   }
-// }
 
 type LocationPickerScreenProps = NativeStackScreenProps<MainStackParamList, "LocationPickerScreen">
 
@@ -113,24 +84,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
   //   )
   // }
 
-  const [markers, setMarkers] = useState<MapMarker[]>([
-    {
-      id: "marker-1",
-      coordinates: [-73.9911, 40.7342],
-      title: "Marker 1",
-      emoji: "📍",
-      color: "#FF0000",
-      data: { additionalInfo: "Some data about Marker 1" },
-    },
-    {
-      id: "marker-2",
-      coordinates: [-73.9911, 40.8342],
-      title: "Marker 2",
-      emoji: "📍",
-      color: "#0141f0ff",
-      data: { additionalInfo: "Some data about Marker 2" },
-    },
-  ] as any[])
+
 
   return (
     <Screen
@@ -176,8 +130,6 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
           allowSelectLocation={true}
           searchRadiusKm={searchRadiusKm} // Pass km directly
           setSearchRadiusKm={setSearchRadiusKm}
-          groups={markers}
-          onGroupPress={(marker) => Alert.alert("Marker Pressed", `You pressed ${marker.title}`)}
         />
       </View>
 

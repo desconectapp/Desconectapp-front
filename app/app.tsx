@@ -120,6 +120,7 @@ export function App() {
         refresh_token: s.refreshToken,
         refresh_expires_at: s.refreshExpiresAt,
         user_id: "",
+        user_uuid: "",
       })
     }
 
@@ -130,7 +131,8 @@ export function App() {
       }
 
       sessionStore.setSession({
-        user_id: s?.user_id,
+        user_id: Number(s?.user_id),
+        user_uuid: s?.user_uuid,
         token: s?.token,
         expiresAt: s?.expires_at,
         refreshToken: s?.refresh_token,

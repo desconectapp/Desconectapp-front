@@ -31,7 +31,6 @@ export const LoginScreen = observer(() => {
     if (!sessionStore.token) {
       navigation.navigate("LoginScreen")
     } else {
-      console.log("o por aca??????")
       navigation.navigate("Main", { screen: "Tabs" })
     }
   }, [navigation, sessionStore.token])
@@ -48,10 +47,9 @@ export const LoginScreen = observer(() => {
     LoginFunc.mutateAsync(response, {
       onSuccess: (_) => {
         setLoading(false)
-        console.log("PASA POR ACA?")
         navigation.navigate("Main", { screen: "Tabs" })
       },
-      onError: (error) => {
+      onError: () => {
         setLoading(false)
         showToast("Error al iniciar sesion", "Por favor, intenta nuevamente.")
       },
@@ -95,7 +93,7 @@ export const LoginScreen = observer(() => {
         forgotPassword={false}
         isSubmitting={loading}
       />
-      <View style={$logoContainer}>
+      <View>
         <Text
           preset="subheading"
           style={themed({
@@ -106,6 +104,20 @@ export const LoginScreen = observer(() => {
           onPress={() => navigation.navigate("SignUpScreen")}
         >
           Don&apos;t have an account? Sign Up
+        </Text>
+      </View>
+
+      <View>
+        <Text
+          preset="subheading"
+          style={themed({
+            color: "gray",
+            textAlign: "center",
+            opacity: 0.9,
+          })}
+          onPress={() => navigation.navigate("ForgotPasswordScreen")}
+        >
+          Forgot your password? Reset
         </Text>
       </View>
     </Screen>

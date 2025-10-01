@@ -5,14 +5,28 @@ export const activitiesService = {
   getActivities: async (
     limit: number = 10,
     offset: number = 0,
+    query: string = "",
   ): Promise<Activity[] | undefined> => {
     const response = await api.apisauce.get<Activity[] | undefined>("/activities", {
       limit,
       offset,
+      q: query,
     })
     if (!response.ok) {
       throw new Error("Error al cargar preferencias")
     }
+    return response.data
+  },
+
+  getActivitiesFromUser: async (): Promise<Activity[] | undefined> => {
+    const response = await api.apisauce.get<Activity[] | undefined>("/preferences", {
+      limit: 1000,
+      offset: 0,
+    })
+    if (!response.ok) {
+      throw new Error("Error al cargar preferencias")
+    }
+    console.log("Preferencias del usuario obtenidas:", response.data)
     return response.data
   },
 

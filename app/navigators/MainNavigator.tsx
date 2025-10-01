@@ -1,9 +1,20 @@
 // MainNavigator.tsx
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, ActivityRequestsScreen, GroupScreen, LocationPickerScreen, SchedulePickerScreen, ActivityPickerScreen, RequestConfirmationScreen } from "@/screens"
+import {
+  PreferencesScreen,
+  ProfileScreen,
+  HomeScreen,
+  SearchScreen,
+  ActivityRequestsScreen,
+  GroupScreen,
+  LocationPickerScreen,
+  SchedulePickerScreen,
+  ActivityPickerScreen,
+  RequestConfirmationScreen,
+} from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
 import { View } from "tamagui"
@@ -12,8 +23,7 @@ import { useRef } from "react"
 import { MyGroupsScreen } from "@/screens/MyGroupsScreen"
 import { SuggestionScreen } from "@/screens/SuggestionScreen"
 import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
-
-
+import { NearbyGroupsScreen } from "@/screens/NearbyGroupsScreen"
 export type MainTabParamList = {
   HomeScreen: undefined
   SearchScreen: undefined
@@ -32,6 +42,7 @@ export type MainStackParamList = {
   RequestConfirmationScreen: { nextScreen?: string }
   MyGroupsScreen: undefined
   GroupInfoScreen: { groupId: string }
+  NearbyGroupsScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -103,8 +114,6 @@ const CustomTabBarButton = ({ onPress }: any) => {
   )
 }
 
-
-
 function TabNavigator() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false }}>
@@ -129,7 +138,9 @@ function TabNavigator() {
         name="ActivityRequestsScreen"
         component={ActivityRequestsScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list-outline" size={size} color={color} />
+          ),
           tabBarLabel: "Búsquedas",
         }}
       />
@@ -158,6 +169,7 @@ export function MainNavigator() {
         component={SuggestionScreen}
         options={{
           animation: "fade",
+          headerShown: false,
         }}
       />
       <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
@@ -188,12 +200,14 @@ export function MainNavigator() {
         component={MyGroupsScreen}
         options={{ title: "My Groups" }}
       />
-       <Stack.Screen
+      <Stack.Screen
         name="GroupInfoScreen"
         component={GroupInfoScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Nearby Groups" }} />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
   )
 }
+
