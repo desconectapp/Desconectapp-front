@@ -1,14 +1,14 @@
-import React, { useState } from "react"
-import { View, StyleSheet, Alert, ViewStyle, TextStyle } from "react-native"
+import React from "react"
+import { View, ViewStyle, TextStyle } from "react-native"
 import { Screen, Text } from "@/components"
-import type { AppStackScreenProps } from "../navigators"
 import { observer } from "mobx-react-lite"
 import { MapGroup, MapViewComponent } from "@/components/Location/MapView"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 
 export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
-  const { themed, theme } = useAppTheme()
+  const { themed } = useAppTheme()
+  // Mock de GET groupos cercanos hasta tener el endpoint real
   const groups: MapGroup[] = [
     {
       id: "group-1",
@@ -136,7 +136,9 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
       <View style={themed($mapContainer)}>
         <MapViewComponent
           groups={groups}
-          // onGroupPress={(marker) => Alert.alert("Marker Pressed", `You pressed ${marker.name}`)}
+          // onGroupPress={(group) => { Aca creo que habria que redireccionar al grupo, pero 
+          // no se si conviene aca o en el MapViewComponent. Primero necesitamos el endpoint de
+          // GET grupos igual}}
         />
       </View>
     </Screen>

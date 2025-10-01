@@ -1,44 +1,24 @@
-import { useStores } from "@/models"
 import { useRef, useState } from "react"
-import { Text, View, StyleSheet, Platform } from "react-native"
+import { Text, View, StyleSheet } from "react-native"
 import MapLibreGL from "@maplibre/maplibre-react-native"
 import { useEffect } from "react"
-import Radar, { Map, Autocomplete } from "react-native-radar"
+import Radar from "react-native-radar"
 import {
-  FlatList,
-  LongPressGestureHandler,
-  State,
-  TextInput,
   TouchableOpacity,
 } from "react-native-gesture-handler"
-import CustomAutocomplete from "./SearchBar"
 import { selectedLocation } from "types"
-import { Icon } from "../Icon"
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { LocationInfo } from "./LocationInfo"
 import { CustomSlider } from "../Custom/CustomSlider"
-// Initialize MapLibre
-// MapLibreGL.setAccessToken(null) // No token needed for OpenStreetMap
+
+
 const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ""
 if (!apiKey) {
   console.warn("RADAR_API_KEY is not set. Please set it in your .env file.")
-} else {
-  console.log("RADAR_API_KEY is set.")
 }
 Radar.initialize(apiKey)
 MapLibreGL.setAccessToken(apiKey) // No token needed for OpenStreetMap
 
 const BSASCOORDS = [-58.4173, -34.6118] // Buenos Aires coords
-
-// export interface MapMarker {
-//   id: string
-//   coordinates: [number, number] // [longitude, latitude]
-//   title?: string
-//   emoji?: string
-//   color?: string
-//   data?: any // additional data you want to store
-//   radius?: number // in degrees, approx 0.01 ~ 1km
-// }
 
 export interface MapGroup {
   id: string
@@ -52,22 +32,28 @@ export interface MapGroup {
 }
 
 export interface MapViewProps {
+  // Para busqueda de grupo
   selectedLocation?: selectedLocation | null
   setSelectedLocation?: (location: selectedLocation | null) => void
-  initialZoom?: number
-  searchRadiusKm?: number // in degrees, approx 0.01 ~ 1km
+  searchRadiusKm?: number
   setSearchRadiusKm?: (radiusKm: number) => void
-  groups?: MapGroup[] // markers to display
-  onGroupPress?: (group: MapGroup) => void // callback when marker is pressed
   allowSelectLocation?: boolean // whether to allow adding markers via long press
+  
+  // Para ver grupos cercanos
+  groups?: MapGroup[] 
+  onGroupPress?: (group: MapGroup) => void // callback when marker is pressed
+  
+  // Otras props
   style?: any
 }
+
 export const MapViewComponent = ({
   selectedLocation,
   setSelectedLocation,
   searchRadiusKm = 0.01,
   setSearchRadiusKm,
   allowSelectLocation = false,
+  
   groups = [],
   onGroupPress,
 
@@ -139,6 +125,7 @@ export const MapViewComponent = ({
     }
   }
 
+  // TODO: mover esto a un utils/el style global
   // Generate a pastel color based on coordinates
   const getColorFromCoords = ([lng, lat]: [number, number]) => {
     // Simple hash function
@@ -161,6 +148,7 @@ export const MapViewComponent = ({
     borderColor: "white",
   })
 
+  // Esto tambien podria ir a un utils
   // Helper function to create a circle geometry from center point and radius in km
   const createCircleGeoJSON = (center: [number, number], radiusKm: number) => {
     const points = 64 // Number of points to create the circle
@@ -191,12 +179,13 @@ export const MapViewComponent = ({
     }
   }
 
-  console.log("selected loc:", selectedLocation)
   return (
     <View style={[styles.container, style]}>
       <MapLibreGL.MapView
         style={styles.map}
         onLongPress={handleMapLongPress}
+        // TODO: revisar onRegionDidChange para poder fetchear grupos cercanos
+        // Tambien ver de mover el url a otro lado, y poder integrar con dark mode (radar-dark-v1)
         mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
         onPress={() => {
           // Don't clear selection if it's being set from search
@@ -212,6 +201,8 @@ export const MapViewComponent = ({
           zoomLevel={zoom}
           animationDuration={1000}
         />
+
+        {/* BUSQUEDA: Muestra el radio de busqueda seleccionado */}
         {selectedLocation && (
           <>
             {/* Search radius circle */}
@@ -263,7 +254,7 @@ export const MapViewComponent = ({
           </>
         )}
 
-        {/* Display nearby groups */}
+        {/* GRUPOS: Muestra los grupos cercanos */}
         {groups?.map((group) => (
           <MapLibreGL.PointAnnotation
             key={group.id}
@@ -293,7 +284,7 @@ export const MapViewComponent = ({
         ))}
       </MapLibreGL.MapView>
 
-      {/* Para cuando selecciono ubicacion en la search */}
+      {/* BUSQUEDA: Para cuando selecciono ubicacion en la search */}
       {selectedLocation && (
         <LocationInfo height={180}>
           <Text style={{ color: "white", fontWeight: "bold", fontSize: 16, paddingBottom: 15 }}>
@@ -319,7 +310,7 @@ export const MapViewComponent = ({
         </LocationInfo>
       )}
 
-      {/* Para cuando selecciono un grupo */}
+      {/* GRUPOS: Para cuando selecciono un grupo */}
       {/* Para el grupo, poner boton de entrar al grupo y eso */}
       {selectedMarker && (
         <LocationInfo height={150}>

@@ -1,25 +1,16 @@
 "use client"
 import { useState } from "react"
-import {
-  View,
-  Alert,
-  ViewStyle,
-  Keyboard,
-} from "react-native"
+import { View, Alert, ViewStyle, Keyboard } from "react-native"
 import { Screen, Text, Button } from "../../components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { useStores } from "@/models"
 import { observer } from "mobx-react-lite"
-import {
-  buttons,
-  buttonTexts,
-  texts,
-} from "@/theme/commonStyles"
+import { buttons, buttonTexts, texts } from "@/theme/commonStyles"
 
 import { MainStackParamList } from "@/navigators/MainNavigator"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
-import { MapMarker, MapViewComponent } from "@/components/Location/MapView"
+import { MapViewComponent } from "@/components/Location/MapView"
 import CustomAutocomplete from "@/components/Location/SearchBar"
 import { selectedLocation } from "types"
 
@@ -32,36 +23,10 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
-  // const [suggestions, setSuggestions] = useState<NominatimResult[]>([])
-  const [selectedLocation, setSelectedLocation] = useState<selectedLocation | null>(requestStore.location??null)
+  const [selectedLocation, setSelectedLocation] = useState<selectedLocation | null>(
+    requestStore.location ?? null,
+  )
   const [searchRadiusKm, setSearchRadiusKm] = useState(requestStore.radiusKm || 1) // Use store value or default 5km
-
-  // // Separate marker position from map center
-  // const [markerPosition, setMarkerPosition] = useState<{
-  //   latitude: number
-  //   longitude: number
-  // } | null>(
-  //   requestStore.location
-  //     ? { latitude: requestStore.location.latitude, longitude: requestStore.location.longitude }
-  //     : null,
-  // )
-
-  // Pan gesture state - simplified
-  // const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
-
-  // Helper function to update both local state and store
-  // const updateSelectedLocation = (location: Location | null) => {
-  //   try {
-  //     console.log("Updating selected location:", location)
-  //     setSelectedLocation(location)
-  //     requestStore.setLocation(location)
-  //     console.log("Successfully updated location in store")
-  //   } catch (error) {
-  //     console.error("Error updating location in store:", error)
-  //     console.error("Location data that caused error:", location)
-  //     Alert.alert("Error", "No se pudo guardar la ubicación seleccionada.")
-  //   }
-  // }
 
   const handleNext = () => {
     // Save selected location and radius to the store
@@ -72,19 +37,6 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
 
     navigation.navigate("SchedulePickerScreen" as any)
   }
-
-  // const renderSuggestion = ({ item }: { item: NominatimResult }) => {
-  //   const mainText = item.name || item.display_name.split(",")[0]
-  //   const secondaryText = item.display_name.split(",").slice(1).join(",").trim()
-  //   return (
-  //     <TouchableOpacity style={themed($suggestionItem)} onPress={() => handleSuggestionPress(item)}>
-  //       <Text style={themed(texts.body)}>{mainText}</Text>
-  //       <Text style={themed(texts.bodySmall)}>{secondaryText}</Text>
-  //     </TouchableOpacity>
-  //   )
-  // }
-
-
 
   return (
     <Screen
@@ -99,26 +51,25 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
       {/* Search Bar with Clear Button */}
       <View style={themed($searchContainer)}>
         <View style={themed($searchInputContainer)}>
-         {/* Search Input */}
-         <CustomAutocomplete
-           placeholder="Buscar ubicación en Argentina..."
-           onSelection={(address: any) => {
-             console.log('Selected address:', address);
-             Keyboard.dismiss();
-             
-             // Small delay to ensure proper state management
-             setTimeout(() => {
-               setSelectedLocation({
-                 id: address.place_id ? String(address.place_id) : "unknown",
-                 name: address.name || address.formattedAddress.split(",")[0],
-                 latitude: address.latitude,
-                 longitude: address.longitude,
-                 address: address.formattedAddress,
-               });
-             }, 100);
-            }
-           }
-         />
+          {/* Search Input */}
+          <CustomAutocomplete
+            placeholder="Buscar ubicación en Argentina..."
+            onSelection={(address: any) => {
+              console.log("Selected address:", address)
+              Keyboard.dismiss()
+
+              // Small delay to ensure proper state management
+              setTimeout(() => {
+                setSelectedLocation({
+                  id: address.place_id ? String(address.place_id) : "unknown",
+                  name: address.name || address.formattedAddress.split(",")[0],
+                  latitude: address.latitude,
+                  longitude: address.longitude,
+                  address: address.formattedAddress,
+                })
+              }, 100)
+            }}
+          />
         </View>
       </View>
 
@@ -135,8 +86,8 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
 
       {/* Fixed Button Container - always at bottom */}
       <View style={themed($buttonContainer)}>
-        <Text style={[themed(texts.bodySmall), {textAlign: 'center', marginBottom: 6}]}>
-           Manten presionado en el mapa para seleccionar una ubicación
+        <Text style={[themed(texts.bodySmall), { textAlign: "center", marginBottom: 6 }]}>
+          Manten presionado en el mapa para seleccionar una ubicación
         </Text>
         <Button
           text="Siguiente"
@@ -153,22 +104,6 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
           onPress={handleNext}
         />
       </View>
-
-      {/* Suggestions List - Outside ScrollView to avoid nesting VirtualizedList */}
-      {/* {showSuggestions && suggestions.length > 0 && (
-        <View
-          style={[themed(containers.card), themed(shadows.medium), themed($suggestionsOverlay)]}
-        >
-          <FlatList
-            data={suggestions}
-            renderItem={renderSuggestion}
-            keyExtractor={(item) => String(item.place_id)}
-            style={themed($suggestionsList)}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={true}
-          />
-        </View>
-      )} */}
     </Screen>
   )
 })
@@ -179,11 +114,6 @@ const $screenBackground = "background"
 const $screenContent = (theme: any): ViewStyle => ({
   flex: 1,
   padding: 1,
-})
-
-const $header = (theme: any): ViewStyle => ({
-  alignItems: "center",
-  marginBottom: theme.spacing.md,
 })
 
 const $searchContainer = (theme: any): ViewStyle => ({
@@ -198,7 +128,6 @@ const $searchInputContainer = (theme: any): ViewStyle => ({
   flexDirection: "row",
   alignItems: "center",
 })
-
 
 const $mapContainer = (theme: any): ViewStyle => ({
   flex: 1,
