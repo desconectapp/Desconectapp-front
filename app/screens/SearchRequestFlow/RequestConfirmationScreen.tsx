@@ -15,7 +15,7 @@ type RequestConfirmationScreenProps = NativeStackScreenProps<MainStackParamList,
 export const RequestConfirmationScreen = observer(function RequestConfirmationScreen({ route }: RequestConfirmationScreenProps) {
   const { themed, theme } = useAppTheme()
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
-  const { requestStore } = useStores()
+  const { requestStore, sessionStore } = useStores()
   const search = useSearch()
   const { showToast } = useAppToast()
 
@@ -40,9 +40,17 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
 
   const handleSearch = () => {
     const requestData = requestStore.getRequestData()
-    console.log("Datos de la búsqueda:", JSON.stringify(requestData, null, 2))
+    
+    // Add user ID to the request data
+    const requestDataWithUser = {
+      ...requestData,
+      user_id: sessionStore.user_id,
+      user_uuid: sessionStore.user_uuid
+    }
+    
+    console.log("Datos de la búsqueda:", JSON.stringify(requestDataWithUser, null, 2))
 
-    search.mutateAsync(requestData)
+    search.mutateAsync(requestDataWithUser)
       .then(() => {
         console.log("Búsqueda realizada con éxito")
         showToast("¡Búsqueda creada! 🎉", "Pronto te notificaremos cuando encontremos coincidencias")
