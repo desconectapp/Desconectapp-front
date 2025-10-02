@@ -121,8 +121,8 @@ function TabNavigator() {
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <AntDesign name="home" size={size} color={color} />,
-          tabBarLabel: "Home",
+          tabBarIcon: ({ color, size }) => <AntDesign name="team" size={size} color={color} />,
+          tabBarLabel: "Groups",
         }}
       />
       <Tab.Screen
