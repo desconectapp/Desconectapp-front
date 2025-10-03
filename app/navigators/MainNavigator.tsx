@@ -12,6 +12,7 @@ import {
   SchedulePickerScreen,
   ActivityPickerScreen,
   RequestConfirmationScreen,
+  CommunitiesScreen,
 } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6"
@@ -24,8 +25,10 @@ import { MyGroupsScreen } from "@/screens/MyGroupsScreen"
 import { SuggestionScreen } from "@/screens/SuggestionScreen"
 import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
 import { NearbyGroupsScreen } from "@/screens/NearbyGroupsScreen"
+
 export type MainTabParamList = {
   HomeScreen: undefined
+  CommunitiesScreen: undefined
   SearchScreen: undefined
   ActivityRequestsScreen: undefined
   ProfileScreen: undefined
@@ -123,6 +126,14 @@ function TabNavigator() {
         options={{
           tabBarIcon: ({ color, size }) => <AntDesign name="team" size={size} color={color} />,
           tabBarLabel: "Groups",
+        }}
+      />
+      <Tab.Screen
+        name="CommunitiesScreen"
+        component={CommunitiesScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <AntDesign name="earth" size={size} color={color} />,
+          tabBarLabel: "Communities",
         }}
       />
       <Tab.Screen
