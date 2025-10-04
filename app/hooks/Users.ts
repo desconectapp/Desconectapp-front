@@ -66,6 +66,7 @@ export const useAddPreferencesBatch = () => {
     mutationFn: (data) => userService.addPreferencesBatch(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] })
+      queryClient.invalidateQueries({ queryKey: ["user-preferences"] })
     },
   })
 }
@@ -89,5 +90,20 @@ export const useActivities = (limit: number = 10, offset: number = 0, query: str
       if (!response) throw new Error("Error al cargar preferencias")
       return response
     },
+  })
+}
+
+export const useUserPreferences = () => {
+  return useQuery({
+    queryKey: ["user-preferences"],
+    queryFn: async () => {
+      const response = await activitiesService.getActivitiesFromUser()
+      if (!response) throw new Error("Error al cargar preferencias del usuario")
+      return response
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   })
 }

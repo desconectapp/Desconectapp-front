@@ -42,6 +42,10 @@ export class Api {
       this.refreshToken = null
       this.tokenExpiration = null
       this.refreshTokenExpiration = null
+      // Clear Supabase cache when logging out
+      import("../chat").then(({ chatsService }) => {
+        chatsService.clearSupabaseCache()
+      })
       return
     }
 
@@ -68,7 +72,6 @@ export class Api {
     })
 
     if (res.ok && res.data) {
-      console.log("REFRESHING TOKEN", res.data)
       const data: SessionData = res.data as SessionData
       this.setToken(data)
     } else {

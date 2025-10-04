@@ -43,7 +43,6 @@ export const HomeScreen = observer(function HomeScreen() {
   } = useGroupsRecs(0)
   const [refreshingRecs, setRefreshingRecs] = useState(false)
 
-  console.log("Recommended Groups:", recommendedGroups)
 
   // Use a single refresh handler for both hooks
   const onRefresh = useCallback(async () => {

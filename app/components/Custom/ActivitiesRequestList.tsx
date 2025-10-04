@@ -27,7 +27,7 @@ const { width } = Dimensions.get("window")
 //   user_id: string
 //   activity_id: string
 //   description: string
-//   week_hours: number[]
+//   week_timeslots: number[]
 //   participants_needed: number
 //   maximum_participants: number
 //   latitude: number
@@ -66,12 +66,13 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
     }
   }
 
-  const formatWeekHours = (weekHours: number[]) => {
+  const formatWeekTimeslots = (weekTimeslots: number[]) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    const selectedDays = weekHours
-      .map((hour) => {
-        const day = Math.floor(hour / 24)
+    const selectedDays = weekTimeslots
+      .map((timeslot) => {
+        // Convert timeslot to day (each day has 48 half-hour timeslots)
+        const day = Math.floor(timeslot / 48)
         if (day > 6 || day < 0) {
           return null
         }
@@ -131,7 +132,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
           <View style={$detailItem}>
             <Text style={themed($detailLabel)}>Available on</Text>
             <Text style={themed($detailValue)}>
-              {formatWeekHours(item.week_hours) || "Flexible"}
+              {formatWeekTimeslots(item.week_timeslots) || "Flexible"}
             </Text>
           </View>
 

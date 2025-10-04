@@ -24,7 +24,6 @@ export const SessionModel = types
   })
   .actions((store) => ({
     setSession(session: UserSession | null) {
-      console.log("Setting session:", session)
       store.user_id = session?.user_id || null
       store.token = session?.token || null
       store.user_uuid = session?.user_uuid || null
