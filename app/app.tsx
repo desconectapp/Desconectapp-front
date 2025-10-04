@@ -113,7 +113,6 @@ export function App() {
     if (!s.token || !s.expiresAt || !s.refreshExpiresAt || !s.refreshToken) {
       api.setToken(null)
     } else {
-      console.log("setting saved token", s.token, s.expiresAt, s.refreshToken, s.refreshExpiresAt)
       api.setToken({
         token: s.token,
         expires_at: s.expiresAt,
