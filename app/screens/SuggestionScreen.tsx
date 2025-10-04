@@ -65,7 +65,6 @@ export const SuggestionScreen = observer(({ route }: any) => {
     });
   };
 
-  console.log("Group Activity:", group.activity_name);
   
   return (
     <View style={styles.container}>

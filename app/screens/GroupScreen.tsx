@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import {
   View,
   TouchableOpacity,
@@ -25,7 +25,7 @@ import { MessageBubble, Message } from "@/components/Custom/Message"
 import { useExitGroup, useGroupById } from "@/hooks/Groups"
 
 import { useStores } from "@/models"
-import { useCreateMessage, useGetChatMessages, useObtainToken, useMessageSubscription } from "@/hooks/Chats"
+import { useCreateMessage, useGetChatMessages, useMessageSubscription } from "@/hooks/Chats"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { MainStackParamList } from "@/navigators/MainNavigator"
@@ -83,33 +83,35 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const navigation = useNavigation<NavigationProp>()
   const { showToast } = useAppToast()
   const { sessionStore } = useStores()
-  const {data} = useObtainToken()
-  if(!sessionStore.supabase_token) {
-    sessionStore.setSupabaseSession(data?.token || "", data?.expiresAt || new Date())
-  }
 
   const { data: messagesData } = useGetChatMessages(groupId)
   
   const createMessageMutation = useCreateMessage()
 
-  const getUserName = useCallback((userUuid: string) => {
-    const member = groupData?.members.find(m => m.uuid === userUuid)
-    return member?.name || userUuid 
+  // Memoize the members map for better performance
+  const membersMap = useMemo(() => {
+    if (!groupData?.members) return new Map()
+    return new Map(groupData.members.map(member => [member.uuid, member]))
   }, [groupData?.members])
 
+  const getUserName = useCallback((userUuid: string) => {
+    const member = membersMap.get(userUuid)
+    return member?.name || userUuid 
+  }, [membersMap])
+
   const handleNewMessage = useCallback((newMessage: any) => {
+    const member = membersMap.get(newMessage.user_id)
     const formattedMessage: Message = {
       id: newMessage.id.toString(),
       text: newMessage.content,
       sender: { 
         id: newMessage.user_id, 
-        name: getUserName(newMessage.user_id),
-        picture: groupData?.members.find(m => m.uuid === newMessage.user_id)?.picture
+        name: member?.name || newMessage.user_id,
+        picture: member?.picture
       },
       timestamp: new Date(newMessage.sent_at),
       isOwn: newMessage.user_id === sessionStore.user_uuid,
     }
-    console.log("uuid", sessionStore.user_uuid)
     
     setMessages(prev => {
       const exists = prev.some(msg => msg.id === formattedMessage.id)
@@ -117,27 +119,35 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
       
       return [...prev, formattedMessage]
     })
-  }, [sessionStore.user_uuid, getUserName, groupData?.members])
+  }, [sessionStore.user_uuid, membersMap])
 
   const { isSubscribed } = useMessageSubscription(groupId, handleNewMessage)
 
-  useEffect(() => {
-    if (messagesData?.messages) {
-      setMessages(messagesData.messages.map((message) => ({
+  // Memoize the formatted messages to prevent unnecessary re-renders
+  const formattedMessages = useMemo(() => {
+    if (!messagesData?.messages) return []
+    
+    return messagesData.messages.map((message) => {
+      const member = membersMap.get(message.user_id)
+      return {
         id: message.id.toString(),
         text: message.content,
         sender: { 
           id: message.user_id, 
-          name: getUserName(message.user_id),
-          picture: groupData?.members.find(m => m.uuid === message.user_id)?.picture
+          name: member?.name || message.user_id,
+          picture: member?.picture
         },
         timestamp: new Date(message.sent_at),
         isOwn: message.user_id === sessionStore.user_uuid,
-      })))
-      
-    console.log("uuid", sessionStore.user_uuid)
+      }
+    })
+  }, [messagesData?.messages, membersMap, sessionStore.user_uuid])
+
+  useEffect(() => {
+    if (formattedMessages.length > 0) {
+      setMessages(formattedMessages)
     }
-  }, [messagesData, sessionStore.user_uuid, getUserName, groupData?.members])
+  }, [formattedMessages])
 
   const sendMessage = () => {
     if (inputText.trim()) {

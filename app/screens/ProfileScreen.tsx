@@ -1,7 +1,7 @@
 "use client"
 
 import { observer } from "mobx-react-lite"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import {
   View,
   type ViewStyle,
@@ -18,14 +18,14 @@ import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm, Controller } from "react-hook-form"
 import { useAppToast } from "@/components/useToast"
+import { chatsService } from "@/services/chat"
 import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
 import type { AppStackScreenProps } from "@/navigators"
-import { useAddPreferencesBatch, useEditProfile, useProfile, useActivities } from "@/hooks/Users"
+import { useAddPreferencesBatch, useEditProfile, useProfile, useActivities, useUserPreferences } from "@/hooks/Users"
 import { useStores } from "@/models"
 import { Pressable } from "react-native"
-import { activitiesService } from "@/services/activities"
 
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 
@@ -61,33 +61,26 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const prevQuery = useRef("")
 
   const { data: prefsData, isFetching } = useActivities(limit, offset, query)
+  const { data: userPreferencesData } = useUserPreferences()
 
   useEffect(() => {
-    activitiesService
-      .getActivitiesFromUser()
-      .then((response: any) => {
-        if (response) {
-          const ids = response?.preferences?.map((p: any) => p.id) || []
+    if (userPreferencesData && showPreferencesModal) {
+      const ids = userPreferencesData?.preferences?.map((p: any) => p.id) || []
 
-          setSelectedPreferences(ids)
-          setAllPreferences((prev) => [
-            ...response.preferences,
-            ...prev.filter((p) => !ids.includes(p.id)),
-          ])
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching user activities:", error)
-      })
-  }, [showPreferencesModal])
+      setSelectedPreferences(ids)
+      setAllPreferences((prev) => [
+        ...userPreferencesData.preferences,
+        ...prev.filter((p) => !ids.includes(p.id)),
+      ])
+    }
+  }, [userPreferencesData, showPreferencesModal])
 
   useEffect(() => {
-    console.log("query", query, prevQuery.current)
-    if (query != prevQuery.current) {
+    if (query !== prevQuery.current) {
       prevQuery.current = query
 
       if (prefsData) {
-        setAllPreferences((prev) => prefsData)
+        setAllPreferences((_prev) => prefsData)
         setHasMore(prefsData.length >= limit)
         setOffset(prefsData.length)
       } else {
@@ -104,19 +97,19 @@ export const ProfileScreen = observer(function ProfileScreen() {
     } else if (prefsData && prefsData.length === 0) {
       setHasMore(false)
     }
-  }, [prefsData])
+  }, [prefsData, query, limit])
 
-  const handleEndReached = () => {
+  const handleEndReached = useCallback(() => {
     if (!isFetching && hasMore) {
       setOffset((prev) => prev + limit)
     }
-  }
+  }, [isFetching, hasMore, limit])
 
-  const togglePreference = (id: number) => {
+  const togglePreference = useCallback((id: number) => {
     setSelectedPreferences((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
     )
-  }
+  }, [])
 
   const handleSavePreferences = async () => {
     try {
@@ -179,6 +172,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
   }
 
   const logOut = () => {
+    // Clear Supabase token cache
+    chatsService.clearSupabaseCache()
     sessionStore.setSession(null)
     navigation.navigate("LoginScreen")
   }

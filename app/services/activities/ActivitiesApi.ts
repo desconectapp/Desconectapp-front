@@ -18,15 +18,14 @@ export const activitiesService = {
     return response.data
   },
 
-  getActivitiesFromUser: async (): Promise<Activity[] | undefined> => {
-    const response = await api.apisauce.get<Activity[] | undefined>("/preferences", {
+  getActivitiesFromUser: async (): Promise<{ preferences: Activity[]; has_more: boolean } | undefined> => {
+    const response = await api.apisauce.get<{ preferences: Activity[]; has_more: boolean } | undefined>("/preferences", {
       limit: 1000,
       offset: 0,
     })
     if (!response.ok) {
       throw new Error("Error al cargar preferencias")
     }
-    console.log("Preferencias del usuario obtenidas:", response.data)
     return response.data
   },
 
