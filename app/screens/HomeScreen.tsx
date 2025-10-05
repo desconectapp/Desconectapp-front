@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Dimensions,
   StyleSheet,
+  Image,
 } from "react-native"
 import { Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
@@ -30,22 +31,15 @@ export const HomeScreen = observer(function HomeScreen() {
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const navigation = useNavigation<AppStackScreenProps<"HomeScreen">["navigation"]>()
 
-  // Hooks for My Groups
+  // Groups hooks
   const { data: paginatedGroups, isLoading, refetch } = useGroups()
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
 
-  // Hooks for Recommended Groups
-  const {
-    data: recommendedGroups,
-    isLoading: isLoadingRecs,
-    refetch: refetchRecs,
-  } = useGroupsRecs(0)
+  // Recommendations
+  const { data: recommendedGroups, isLoading: isLoadingRecs, refetch: refetchRecs } = useGroupsRecs(0)
   const [refreshingRecs, setRefreshingRecs] = useState(false)
 
-  console.log("Recommended Groups:", recommendedGroups)
-
-  // Use a single refresh handler for both hooks
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     setRefreshingRecs(true)
@@ -58,9 +52,7 @@ export const HomeScreen = observer(function HomeScreen() {
   }, [refetch, refetchRecs])
 
   useEffect(() => {
-    if (paginatedGroups?.groups) {
-      setAllGroups(paginatedGroups.groups)
-    }
+    if (paginatedGroups?.groups) setAllGroups(paginatedGroups.groups)
   }, [paginatedGroups])
 
   const recommendedPhotoItems: PhotoItem[] =
@@ -71,49 +63,52 @@ export const HomeScreen = observer(function HomeScreen() {
       image: group.photo,
     })) || []
 
+  const handleAddGroup = () => {
+    //
+  }
+
   const renderGroupCard = ({ item }: { item: GroupFront }) => (
     <TouchableOpacity
-      style={themed(styles.groupCardContainer)}
+      style={themed(themedStyles.groupCardContainer)}
       onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
       disabled={isLoading}
       activeOpacity={0.8}
     >
-      <View style={themed(styles.groupCardInner)}>
-        {/* Avatar */}
-        <View style={themed(styles.groupAvatar)}>
-          <Text style={themed(styles.groupAvatarText)}>
+      <View style={themed(themedStyles.groupCardInner)}>
+        <View style={themed(themedStyles.groupAvatar)}>
+          <Text style={themed(themedStyles.groupAvatarText)}>
             {item.icon || item.name.charAt(0).toUpperCase()}
           </Text>
         </View>
 
-        {/* Group Info */}
-        <View style={styles.groupInfo}>
-          <View style={styles.groupHeader}>
-            <Text style={themed(styles.groupName)} numberOfLines={1}>
+        <View style={themed(themedStyles.groupInfo)}>
+          <View style={themed(themedStyles.groupHeader)}>
+            <Text style={themed(themedStyles.groupName)} numberOfLines={1}>
               {item.name}
             </Text>
 
             {item.unreadCount && item.unreadCount > 0 && (
-              <View style={themed(styles.unreadBadge)}>
-                <Text style={themed(styles.unreadText)}>
+              <View style={themed(themedStyles.unreadBadge)}>
+                <Text style={themed(themedStyles.unreadText)}>
                   {item.unreadCount > 99 ? "99+" : item.unreadCount}
                 </Text>
               </View>
             )}
           </View>
 
-          <Text style={themed(styles.description)} numberOfLines={1}>
+          <Text style={themed(themedStyles.description)} numberOfLines={1}>
             {!isLoading ? item.description || "No description yet" : ""}
           </Text>
 
           {item.memberCount && (
-            <Text style={themed(styles.memberCount)}>{item.memberCount} members</Text>
+            <Text style={themed(themedStyles.memberCount)}>
+              {item.memberCount} members
+            </Text>
           )}
         </View>
 
-        {/* Arrow */}
-        <View style={styles.groupArrow}>
-          <Text style={themed(styles.arrowText)}>›</Text>
+        <View style={themed(themedStyles.groupArrow)}>
+          <Text style={themed(themedStyles.arrowText)}>›</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -121,32 +116,31 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const ListHeaderComponent = () => {
     const myGroupsSection = () => {
-      if (isLoading && allGroups.length === 0) {
-        return <Text>Loading groups...</Text>
-      }
+      if (isLoading && allGroups.length === 0)
+        return <ActivityIndicator style={{ marginVertical: 30 }} size="large" />
 
-      if (!isLoading && allGroups.length === 0) {
+      if (!isLoading && allGroups.length === 0)
         return (
-          <View style={$emptyContainer}>
-            <Text style={$emptyIcon}>👥</Text>
-            <Text style={themed($emptyTitle)}>No Groups Yet</Text>
-            <Text style={themed($emptySubtitle)}>Make your first search!</Text>
+          <View style={themed(themedStyles.emptyContainer)}>
+            <Text style={themed(themedStyles.emptyIcon)}>👥</Text>
+            <Text style={themed(themedStyles.emptyTitle)}>No Groups Yet</Text>
+            <Text style={themed(themedStyles.emptySubtitle)}>
+              Make your first search!
+            </Text>
           </View>
         )
-      }
 
       const limitedGroups = allGroups.slice(0, 3)
-
       return (
-        <View style={$groupsSection}>
-          <View style={$sectionHeader}>
-            <Text style={themed($sectionTitle)}>My Groups</Text>
+        <View style={themed(themedStyles.sectionContainer)}>
+          <View style={themed(themedStyles.sectionHeader)}>
+            <Text style={themed(themedStyles.sectionTitle)}>My Groups</Text>
             {allGroups.length > 3 && (
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate("MyGroupsScreen")}
               >
-                <Text style={themed($seeAllText)}>See All</Text>
+                <Text style={themed(themedStyles.seeAllText)}>See All</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -156,64 +150,69 @@ export const HomeScreen = observer(function HomeScreen() {
             renderItem={renderGroupCard}
             keyExtractor={(item) => String(item.id)}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={$groupsList}
-            scrollEnabled={false} // fixed, no scrolling for just 3 items
+            scrollEnabled={false}
+            contentContainerStyle={themed(themedStyles.groupsList)}
           />
         </View>
       )
     }
 
-    const discoverNewGroupsSection = () => {
-      return (
-        <View style={$suggestionsSection}>
-          <View style={$sectionHeader}>
-            <Text style={themed($sectionTitle)}>Discover New Groups</Text>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => navigation.navigate("NearbyGroupsScreen" as any)}
-              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-            >
-              <FontAwesome5 name="globe-americas" size={20} color={theme.colors.tint} style={{ marginRight: 6 }} />
-              <Text style={themed($seeAllText)}>See All</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Content depending on state */}
-          {isLoadingRecs ? (
-            <ActivityIndicator style={{ marginVertical: 20 }} size="large" />
-          ) : recommendedPhotoItems.length === 0 ? (
-            <View style={{ alignItems: "center", paddingVertical: 20 }}>
-              <Text style={themed({ fontSize: 16, color: theme.colors.textDim })}>
-                No new groups to recommend right now 👀
-              </Text>
-            </View>
-          ) : (
-            <PhotoGallerySlider
-              onItemPress={(item) => {
-                const selectedGroup = recommendedGroups?.groups.find(
-                  (g) => String(g.id) === item.id,
-                )
-
-                if (selectedGroup) {
-                  navigation.navigate("SuggestionScreen", { group: selectedGroup })
-                }
-              }}
-              data={recommendedPhotoItems}
-              itemWidth={width * 0.42}
-            />
-          )}
+    const discoverSection = () => (
+      <View style={themed(themedStyles.sectionContainer)}>
+        <View style={themed(themedStyles.sectionHeader)}>
+          <Text style={themed(themedStyles.sectionTitle)}>Discover New Groups</Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate("NearbyGroupsScreen" as never)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+          >
+            <FontAwesome5 name="globe-americas" size={20} color={theme.colors.tint} />
+            <Text style={themed(themedStyles.seeAllText)}>See All</Text>
+          </TouchableOpacity>
         </View>
-      )
-    }
+
+        {isLoadingRecs ? (
+          <ActivityIndicator style={{ marginVertical: 20 }} size="large" />
+        ) : recommendedPhotoItems.length === 0 ? (
+          <View style={themed(themedStyles.emptyContainer)}>
+            <Text style={themed(themedStyles.emptySubtitle)}>
+              No new groups to recommend right now 👀
+            </Text>
+          </View>
+        ) : (
+          <PhotoGallerySlider
+            onItemPress={(item) => {
+              const selected = recommendedGroups?.groups.find((g) => String(g.id) === item.id)
+              if (selected) navigation.navigate("SuggestionScreen", { group: selected })
+            }}
+            data={recommendedPhotoItems}
+            itemWidth={width * 0.42}
+          />
+        )}
+      </View>
+    )
 
     return (
       <View style={[$container, $topInsets]}>
-        {/* Header */}
-        <View style={$header}>{/* ... header content ... */}</View>
-        {/* My Groups Section */}
+        <View style={themed(themedStyles.header)}>
+          <Image
+            source={require("../../assets/images/desconectapp_pagelogo.jpeg")}
+            style={styles.headerImage}
+            resizeMode="contain"
+          />
+          <Text style={themed([themedStyles.headerTitle, styles.headerTitleOverride])}>
+            Groups
+          </Text>
+          <TouchableOpacity
+            onPress={handleAddGroup}
+            activeOpacity={0.7}
+            style={styles.addButton}
+          >
+            <FontAwesome5 name="plus" size={22} color={theme.colors.tint} />
+          </TouchableOpacity>
+        </View>
         {myGroupsSection()}
-        {/* Discover New Groups Section */}
-        {discoverNewGroupsSection()}
+        {discoverSection()}
       </View>
     )
   }
@@ -230,156 +229,191 @@ export const HomeScreen = observer(function HomeScreen() {
           tintColor={theme.colors.tint}
         />
       }
-      onEndReached={() => null}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={ListHeaderComponent}
-      ListFooterComponent={
-        isLoadingRecs ? <ActivityIndicator style={{ marginVertical: 20 }} size="large" /> : null
-      }
     />
   )
 })
+
+//───────────────────────────────
+// STYLES
+//───────────────────────────────
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
   paddingBottom: spacing.xl,
 }
 
-const $screenBackground = (theme: any) => ({
-  backgroundColor: theme.colors.background,
-})
-
-const $header: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.xl,
-  paddingTop: spacing.md,
-}
-
-const $groupsSection: ViewStyle = {
-  marginBottom: spacing.xl,
-}
-
-const $sectionHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: spacing.lg,
-}
-
-const $sectionTitle = (theme: any): TextStyle => ({
-  fontSize: 22,
-  fontWeight: "700",
-  color: theme.colors.text,
-})
-
-const $seeAllText = (theme: any): TextStyle => ({
-  fontSize: 16,
-  color: theme.colors.tint,
-  fontWeight: "600",
-})
-
-const $groupsList: ViewStyle = {
-  gap: spacing.md,
-}
-
-const $emptyContainer: ViewStyle = {
-  alignItems: "center",
-  paddingVertical: spacing.xxl,
-}
-
-const $emptyIcon: TextStyle = {
-  fontSize: 64,
-  lineHeight: 64,
-  marginBottom: spacing.lg,
-}
-
-const $emptyTitle = (theme: any): TextStyle => ({
-  fontSize: 20,
-  fontWeight: "600",
-  color: theme.colors.text,
-  marginBottom: spacing.sm,
-})
-
-const $emptySubtitle = (theme: any): TextStyle => ({
-  fontSize: 16,
-  color: theme.colors.textDim,
-  textAlign: "center",
-  paddingHorizontal: spacing.lg,
-})
-
-const $suggestionsSection: ViewStyle = {}
-
 const styles = StyleSheet.create({
-  groupCardContainer: {
-    marginVertical: 6,
-    marginHorizontal: 0,
-    borderRadius: 13,
-    overflow: "hidden",
-    backgroundColor: "#fff", // fallback
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 3,
+  headerImage: {
+    width: 40,
+    height: 40,
+    marginRight: spacing.sm,
   },
-  groupCardInner: {
+  headerTitleOverride: {
+    flex: 1,
+    textAlign: "center",
+    marginLeft: spacing.sm,
+  } as TextStyle,
+  addButton: {
+    padding: spacing.sm,
+  } as ViewStyle,
+})
+
+//───────────────────────────────
+// THEMED STYLES
+//───────────────────────────────
+
+export const themedStyles = {
+  header: (theme: any): ViewStyle => ({
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-  },
-  groupAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#eee",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  groupAvatarText: {
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+  }),
+
+  headerTitle: (theme: any): TextStyle => ({
     fontSize: 20,
-    fontWeight: "bold",
-  },
-  groupInfo: {
-    flex: 1,
-  },
-  groupHeader: {
+    fontWeight: "600",
+    color: theme.colors.text,
+  }),
+
+  sectionContainer: (_theme: any): ViewStyle => ({
+    marginBottom: spacing.xl,
+  }),
+
+  sectionHeader: (_theme: any): ViewStyle => ({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-  },
-  groupName: {
+    marginBottom: spacing.lg,
+  }),
+
+  sectionTitle: (theme: any): TextStyle => ({
+    fontSize: 22,
+    fontWeight: "700",
+    color: theme.colors.text,
+  }),
+
+  seeAllText: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.tint,
+    fontWeight: "600",
+  }),
+
+  groupsList: (_theme: any): ViewStyle => ({
+    gap: spacing.md,
+  }),
+
+  emptyContainer: (_theme: any): ViewStyle => ({
+    alignItems: "center",
+    paddingVertical: spacing.xxl,
+  }),
+
+  emptyIcon: (_theme: any): TextStyle => ({
+    fontSize: 64,
+    lineHeight: 64,
+    marginBottom: spacing.lg,
+  }),
+
+  emptyTitle: (theme: any): TextStyle => ({
+    fontSize: 20,
+    fontWeight: "600",
+    color: theme.colors.text,
+    marginBottom: spacing.sm,
+  }),
+
+  emptySubtitle: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.textDim,
+    textAlign: "center",
+    paddingHorizontal: spacing.lg,
+  }),
+
+  groupCardContainer: (theme: any): ViewStyle => ({
+    marginVertical: spacing.xs,
+    borderRadius: spacing.sm,
+    backgroundColor: theme.colors.card,
+    shadowColor: theme.colors.shadow || "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  }),
+
+  groupCardInner: (_theme: any): ViewStyle => ({
+    flexDirection: "row",
+    alignItems: "center",
+    padding: spacing.md,
+  }),
+
+  groupAvatar: (theme: any): ViewStyle => ({
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: theme.colors.tintSoft || theme.colors.border,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+  }),
+
+  groupAvatarText: (theme: any): TextStyle => ({
+    fontSize: 20,
+    fontWeight: "700",
+    color: theme.colors.tintInverse,
+  }),
+
+  groupInfo: (_theme: any): ViewStyle => ({
+    flex: 1,
+  }),
+
+  groupHeader: (_theme: any): ViewStyle => ({
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  }),
+
+  groupName: (theme: any): TextStyle => ({
     fontSize: 16,
     fontWeight: "600",
-  },
-  unreadBadge: {
-    backgroundColor: "#FF3B30",
+    color: theme.colors.text,
+  }),
+
+  unreadBadge: (_theme: any): ViewStyle => ({
+    backgroundColor: "#e53935",
     borderRadius: 8,
-    paddingHorizontal: 6,
+    paddingHorizontal: spacing.xs,
     paddingVertical: 2,
-  },
-  unreadText: {
+  }),
+
+  unreadText: (_theme: any): TextStyle => ({
     color: "#fff",
     fontSize: 12,
-    fontWeight: "bold",
-  },
-  description: {
+    fontWeight: "700",
+  }),
+
+  description: (theme: any): TextStyle => ({
     fontSize: 14,
-    color: "#666",
-    marginTop: 2,
-  },
-  memberCount: {
+    color: theme.colors.textDim,
+    marginTop: spacing.xxs,
+  }),
+
+  memberCount: (theme: any): TextStyle => ({
     fontSize: 12,
-    color: "#999",
-    marginTop: 2,
-  },
-  groupArrow: {
-    marginLeft: 12,
-  },
-  arrowText: {
+    color: theme.colors.textDim,
+    marginTop: spacing.xxs,
+  }),
+
+  groupArrow: (_theme: any): ViewStyle => ({
+    marginLeft: spacing.sm,
+  }),
+
+  arrowText: (theme: any): TextStyle => ({
     fontSize: 24,
-    color: "#ccc",
-  },
-})
+    color: theme.colors.textDim,
+  }),
+}

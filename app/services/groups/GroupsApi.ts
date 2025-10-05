@@ -1,5 +1,5 @@
 import { api } from "../api"
-import { Group, GroupData, PaginatedOpenGroup, PaginatedUserGroups } from "./Groups.types"
+import { Group, GroupData, PaginatedOpenGroup, PaginatedUserGroups, CreateGroupParams } from "./Groups.types"
 
 export const groupsService = {
   getGroups: async (): Promise<PaginatedUserGroups | undefined> => {
@@ -16,6 +16,16 @@ export const groupsService = {
       throw new Error("Error al cargar las sugerencias para el usuario")
     }
     return response.data
+  },
+
+  createGroup: async (params: CreateGroupParams): Promise<GroupData | undefined> => {
+    const response = await api.apisauce.post<GroupData>(`/groups`, params);
+    
+    if (!response.ok) {
+        throw new Error(`Error al crear el grupo: ${response.problem}`);
+    }
+    
+    return response.data;
   },
 
   joinGroup: async (id: string): Promise<boolean> => {

@@ -17,6 +17,15 @@ export interface GroupData {
   members: Member[]
 }
 
+export interface CreateGroupParams {
+  name: string | null;
+  description: string | null;
+  location: string | null;
+  activity_id: number;
+  public: boolean | null;
+  user_ids: number[];
+}
+
 export interface Group {
   id: number
   name: string

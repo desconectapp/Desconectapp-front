@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { groupsService } from "../services/groups"
+import { CreateGroupParams, GroupData } from"@/services/groups/Groups.types"
+
 
 export const useExitGroup = () => {
   const queryClient = useQueryClient()
@@ -44,6 +46,17 @@ export const useGroupById = (id: string) => {
     },
   })
 }
+
+export const useCreateGroup = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<GroupData | undefined, Error, { params: CreateGroupParams }>({
+    mutationFn: ({ params }) => groupsService.createGroup(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+    },
+  });
+};
 
 export const useChangeGroupStatus = () => {
   const queryClient = useQueryClient();
