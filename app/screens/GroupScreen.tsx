@@ -13,13 +13,12 @@ import {
   type ImageStyle,
   Dimensions,
 } from "react-native"
-import { AutoImage, Button, Text } from "@/components"
+import { AutoImage, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 
-import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import { MessageBubble, Message } from "@/components/Custom/Message"
+import { MessageBubble, MessageBubbleType } from "@/components/Custom/Message"
 import { useGroupById } from "@/hooks/Groups"
 
 import { useStores } from "@/models"
@@ -43,14 +42,14 @@ type NavigationProp = NativeStackNavigationProp<MainStackParamList>
 export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const { groupId } = route.params
   const { data: groupData, isLoading } = useGroupById(groupId)
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<MessageBubbleType[]>([])
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
   const [inputText, setInputText] = useState("")
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation<NavigationProp>()
-  const { showToast } = useAppToast()
+  // const { showToast } = useAppToast()
   const { sessionStore } = useStores()
 
   const { imageUri, setImage, handleImagePicker } = useImagePicker()
@@ -66,18 +65,19 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     return new Map(groupData.members.map((member) => [member.uuid, member]))
   }, [groupData?.members])
 
-  const getUserName = useCallback(
-    (userUuid: string) => {
-      const member = membersMap.get(userUuid)
-      return member?.name || userUuid
-    },
-    [membersMap],
-  )
+  // const getUserName = useCallback(
+  //   (userUuid: string) => {
+  //     const member = membersMap.get(userUuid)
+  //     return member?.name || userUuid
+  //   },
+  //   [membersMap],
+  // )
 
   const handleNewMessage = useCallback(
     (newMessage: any) => {
+      console.log(newMessage)
       const member = membersMap.get(newMessage.user_id)
-      const formattedMessage: Message = {
+      const formattedMessage: MessageBubbleType = {
         id: newMessage.id.toString(),
         text: newMessage.content,
         sender: {
@@ -87,6 +87,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         },
         timestamp: new Date(newMessage.sent_at),
         isOwn: newMessage.user_id === sessionStore.user_uuid,
+        imageUrl: newMessage.image_url || undefined,
       }
 
       setMessages((prev) => {
@@ -117,6 +118,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         },
         timestamp: new Date(message.sent_at),
         isOwn: message.user_id === sessionStore.user_uuid,
+        imageUrl: message.image_url || undefined,
       }
     })
   }, [messagesData?.messages, membersMap, sessionStore.user_uuid])
@@ -187,7 +189,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         <FlatList
           ref={flatListRef}
           data={messages}
-          renderItem={({ item }: { item: Message }) => <MessageBubble item={item} />}
+          renderItem={({ item }: { item: MessageBubble }) => <MessageBubble item={item} />}
           keyExtractor={(item) => item.id}
           style={styles.messagesList}
           contentContainerStyle={styles.messagesContent}

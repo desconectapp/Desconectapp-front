@@ -1,12 +1,12 @@
 export interface SupabaseToken {
-    supabase_token: string
+  supabase_token: string
 }
 
-
 export interface Message {
-    id: number
-    group_id: number
-    user_id: string
-    content: string
-    sent_at: Date
+  id: number
+  group_id: number
+  user_id: string
+  content: string
+  sent_at: Date
+  image_url: string | null
 }
