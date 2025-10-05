@@ -13,6 +13,7 @@ import {
   ActivityPickerScreen,
   RequestConfirmationScreen,
   CommunitiesScreen,
+  CreateGroupScreen,
 } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6"
@@ -46,6 +47,7 @@ export type MainStackParamList = {
   MyGroupsScreen: undefined
   GroupInfoScreen: { groupId: string }
   NearbyGroupsScreen: undefined
+  CreateGroupScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -214,6 +216,11 @@ export function MainNavigator() {
       <Stack.Screen
         name="GroupInfoScreen"
         component={GroupInfoScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateGroupScreen"
+        component={CreateGroupScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Nearby Groups" }} />

@@ -23,6 +23,7 @@ import { spacing } from "@/theme"
 import { GroupFront } from "./GroupsFront.types"
 import { Group, OpenGroup } from "@/services/groups/Groups.types"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 const { width } = Dimensions.get("window")
 
@@ -64,51 +65,51 @@ export const HomeScreen = observer(function HomeScreen() {
     })) || []
 
   const handleAddGroup = () => {
-    //
+    navigation.navigate("CreateGroupScreen")
   }
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => (
     <TouchableOpacity
-      style={themed(themedStyles.groupCardContainer)}
+      style={themed(themedStylesGroup.groupCardContainer)}
       onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
       disabled={isLoading}
       activeOpacity={0.8}
     >
-      <View style={themed(themedStyles.groupCardInner)}>
-        <View style={themed(themedStyles.groupAvatar)}>
-          <Text style={themed(themedStyles.groupAvatarText)}>
+      <View style={themed(themedStylesGroup.groupCardInner)}>
+        <View style={themed(themedStylesGroup.groupAvatar)}>
+          <Text style={themed(themedStylesGroup.groupAvatarText)}>
             {item.icon || item.name.charAt(0).toUpperCase()}
           </Text>
         </View>
 
-        <View style={themed(themedStyles.groupInfo)}>
-          <View style={themed(themedStyles.groupHeader)}>
-            <Text style={themed(themedStyles.groupName)} numberOfLines={1}>
+        <View style={themed(themedStylesGroup.groupInfo)}>
+          <View style={themed(themedStylesGroup.groupHeader)}>
+            <Text style={themed(themedStylesGroup.groupName)} numberOfLines={1}>
               {item.name}
             </Text>
 
             {item.unreadCount && item.unreadCount > 0 && (
-              <View style={themed(themedStyles.unreadBadge)}>
-                <Text style={themed(themedStyles.unreadText)}>
+              <View style={themed(themedStylesGroup.unreadBadge)}>
+                <Text style={themed(themedStylesGroup.unreadText)}>
                   {item.unreadCount > 99 ? "99+" : item.unreadCount}
                 </Text>
               </View>
             )}
           </View>
 
-          <Text style={themed(themedStyles.description)} numberOfLines={1}>
+          <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
             {!isLoading ? item.description || "No description yet" : ""}
           </Text>
 
           {item.memberCount && (
-            <Text style={themed(themedStyles.memberCount)}>
+            <Text style={themed(themedStylesGroup.memberCount)}>
               {item.memberCount} members
             </Text>
           )}
         </View>
 
-        <View style={themed(themedStyles.groupArrow)}>
-          <Text style={themed(themedStyles.arrowText)}>›</Text>
+        <View style={themed(themedStylesGroup.groupArrow)}>
+          <Text style={themed(themedStylesGroup.arrowText)}>›</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -121,10 +122,10 @@ export const HomeScreen = observer(function HomeScreen() {
 
       if (!isLoading && allGroups.length === 0)
         return (
-          <View style={themed(themedStyles.emptyContainer)}>
-            <Text style={themed(themedStyles.emptyIcon)}>👥</Text>
-            <Text style={themed(themedStyles.emptyTitle)}>No Groups Yet</Text>
-            <Text style={themed(themedStyles.emptySubtitle)}>
+          <View style={themed(themedStylesGroup.emptyContainer)}>
+            <Text style={themed(themedStylesGroup.emptyIcon)}>👥</Text>
+            <Text style={themed(themedStylesGroup.emptyTitle)}>No Groups Yet</Text>
+            <Text style={themed(themedStylesGroup.emptySubtitle)}>
               Make your first search!
             </Text>
           </View>
@@ -132,15 +133,15 @@ export const HomeScreen = observer(function HomeScreen() {
 
       const limitedGroups = allGroups.slice(0, 3)
       return (
-        <View style={themed(themedStyles.sectionContainer)}>
-          <View style={themed(themedStyles.sectionHeader)}>
-            <Text style={themed(themedStyles.sectionTitle)}>My Groups</Text>
+        <View style={themed(themedStylesGroup.sectionContainer)}>
+          <View style={themed(themedStylesGroup.sectionHeader)}>
+            <Text style={themed(themedStylesGroup.sectionTitle)}>My Groups</Text>
             {allGroups.length > 3 && (
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate("MyGroupsScreen")}
               >
-                <Text style={themed(themedStyles.seeAllText)}>See All</Text>
+                <Text style={themed(themedStylesGroup.seeAllText)}>See All</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -151,31 +152,31 @@ export const HomeScreen = observer(function HomeScreen() {
             keyExtractor={(item) => String(item.id)}
             showsVerticalScrollIndicator={false}
             scrollEnabled={false}
-            contentContainerStyle={themed(themedStyles.groupsList)}
+            contentContainerStyle={themed(themedStylesGroup.groupsList)}
           />
         </View>
       )
     }
 
     const discoverSection = () => (
-      <View style={themed(themedStyles.sectionContainer)}>
-        <View style={themed(themedStyles.sectionHeader)}>
-          <Text style={themed(themedStyles.sectionTitle)}>Discover New Groups</Text>
+      <View style={themed(themedStylesGroup.sectionContainer)}>
+        <View style={themed(themedStylesGroup.sectionHeader)}>
+          <Text style={themed(themedStylesGroup.sectionTitle)}>Discover New Groups</Text>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigation.navigate("NearbyGroupsScreen" as never)}
             style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
           >
             <FontAwesome5 name="globe-americas" size={20} color={theme.colors.tint} />
-            <Text style={themed(themedStyles.seeAllText)}>See All</Text>
+            <Text style={themed(themedStylesGroup.seeAllText)}>See All</Text>
           </TouchableOpacity>
         </View>
 
         {isLoadingRecs ? (
           <ActivityIndicator style={{ marginVertical: 20 }} size="large" />
         ) : recommendedPhotoItems.length === 0 ? (
-          <View style={themed(themedStyles.emptyContainer)}>
-            <Text style={themed(themedStyles.emptySubtitle)}>
+          <View style={themed(themedStylesGroup.emptyContainer)}>
+            <Text style={themed(themedStylesGroup.emptySubtitle)}>
               No new groups to recommend right now 👀
             </Text>
           </View>
@@ -193,27 +194,27 @@ export const HomeScreen = observer(function HomeScreen() {
     )
 
     return (
-      <View style={[$container, $topInsets]}>
-        <View style={themed(themedStyles.header)}>
-          <Image
-            source={require("../../assets/images/desconectapp_pagelogo.jpeg")}
-            style={styles.headerImage}
-            resizeMode="contain"
-          />
-          <Text style={themed([themedStyles.headerTitle, styles.headerTitleOverride])}>
-            Groups
-          </Text>
-          <TouchableOpacity
-            onPress={handleAddGroup}
-            activeOpacity={0.7}
-            style={styles.addButton}
-          >
-            <FontAwesome5 name="plus" size={22} color={theme.colors.tint} />
-          </TouchableOpacity>
-        </View>
-        {myGroupsSection()}
-        {discoverSection()}
-      </View>
+      <SafeAreaView style={[styles.container, themed(themedStylesGroup.container)]}>
+          <View style={themed(themedStylesGroup.header)}>
+            <Image
+              source={require("../../assets/images/desconectapp_icon.jpeg")}
+              style={styles.headerImage}
+              resizeMode="contain"
+            />
+            <Text style={themed([themedStylesGroup.headerTitle, styles.headerTitleOverride])}>
+              Groups
+            </Text>
+            <TouchableOpacity
+              onPress={handleAddGroup}
+              activeOpacity={0.7}
+              style={styles.addButton}
+            >
+              <FontAwesome5 name="plus" size={22} color={theme.colors.tint} />
+            </TouchableOpacity>
+          </View>
+          {myGroupsSection()}
+          {discoverSection()}
+      </SafeAreaView>
     )
   }
 
@@ -235,45 +236,48 @@ export const HomeScreen = observer(function HomeScreen() {
   )
 })
 
-//───────────────────────────────
-// STYLES
-//───────────────────────────────
-
-const $container: ViewStyle = {
-  paddingHorizontal: spacing.lg,
-  paddingBottom: spacing.xl,
-}
-
 const styles = StyleSheet.create({
+  container: { flex: 1 } as ViewStyle,
+
   headerImage: {
-    width: 40,
-    height: 40,
-    marginRight: spacing.sm,
+    width: 60,
+    height: 60,
+    position: "absolute",
+    left: spacing.md,
+    top: "50%",
+  transform: [{ translateY: -26 }],
   },
   headerTitleOverride: {
-    flex: 1,
+    fontSize: 18,
     textAlign: "center",
-    marginLeft: spacing.sm,
+    fontWeight: "700",
+    flexShrink: 1,
   } as TextStyle,
   addButton: {
-    padding: spacing.sm,
+    position: "absolute",
+    right: spacing.md,
+    top: "50%",
+    transform: [{ translateY: -12 }],
+    padding: spacing.xs,
   } as ViewStyle,
 })
 
-//───────────────────────────────
-// THEMED STYLES
-//───────────────────────────────
+export const themedStylesGroup = {
+  container: (theme: any): ViewStyle => ({
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  }),
 
-export const themedStyles = {
   header: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.background,
+    borderBottomColor: theme.colors.border,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center", 
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    backgroundColor: theme.colors.background,
+    position: "relative",
   }),
 
   headerTitle: (theme: any): TextStyle => ({
@@ -284,6 +288,8 @@ export const themedStyles = {
 
   sectionContainer: (_theme: any): ViewStyle => ({
     marginBottom: spacing.xl,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.lg,
   }),
 
   sectionHeader: (_theme: any): ViewStyle => ({
@@ -338,11 +344,8 @@ export const themedStyles = {
     marginVertical: spacing.xs,
     borderRadius: spacing.sm,
     backgroundColor: theme.colors.card,
-    shadowColor: theme.colors.shadow || "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   }),
 
   groupCardInner: (_theme: any): ViewStyle => ({

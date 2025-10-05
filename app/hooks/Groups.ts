@@ -50,8 +50,8 @@ export const useGroupById = (id: string) => {
 export const useCreateGroup = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<GroupData | undefined, Error, { params: CreateGroupParams }>({
-    mutationFn: ({ params }) => groupsService.createGroup(params),
+  return useMutation<GroupData | undefined, Error, CreateGroupParams >({
+    mutationFn: ( params ) => groupsService.createGroup(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['groups'] });
     },

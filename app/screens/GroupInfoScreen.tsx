@@ -668,7 +668,7 @@ export const themedStyles = {
     textAlignVertical: "center",
     textAlign: "center",
     marginBottom: spacing.sm,
-    }),
+  }),
   groupName: (theme: any): TextStyle => ({
     fontSize: 24,
     fontWeight: "bold",

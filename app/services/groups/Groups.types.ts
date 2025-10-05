@@ -22,7 +22,7 @@ export interface CreateGroupParams {
   description: string | null;
   location: string | null;
   activity_id: number;
-  public: boolean | null;
+  public: boolean | false;
   user_ids: number[];
 }
 
