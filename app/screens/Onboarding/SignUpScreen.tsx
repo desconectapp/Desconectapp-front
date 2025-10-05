@@ -137,7 +137,7 @@ export const SignUpScreen = observer(() => {
           })}
           onPress={() => navigation.navigate("LoginScreen")}
         >
-          Already have an account? Sign In
+          Already have an account? Log In
         </Text>
       </View>
     </Screen>
