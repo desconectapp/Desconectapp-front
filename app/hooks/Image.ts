@@ -1,11 +1,11 @@
 import { Alert } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import { useAppToast } from "@/components/useToast"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export const useImagePicker = () => {
   const { showToast } = useAppToast()
-  const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [imageUri, setImage] = useState<string | null>(null)
 
   const handleImagePicker = async () => {
     Alert.alert("Update Profile Picture", "Choose an option", [
@@ -51,12 +51,13 @@ export const useImagePicker = () => {
 
   const handleImageResponse = (result: ImagePicker.ImagePickerResult) => {
     if (!result.canceled && result.assets.length > 0) {
-      setProfileImage(result.assets[0].uri)
+      setImage(result.assets[0].uri)
     }
   }
 
   return {
-    profileImage,
+    imageUri: imageUri,
+    setImage,
     handleImagePicker,
   }
 }

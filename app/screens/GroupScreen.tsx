@@ -5,71 +5,40 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
-  Modal,
-  Image,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
+  Dimensions,
 } from "react-native"
-import { Button, Text } from "@/components"
+import { AutoImage, Button, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import { MessageBubble, Message } from "@/components/Custom/Message"
-import { useExitGroup, useGroupById } from "@/hooks/Groups"
+import { useGroupById } from "@/hooks/Groups"
 
 import { useStores } from "@/models"
-import { useCreateMessage, useGetChatMessages, useMessageSubscription } from "@/hooks/Chats"
+import {
+  useCreateMessage,
+  useGetChatMessages,
+  useMessageSubscription,
+  useUploadGroupImage,
+} from "@/hooks/Chats"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { MainStackParamList } from "@/navigators/MainNavigator"
+import useImagePicker from "@/hooks/Image"
+
+import ClipIcon from "../../assets/images/clip.png"
+
+const { height: screenHeight } = Dimensions.get("window")
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>
-
-
-interface Member {
-  id: string
-  uuid: string
-  name: string
-  picture?: string
-}
-
-const mockMessages: Message[] = [
-  {
-    id: "1",
-    text: "Hey everyone! Ready for tomorrow's match?",
-    sender: { id: "user123", name: "John Doe", picture: "https://example.com/profile/johndoe.jpg" },
-    timestamp: new Date("2023-10-01T10:30:00Z"),
-    isOwn: false,
-  },
-  {
-    id: "2",
-    text: "What time are we meeting?",
-    sender: { id: "currentUser", name: "You" },
-    timestamp: new Date("2023-10-01T10:32:00Z"),
-    isOwn: true,
-  },
-  {
-    id: "3",
-    text: "Let's meet at 3 PM at the usual spot",
-    sender: { id: "user456", name: "Maria Garcia" },
-    timestamp: new Date("2023-10-01T10:35:00Z"),
-    isOwn: false,
-  },
-  {
-    id: "4",
-    text: "Perfect! See you all there",
-    sender: { id: "currentUser", name: "You" },
-    timestamp: new Date("2023-10-01T10:36:00Z"),
-    isOwn: true,
-  },
-]
 
 export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const { groupId } = route.params
@@ -84,58 +53,67 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const { showToast } = useAppToast()
   const { sessionStore } = useStores()
 
+  const { imageUri, setImage, handleImagePicker } = useImagePicker()
+
   const { data: messagesData } = useGetChatMessages(groupId)
-  
-  const createMessageMutation = useCreateMessage()
+
+  const { isPending: isSendingMessage, mutateAsync: createMessageAsync } = useCreateMessage()
+  const { isPending: isUploadingImage, mutateAsync: uploadMutateAsync } = useUploadGroupImage()
 
   // Memoize the members map for better performance
   const membersMap = useMemo(() => {
     if (!groupData?.members) return new Map()
-    return new Map(groupData.members.map(member => [member.uuid, member]))
+    return new Map(groupData.members.map((member) => [member.uuid, member]))
   }, [groupData?.members])
 
-  const getUserName = useCallback((userUuid: string) => {
-    const member = membersMap.get(userUuid)
-    return member?.name || userUuid 
-  }, [membersMap])
+  const getUserName = useCallback(
+    (userUuid: string) => {
+      const member = membersMap.get(userUuid)
+      return member?.name || userUuid
+    },
+    [membersMap],
+  )
 
-  const handleNewMessage = useCallback((newMessage: any) => {
-    const member = membersMap.get(newMessage.user_id)
-    const formattedMessage: Message = {
-      id: newMessage.id.toString(),
-      text: newMessage.content,
-      sender: { 
-        id: newMessage.user_id, 
-        name: member?.name || newMessage.user_id,
-        picture: member?.picture
-      },
-      timestamp: new Date(newMessage.sent_at),
-      isOwn: newMessage.user_id === sessionStore.user_uuid,
-    }
-    
-    setMessages(prev => {
-      const exists = prev.some(msg => msg.id === formattedMessage.id)
-      if (exists) return prev
-      
-      return [...prev, formattedMessage]
-    })
-  }, [sessionStore.user_uuid, membersMap])
+  const handleNewMessage = useCallback(
+    (newMessage: any) => {
+      const member = membersMap.get(newMessage.user_id)
+      const formattedMessage: Message = {
+        id: newMessage.id.toString(),
+        text: newMessage.content,
+        sender: {
+          id: newMessage.user_id,
+          name: member?.name || newMessage.user_id,
+          picture: member?.picture,
+        },
+        timestamp: new Date(newMessage.sent_at),
+        isOwn: newMessage.user_id === sessionStore.user_uuid,
+      }
+
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg.id === formattedMessage.id)
+        if (exists) return prev
+
+        return [...prev, formattedMessage]
+      })
+    },
+    [sessionStore.user_uuid, membersMap],
+  )
 
   const { isSubscribed } = useMessageSubscription(groupId, handleNewMessage)
 
   // Memoize the formatted messages to prevent unnecessary re-renders
   const formattedMessages = useMemo(() => {
     if (!messagesData?.messages) return []
-    
+
     return messagesData.messages.map((message) => {
       const member = membersMap.get(message.user_id)
       return {
         id: message.id.toString(),
         text: message.content,
-        sender: { 
-          id: message.user_id, 
+        sender: {
+          id: message.user_id,
           name: member?.name || message.user_id,
-          picture: member?.picture
+          picture: member?.picture,
         },
         timestamp: new Date(message.sent_at),
         isOwn: message.user_id === sessionStore.user_uuid,
@@ -149,14 +127,20 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     }
   }, [formattedMessages])
 
-  const sendMessage = () => {
-    if (inputText.trim()) {
-      createMessageMutation.mutate({
-        groupId: parseInt(groupId),
-        message: inputText.trim()
-      })
-      setInputText("") // Clear input after sending
+  const sendMessage = async () => {
+    let url = null
+    if (imageUri) {
+      url = await uploadMutateAsync({ groupId, uri: imageUri })
     }
+
+    createMessageAsync({
+      groupId: parseInt(groupId),
+      message: inputText.trim(),
+      imageUrl: url,
+    })
+
+    setInputText("")
+    setImage(null)
   }
 
   if (isLoading) {
@@ -188,7 +172,9 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             <Text style={styles.groupIcon}>{groupData?.icon}</Text>
             <View style={styles.headerTextContainer}>
               <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
-              <Text style={themed(themedStyles.memberCount)}>{groupData?.members.length} members</Text>
+              <Text style={themed(themedStyles.memberCount)}>
+                {groupData?.members.length} members
+              </Text>
             </View>
           </TouchableOpacity>
 
@@ -209,8 +195,31 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
 
+        {imageUri && (
+          <View style={styles.imagePreviewBar}>
+            <AutoImage source={{ uri: imageUri }} style={styles.imagePreviewLarge} />
+            <TouchableOpacity style={styles.removeImageButtonLarge} onPress={() => setImage(null)}>
+              <Text style={styles.removeImageText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Input */}
-        <View style={[styles.inputContainer, $bottomInsets, themed(themedStyles.inputContainerBackground)]}>
+        <View
+          style={[
+            styles.inputContainer,
+            $bottomInsets,
+            themed(themedStyles.inputContainerBackground),
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.attachButton}
+            onPress={handleImagePicker}
+            activeOpacity={0.7}
+          >
+            <AutoImage source={ClipIcon} style={styles.attachIcon} />
+          </TouchableOpacity>
+
           <TextInput
             style={themed(themedStyles.textInput)}
             value={inputText}
@@ -221,9 +230,14 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             maxLength={500}
           />
           <TouchableOpacity
-            style={[themed(themedStyles.sendButton), !inputText.trim() && themed(themedStyles.sendButtonDisabled)]}
+            style={[
+              themed(themedStyles.sendButton),
+              !isSendingMessage && !isUploadingImage && !imageUri && !inputText.trim()
+                ? themed(themedStyles.sendButtonDisabled)
+                : {},
+            ]}
             onPress={sendMessage}
-            disabled={!inputText.trim()}
+            disabled={!isSendingMessage && !isUploadingImage && !imageUri && !inputText.trim()}
             activeOpacity={0.7}
           >
             <Text style={themed(themedStyles.sendButtonText)}>→</Text>
@@ -234,27 +248,24 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   )
 })
 
-
-// ---------------- STYLES ----------------
-
 export const styles = StyleSheet.create({
-  container: { flex: 1 } as ViewStyle,
-
-  header: {
-    flexDirection: "row",
+  attachButton: {
     alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-  } as ViewStyle,
+    height: 40,
+    justifyContent: "center",
+    marginRight: spacing.sm,
+    width: 40,
+  },
+
+  attachIcon: {
+    height: 20,
+    resizeMode: "contain",
+    width: 20,
+  },
 
   backButton: { paddingRight: spacing.md } as ViewStyle,
 
-  headerInfo: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  } as ViewStyle,
+  container: { flex: 1 } as ViewStyle,
 
   groupIcon: {
     fontSize: 32,
@@ -264,16 +275,39 @@ export const styles = StyleSheet.create({
     marginRight: spacing.sm,
   } as TextStyle,
 
-  headerTextContainer: { flex: 1 } as ViewStyle,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  } as ViewStyle,
 
   headerAction: { paddingLeft: spacing.md } as ViewStyle,
 
-  messagesList: { flex: 1 } as ViewStyle,
-
-  messagesContent: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  headerInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
   } as ViewStyle,
+
+  headerTextContainer: { flex: 1 } as ViewStyle,
+
+  imagePreviewBar: {
+    backgroundColor: "rgba(0,0,0,0.3)",
+    height: screenHeight * 0.2,
+    overflow: "hidden",
+    position: "relative",
+    width: "100%",
+  },
+
+  imagePreviewLarge: {
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    height: "100%",
+    resizeMode: "contain",
+    width: "100%",
+  },
 
   inputContainer: {
     flexDirection: "row",
@@ -283,15 +317,9 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1,
   } as ViewStyle,
 
-  membersList: { flex: 1 } as ViewStyle,
-
-  memberAvatar: { marginRight: spacing.md } as ViewStyle,
-
-  memberAvatarImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  } as ImageStyle,
+  inputWrapper: {
+    borderTopWidth: 1,
+  },
 
   leaveButton: {
     borderColor: "#e53935",
@@ -304,6 +332,55 @@ export const styles = StyleSheet.create({
     color: "#e53935",
     fontWeight: "600",
   } as TextStyle,
+
+  memberAvatar: { marginRight: spacing.md } as ViewStyle,
+
+  memberAvatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  } as ImageStyle,
+
+  membersList: { flex: 1 } as ViewStyle,
+
+  messagesContent: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  } as ViewStyle,
+
+  messagesList: { flex: 1 } as ViewStyle,
+
+  removeImageButton: {
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 10,
+    left: 50,
+    paddingHorizontal: 4,
+    position: "absolute",
+    top: 4,
+  },
+
+  removeImageButtonLarge: {
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 15,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    position: "absolute",
+    right: 8,
+    top: 8,
+    zIndex: 10,
+  },
+
+  removeImageText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  removeImageText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
 })
 
 export const themedStyles = {
@@ -435,10 +512,10 @@ export const themedStyles = {
     color: theme.colors.text,
     fontWeight: "500",
   }),
-  pressedLeaveButton: (theme: any): ViewStyle => ({
+  pressedLeaveButton: (): ViewStyle => ({
     backgroundColor: "rgba(229, 57, 53, 0.08)",
   }),
-  pressedLeaveButtonText: (theme: any): TextStyle => ({
+  pressedLeaveButtonText: (): TextStyle => ({
     color: "#e53935",
     opacity: 0.9,
   }),

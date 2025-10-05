@@ -3,7 +3,6 @@ import { useEffect, useRef, useCallback } from "react"
 import { chatsService, getSupabaseClientWithProvidedToken } from "../services/chat"
 import { Message } from "../services/chat/Chats.types"
 
-
 export const useObtainToken = () => {
   return useQuery({
     queryKey: ["chats", "token"],
@@ -19,17 +18,16 @@ export const useObtainToken = () => {
   })
 }
 
-
 export const useGetChatMessages = (groupId: string) => {
   const { data: tokenData } = useObtainToken()
-  
+
   return useQuery({
     queryKey: ["chat", "messages", groupId],
     queryFn: async () => {
       if (!tokenData?.token) {
         throw new Error("No token available")
       }
-      
+
       const supabase = getSupabaseClientWithProvidedToken(tokenData.token)
       const { error, data } = await supabase.from("messages").select("*").eq("group_id", groupId)
 
@@ -37,33 +35,51 @@ export const useGetChatMessages = (groupId: string) => {
         console.error("Supabase error:", error)
         throw new Error(`Error al cargar los mensajes: ${error.message}`)
       }
-      
+
       if (!data) {
         throw new Error("No se encontraron mensajes")
       }
-      
+
       return { messages: data as Message[] }
     },
     enabled: !!tokenData?.token, // Only run when we have a token
   })
 }
 
+export const useUploadGroupImage = () => {
+  return useMutation({
+    mutationFn: async ({ groupId, uri }: { groupId: number; uri: string }) => {
+      const { url } = await chatsService.uploadGroupImage(groupId, uri)
+      return url
+    },
+  })
+}
+
 export const useCreateMessage = () => {
   const queryClient = useQueryClient()
   const { data: tokenData } = useObtainToken()
-  
+
   return useMutation({
-    mutationFn: async ({ groupId, message }: { groupId: number; message: string }) => {
+    mutationFn: async ({
+      groupId,
+      message,
+      imageUrl,
+    }: {
+      groupId: number
+      message: string
+      imageUrl: string | null
+    }) => {
       if (!tokenData?.token) {
         throw new Error("No token available")
       }
-      
+
       const supabase = getSupabaseClientWithProvidedToken(tokenData.token)
       const { error, data } = await supabase
         .from("messages")
         .insert({
           group_id: groupId,
           content: message,
+          image_url: imageUrl,
           sent_at: new Date().toISOString(),
         })
         .select()
@@ -95,16 +111,16 @@ export const useMessageSubscription = (
     (message: Message) => {
       queryClient.setQueryData(["chat", "messages", groupId], (oldData: any) => {
         if (!oldData) return { messages: [message] }
-        
+
         const messageExists = oldData.messages.some((msg: Message) => msg.id === message.id)
         if (messageExists) return oldData
-        
+
         return {
           ...oldData,
           messages: [...oldData.messages, message],
         }
       })
-      
+
       onNewMessage?.(message)
     },
     [queryClient, onNewMessage, groupId],
@@ -120,7 +136,7 @@ export const useMessageSubscription = (
     const setupSubscription = async () => {
       try {
         const supabase = getSupabaseClientWithProvidedToken(tokenData.token)
-        
+
         const subscription = supabase
           .channel(`messages:group_id=eq.${groupId}`)
           .on(
@@ -187,4 +203,5 @@ export const useMessageSubscription = (
     },
   })
 }
-*/ 
+*/
+
