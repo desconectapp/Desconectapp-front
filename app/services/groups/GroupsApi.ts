@@ -1,5 +1,6 @@
+import { MapGroup } from "@/components/Location/MapView"
 import { api } from "../api"
-import { Group, GroupData, PaginatedOpenGroup, PaginatedUserGroups } from "./Groups.types"
+import { Group, GroupData, OpenGroup, PaginatedOpenGroup, PaginatedUserGroups } from "./Groups.types"
 
 export const groupsService = {
   getGroups: async (): Promise<PaginatedUserGroups | undefined> => {
@@ -81,5 +82,26 @@ export const groupsService = {
     }
     return true;
   },
-
+  getNearbyGroups: async (latitude: number, longitude: number, radius_km: number): Promise<MapGroup[]> => {
+    const response = await api.apisauce.get<{groups: OpenGroup[]}>(`/groups/open`, {
+      latitude,
+      longitude,
+      radius: radius_km
+    });
+    if (!response.ok) {
+      console.log("Error fetching nearby groups:", response.problem);
+      throw new Error("Error al cargar los grupos cercanos");
+    }
+    const modifiedResponse: MapGroup[] = (response.data?.groups || []).map((group) => ({
+      id: group.id.toString(),
+      name: group.name,
+      icon: group.photo || "👥",
+      coordinates: [parseFloat(group.location.split(",")[1]), parseFloat(group.location.split(",")[0])],
+      location: group.location,
+      description: group.description,
+      membersCount: group.member_count,
+      radius: 1 // Default radius, adjust as needed
+    }));
+    return modifiedResponse??[];
+  }
 }
