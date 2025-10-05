@@ -10,7 +10,7 @@ import { useSignUp } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import logoImage from "../../../assets/images/logo.png"
+import logoImage from "../../../assets/images/desconectapp_icon.jpeg"
 import { AuthForm } from "@/components/Custom/AuthForm"
 import { useStores } from "@/models"
 
@@ -146,33 +146,33 @@ export const SignUpScreen = observer(() => {
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
-  paddingTop: spacing.xl,
+  paddingTop: spacing.md,
+}
+
+const $logoContainer: ViewStyle = {
+  alignItems: "center",
+  marginBottom: spacing.md,
+  paddingTop: spacing.sm,
+}
+
+const $subtitleText = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  textAlign: "center",
+  opacity: 0.8,
+})
+
+const $logo: ImageStyle = {
+  width: width * 0.6,
+  height: width * 0.6,
+  marginBottom: spacing.md,
 }
 
 const $screenBackground = (theme: any) => ({
   backgroundColor: theme.colors.background,
 })
 
-const $logoContainer: ViewStyle = {
-  alignItems: "center",
-  marginBottom: spacing.xxl,
-  paddingTop: spacing.xl,
-}
-
-const $logo: ImageStyle = {
-  width: width * 0.3,
-  height: width * 0.3,
-  marginBottom: spacing.md,
-}
-
 const $welcomeText = (theme: any): TextStyle => ({
   color: theme.colors.text,
   marginBottom: spacing.xs,
   textAlign: "center",
-})
-
-const $subtitleText = (theme: any): TextStyle => ({
-  color: theme.colors.textDim,
-  textAlign: "center",
-  opacity: 0.8,
 })
