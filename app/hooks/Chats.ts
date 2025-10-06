@@ -55,6 +55,15 @@ export const useUploadGroupImage = () => {
   })
 }
 
+export const useUploadProfileImage = () => {
+  return useMutation({
+    mutationFn: async ({ userId, uri }: { userId: string; uri: string }) => {
+      const { url } = await chatsService.uploadProfileImage(userId, uri)
+      return url
+    },
+  })
+}
+
 export const useCreateMessage = () => {
   const queryClient = useQueryClient()
   const { data: tokenData } = useObtainToken()

@@ -3,8 +3,7 @@ import { SupabaseToken, Message } from "./Chats.types"
 import { getSupabaseClient, clearSupabaseCache } from "../../supabase-client"
 import * as FileSystem from "expo-file-system"
 
-import uuid from 'react-native-uuid';
-
+import uuid from "react-native-uuid"
 
 // Cache for the Supabase token to avoid multiple API calls
 let cachedSupabaseToken: string | null = null
@@ -171,6 +170,52 @@ export const chatsService = {
     }
 
     const { data: publicUrlData } = supabase.storage.from("group-imgs").getPublicUrl(filePath)
+
+    const url = publicUrlData?.publicUrl
+    if (!url) {
+      throw new Error("No se pudo obtener la URL pÃºblica de la imagen")
+    }
+
+    return { url, path: filePath }
+  },
+
+  uploadProfileImage: async (
+    userId: string,
+    fileUri: string,
+  ): Promise<{ url: string; path: string }> => {
+    console.log("uploading")
+    const supabase = await getSupabaseClientWithToken()
+    console.log(supabase)
+
+    const id = uuid.v1()
+
+    // Build a unique path inside the bucket per group
+    const fileExt = fileUri.split(".").pop()?.toLowerCase() || "jpg"
+    const fileName = `${id}.${fileExt}`
+    const filePath = `${userId}/${fileName}`
+
+    // Convert the local URI to an ArrayBuffer (RN-friendly)
+    const base64 = await FileSystem.readAsStringAsync(fileUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    })
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const arrayBuffer = bytes.buffer
+
+    const { error: uploadError } = await supabase.storage
+      .from("profile-imgs")
+      .upload(filePath, arrayBuffer, {
+        contentType: `image/${fileExt}`,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError)
+      throw new Error(`Error al subir la imagen: ${uploadError.message}`)
+    }
+
+    const { data: publicUrlData } = supabase.storage.from("profile-imgs").getPublicUrl(filePath)
 
     const url = publicUrlData?.publicUrl
     if (!url) {

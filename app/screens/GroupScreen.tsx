@@ -189,7 +189,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         <FlatList
           ref={flatListRef}
           data={messages}
-          renderItem={({ item }: { item: MessageBubble }) => <MessageBubble item={item} />}
+          renderItem={({ item }: { item: MessageBubbleType }) => <MessageBubble item={item} />}
           keyExtractor={(item) => item.id}
           style={styles.messagesList}
           contentContainerStyle={styles.messagesContent}

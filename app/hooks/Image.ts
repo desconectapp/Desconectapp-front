@@ -1,7 +1,7 @@
 import { Alert } from "react-native"
 import * as ImagePicker from "expo-image-picker"
 import { useAppToast } from "@/components/useToast"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 export const useImagePicker = () => {
   const { showToast } = useAppToast()
