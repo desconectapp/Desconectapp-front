@@ -1,17 +1,70 @@
-import React from "react"
+import React, { useState, useCallback, useRef, useEffect } from "react"
 import { View, ViewStyle, TextStyle } from "react-native"
 import { Screen, Text } from "@/components"
 import { observer } from "mobx-react-lite"
 import { MapGroup, MapViewComponent } from "@/components/Location/MapView"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
-import { useNearbyGroups } from "@/hooks/Groups"
+import { groupsService } from "@/services/groups"
 
 export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
   const { themed } = useAppTheme()
 
-  const {data: groups} = useNearbyGroups(-34.6037, -58.3816, 2)
-  console.log("Nearby groups:", groups)
+  // State for dynamic group fetching
+  const [groups, setGroups] = useState<MapGroup[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Debounced fetch function
+  const fetchNearbyGroups = useCallback(async (center: [number, number], radiusKm: number) => {
+    try {
+      setIsLoading(true)
+      console.log(`Fetching groups for center: [${center[1]}, ${center[0]}], radius: ${radiusKm}km`)
+      
+      const fetchedGroups = await groupsService.getNearbyGroups(
+        center[1], // latitude
+        center[0], // longitude
+        radiusKm
+      )
+      
+      // Smooth transition: only update if there are meaningful changes
+      if (JSON.stringify(fetchedGroups.map(g => g.id).sort()) !== JSON.stringify(groups.map(g => g.id).sort())) {
+        setGroups(fetchedGroups)
+        console.log("Updated groups:", fetchedGroups.length)
+      }
+    } catch (error) {
+      console.error("Error fetching nearby groups:", error)
+      // Don't clear groups on error, keep existing ones for better UX
+    } finally {
+      setIsLoading(false)
+    }
+  }, [groups])
+
+  // Handle region changes from the map with debouncing
+  const handleRegionChange = useCallback((center: [number, number], radiusKm: number) => {
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Set new timeout for debounced fetch - reduced delay for smoother experience
+    debounceTimeoutRef.current = setTimeout(() => {
+      fetchNearbyGroups(center, radiusKm)
+    }, 500) // 500ms debounce delay (reduced from 800ms)
+  }, [fetchNearbyGroups])
+
+  // Initial fetch for Buenos Aires center
+  useEffect(() => {
+    fetchNearbyGroups([-58.4173, -34.6118], 5) // Default Buenos Aires coordinates with 5km radius
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [])
+
   return (
     <Screen
       preset="fixed"
@@ -22,10 +75,14 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
         keyboardVerticalOffset: 0,
       }}
     >
-      <Text style={themed($title)}>Explore groups near your location.</Text>
+      <Text style={themed($title)}>
+        Explore groups near your location.
+      </Text>
       <View style={themed($mapContainer)}>
         <MapViewComponent
           groups={groups}
+          enableDynamicFetch={true}
+          onRegionChange={handleRegionChange}
           // onGroupPress={(group) => { Aca creo que habria que redireccionar al grupo, pero 
           // no se si conviene aca o en el MapViewComponent. Primero necesitamos el endpoint de
           // GET grupos igual}}

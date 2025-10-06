@@ -92,16 +92,23 @@ export const groupsService = {
       console.log("Error fetching nearby groups:", response.problem);
       throw new Error("Error al cargar los grupos cercanos");
     }
-    const modifiedResponse: MapGroup[] = (response.data?.groups || []).map((group) => ({
-      id: group.id.toString(),
-      name: group.name,
-      icon: group.photo || "👥",
-      coordinates: [parseFloat(group.location.split(",")[1]), parseFloat(group.location.split(",")[0])],
-      location: group.location,
-      description: group.description,
-      membersCount: group.member_count,
-      radius: 1 // Default radius, adjust as needed
-    }));
+    const modifiedResponse: MapGroup[] = (response.data?.groups || []).map((group) => {
+      // Parse location string which should be in format "latitude,longitude"
+      const locationParts = group.location.split(",");
+      const latitude = parseFloat(locationParts[0]?.trim() || "0");
+      const longitude = parseFloat(locationParts[1]?.trim() || "0");
+      
+      return {
+        id: group.id.toString(),
+        name: group.name,
+        icon: group.photo || "👥",
+        coordinates: [longitude, latitude] as [number, number], // MapLibre expects [lng, lat]
+        location: group.location,
+        description: group.description,
+        membersCount: group.member_count,
+        radius: 1 // Default radius, adjust as needed
+      };
+    });
     return modifiedResponse??[];
   }
 }
