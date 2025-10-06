@@ -8,4 +8,5 @@ export interface GroupFront {
   unreadCount?: number
   description?: string
   location?: string
+  avatar_url?: string | null
 }

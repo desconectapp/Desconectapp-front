@@ -25,7 +25,7 @@ const CustomAutocomplete = ({ onSelection, placeholder }) => {
       setSuggestions(result.addresses)
       setShowSuggestions(true)
     } catch (error) {
-      console.error("Search error:", error)
+      console.log("Search error:", error)
     }
   }
 

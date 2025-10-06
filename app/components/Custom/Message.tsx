@@ -1,11 +1,11 @@
-import { View, type ViewStyle, type TextStyle, Dimensions } from "react-native"
-import { Text } from "@/components"
+import { View, type ViewStyle, type TextStyle, Dimensions, ImageStyle } from "react-native"
+import { AutoImage, Text } from "@/components"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 
 const { width } = Dimensions.get("window")
 
-export interface Message {
+export interface MessageBubbleType {
   id: string
   text: string
   sender: {
@@ -15,9 +15,10 @@ export interface Message {
   }
   timestamp: Date
   isOwn: boolean
+  imageUrl?: string
 }
 
-export const MessageBubble = ({ item }: { item: Message }) => {
+export const MessageBubble = ({ item }: { item: MessageBubbleType }) => {
   const { themed } = useAppTheme()
 
   const formatTime = (timestamp: Date) => {
@@ -37,6 +38,7 @@ export const MessageBubble = ({ item }: { item: Message }) => {
           item.isOwn ? themed($ownMessageBubble) : themed($otherMessageBubble),
         ]}
       >
+        {item.imageUrl && <AutoImage source={{ uri: item.imageUrl }} style={themed($image)} />}
         <Text
           style={[
             themed($messageText),
@@ -121,4 +123,11 @@ const $ownMessageTime = (theme: any): TextStyle => ({
 
 const $otherMessageTime = (theme: any): TextStyle => ({
   color: theme.colors.textDim,
+})
+
+const $image = (_: any): ImageStyle => ({
+  height: 250,
+  width: 250,
+  borderRadius: spacing.md,
+  marginBottom: spacing.sm,
 })

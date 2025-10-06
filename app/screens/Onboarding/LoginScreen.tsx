@@ -12,7 +12,7 @@ import { useAppToast } from "@/components/useToast"
 import { AuthForm } from "@/components/Custom/AuthForm"
 import { Dimensions, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
 import { spacing } from "@/theme"
-import logoImage from "../../../assets/images/logo.png"
+import logoImage from "../../../assets/images/desconectapp_icon.jpeg"
 import { useStores } from "@/models"
 
 const { width } = Dimensions.get("window")
@@ -60,7 +60,7 @@ export const LoginScreen = observer(() => {
       <View style={$logoContainer}>
         <AutoImage source={logoImage} style={$logo} resizeMode="contain" />
         <Text preset="heading" style={themed($welcomeText)}>
-          Welcome Back
+          Conecta con lo que te gusta
         </Text>
         <Text preset="subheading" style={themed($subtitleText)}>
           Enter your credentials to continue
@@ -126,13 +126,13 @@ export const LoginScreen = observer(() => {
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
-  paddingTop: spacing.xl,
+  paddingTop: spacing.md,
 }
 
 const $logoContainer: ViewStyle = {
   alignItems: "center",
-  marginBottom: spacing.xxl,
-  paddingTop: spacing.xl,
+  marginBottom: spacing.md,
+  paddingTop: spacing.sm,
 }
 
 const $subtitleText = (theme: any): TextStyle => ({
@@ -142,8 +142,8 @@ const $subtitleText = (theme: any): TextStyle => ({
 })
 
 const $logo: ImageStyle = {
-  width: width * 0.3,
-  height: width * 0.3,
+  width: width * 0.6,
+  height: width * 0.6,
   marginBottom: spacing.md,
 }
 
