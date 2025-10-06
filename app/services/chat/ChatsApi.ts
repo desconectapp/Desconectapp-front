@@ -9,6 +9,10 @@ import uuid from "react-native-uuid"
 let cachedSupabaseToken: string | null = null
 let tokenExpirationTime: number | null = null
 
+// Cache for the Supabase token to avoid multiple API calls
+let cachedSupabaseToken: string | null = null
+let tokenExpirationTime: number | null = null
+
 const getSupabaseClientWithToken = async () => {
   const now = Date.now()
 

@@ -61,6 +61,7 @@ export const useUploadProfileImage = () => {
       const { url } = await chatsService.uploadProfileImage(userId, uri)
       return url
     },
+    enabled: !!tokenData?.token, // Only run when we have a token
   })
 }
 
