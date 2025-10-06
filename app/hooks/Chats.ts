@@ -174,6 +174,7 @@ export const useMessageSubscription = (
           )
           .subscribe((status) => {
             if (status === "SUBSCRIBED") {
+              // Connected successfully
             } else if (status === "CHANNEL_ERROR") {
               console.error("Channel subscription error")
               handleError(new Error("Channel subscription failed"))
@@ -213,4 +214,3 @@ export const useMessageSubscription = (
   })
 }
 */
-

@@ -49,7 +49,6 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const [inputText, setInputText] = useState("")
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation<NavigationProp>()
-  // const { showToast } = useAppToast()
   const { sessionStore } = useStores()
 
   const { imageUri, setImage, handleImagePicker } = useImagePicker()
@@ -65,17 +64,8 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     return new Map(groupData.members.map((member) => [member.uuid, member]))
   }, [groupData?.members])
 
-  // const getUserName = useCallback(
-  //   (userUuid: string) => {
-  //     const member = membersMap.get(userUuid)
-  //     return member?.name || userUuid
-  //   },
-  //   [membersMap],
-  // )
-
   const handleNewMessage = useCallback(
     (newMessage: any) => {
-      console.log(newMessage)
       const member = membersMap.get(newMessage.user_id)
       const formattedMessage: MessageBubbleType = {
         id: newMessage.id.toString(),
@@ -93,7 +83,6 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === formattedMessage.id)
         if (exists) return prev
-
         return [...prev, formattedMessage]
       })
     },
@@ -105,7 +94,6 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   // Memoize the formatted messages to prevent unnecessary re-renders
   const formattedMessages = useMemo(() => {
     if (!messagesData?.messages) return []
-
     return messagesData.messages.map((message) => {
       const member = membersMap.get(message.user_id)
       return {
@@ -331,47 +319,12 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1,
   } as ViewStyle,
 
-  inputWrapper: {
-    borderTopWidth: 1,
-  },
-
-  leaveButton: {
-    borderColor: "#e53935",
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderRadius: 8,
-  } as ViewStyle,
-
-  leaveButtonText: {
-    color: "#e53935",
-    fontWeight: "600",
-  } as TextStyle,
-
-  memberAvatar: { marginRight: spacing.md } as ViewStyle,
-
-  memberAvatarImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  } as ImageStyle,
-
-  membersList: { flex: 1 } as ViewStyle,
-
   messagesContent: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   } as ViewStyle,
 
   messagesList: { flex: 1 } as ViewStyle,
-
-  removeImageButton: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 10,
-    left: 50,
-    paddingHorizontal: 4,
-    position: "absolute",
-    top: 4,
-  },
 
   removeImageButtonLarge: {
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -382,12 +335,6 @@ export const styles = StyleSheet.create({
     right: 8,
     top: 8,
     zIndex: 10,
-  },
-
-  removeImageText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 
   removeImageText: {
@@ -454,83 +401,5 @@ export const themedStyles = {
     color: theme.colors.tintInverse,
     fontSize: 18,
     fontWeight: "600",
-  }),
-  modalContainer: (theme: any): ViewStyle => ({
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  }),
-  modalHeader: (theme: any): ViewStyle => ({
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  }),
-  modalTitle: (theme: any): TextStyle => ({
-    color: theme.colors.text,
-  }),
-  modalCloseText: (theme: any): TextStyle => ({
-    color: theme.colors.tint,
-    fontSize: 16,
-    fontWeight: "600",
-  }),
-  groupInfoSection: (theme: any): ViewStyle => ({
-    alignItems: "center",
-    paddingVertical: spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  }),
-  modalGroupName: (theme: any): TextStyle => ({
-    fontSize: 24,
-    fontWeight: "bold",
-    color: theme.colors.text,
-    marginTop: spacing.sm,
-  }),
-  modalGroupLocation: (theme: any): TextStyle => ({
-    fontSize: 16,
-    color: theme.colors.textDim,
-    marginTop: spacing.xs,
-  }),
-  modalGroupDescription: (theme: any): TextStyle => ({
-    fontSize: 14,
-    color: theme.colors.textDim,
-    textAlign: "center",
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  }),
-  memberItem: (theme: any): ViewStyle => ({
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  }),
-  memberAvatarPlaceholder: (theme: any): ViewStyle => ({
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: theme.colors.tint,
-    justifyContent: "center",
-    alignItems: "center",
-  }),
-  memberAvatarText: (theme: any): TextStyle => ({
-    color: theme.colors.tintInverse,
-    fontSize: 18,
-    fontWeight: "600",
-  }),
-  memberName: (theme: any): TextStyle => ({
-    fontSize: 16,
-    color: theme.colors.text,
-    fontWeight: "500",
-  }),
-  pressedLeaveButton: (): ViewStyle => ({
-    backgroundColor: "rgba(229, 57, 53, 0.08)",
-  }),
-  pressedLeaveButtonText: (): TextStyle => ({
-    color: "#e53935",
-    opacity: 0.9,
   }),
 }

@@ -21,7 +21,12 @@ import { chatsService } from "@/services/chat"
 import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
+
 import type { AppStackScreenProps } from "@/navigators"
+
+import { useStores } from "@/models"
+import { Pressable } from "react-native"
+import { useUploadProfileImage } from "@/hooks/Chats"
 import {
   useAddPreferencesBatch,
   useEditProfile,
@@ -29,9 +34,6 @@ import {
   useActivities,
   useUserPreferences,
 } from "@/hooks/Users"
-import { useStores } from "@/models"
-import { Pressable } from "react-native"
-import { useUploadProfileImage } from "@/hooks/Chats"
 
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 

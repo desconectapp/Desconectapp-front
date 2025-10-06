@@ -82,6 +82,13 @@ export const chatsService = {
     return data as Message
   },
 
+  clearSupabaseCache: () => {
+    clearSupabaseCache()
+    // Also clear our token cache
+    cachedSupabaseToken = null
+    tokenExpirationTime = null
+  },
+
   subscribeToMessages: async (
     groupId: string,
     onMessage: (message: Message) => void,
@@ -223,12 +230,5 @@ export const chatsService = {
     }
 
     return { url, path: filePath }
-  },
-
-  clearSupabaseCache: () => {
-    clearSupabaseCache()
-    // Also clear our token cache
-    cachedSupabaseToken = null
-    tokenExpirationTime = null
   },
 }
