@@ -171,7 +171,12 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             onPress={() => navigation.navigate("GroupInfoScreen", { groupId })}
             activeOpacity={0.7}
           >
-            <Text style={styles.groupIcon}>{groupData?.icon}</Text>
+            {groupData?.avatar_url ? (
+              <AutoImage source={{ uri: groupData?.avatar_url }} style={styles.groupAvatar} />
+            ) : (
+              <Text style={styles.groupIcon}>{groupData?.icon}</Text>
+            )}
+
             <View style={styles.headerTextContainer}>
               <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
               <Text style={themed(themedStyles.memberCount)}>
@@ -268,6 +273,13 @@ export const styles = StyleSheet.create({
   backButton: { paddingRight: spacing.md } as ViewStyle,
 
   container: { flex: 1 } as ViewStyle,
+
+  groupAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 18,
+    marginRight: spacing.sm,
+  } as ImageStyle,
 
   groupIcon: {
     fontSize: 32,

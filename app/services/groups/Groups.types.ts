@@ -14,6 +14,7 @@ export interface GroupData {
   icon: string
   location: string
   public: boolean
+  avatar_url: string | null
   members: Member[]
 }
 
@@ -35,6 +36,7 @@ export interface Group {
   icon: string
   location: string
   members_count: number
+  avatar_url: string | null
 }
 
 export interface PaginatedUserGroups {

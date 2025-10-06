@@ -7,6 +7,7 @@ export const groupsService = {
     if (!response.ok) {
       throw new Error("Error al cargar los grupos")
     }
+	console.log("FETCHING GROUPS: ", response.data)
     return response.data
   },
 
@@ -38,6 +39,7 @@ export const groupsService = {
 
   getGroupById: async (id: string): Promise<GroupData | undefined> => {
     const response = await api.apisauce.get<GroupData>(`/groups/${id}`)
+	console.log(response)
     if (!response.ok) {
       throw new Error("Error al cargar el grupo")
     }
@@ -76,18 +78,18 @@ export const groupsService = {
     return true;
   },
 
-  updateGroupLocation: async (id: string, location: string): Promise<boolean> => {
-    const response = await api.apisauce.put(`/groups/location/${id}`, { location });
+  updateGroupPhoto: async (id: string, avatar_url: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/avatar/${id}`, { avatar_url });
     if (!response.ok) {
-      throw new Error("Error al cambiar la location del grupo");
+      throw new Error("Error al cambiar el nombre del grupo");
     }
     return true;
   },
 
-  updateGroupPhoto: async (id: string, photo: string): Promise<boolean> => {
-    const response = await api.apisauce.put(`/groups/photo/${id}`, { photo });
+  updateGroupLocation: async (id: string, location: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/location/${id}`, { location });
     if (!response.ok) {
-      throw new Error("Error al cambiar la foto del grupo");
+      throw new Error("Error al cambiar la location del grupo");
     }
     return true;
   },

@@ -27,6 +27,7 @@ import {
   updateGroupDescription,
   updateGroupName as useUpdateGroupName,
   updateGroupLocation as useUpdateGroupLocation,
+  useUpdateGroupPhoto,
 } from "@/hooks/Groups"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -35,6 +36,10 @@ import { GroupData, Member } from "@/services/groups/Groups.types"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { FontAwesome } from "@expo/vector-icons"
+
+import { AutoImage } from "@/components"
+import useImagePicker from "@/hooks/Image"
+import { useUploadGroupImage } from "@/hooks/Chats"
 
 type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
 
@@ -62,10 +67,14 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   const { mutate: updateDescription } = updateGroupDescription()
   const { mutate: updateGroupName } = useUpdateGroupName()
   const { mutate: updateGroupLocation } = useUpdateGroupLocation()
+  const { mutate: updateGroupPhoto } = useUpdateGroupPhoto()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState("")
   const [tempDescription, setTempDescription] = useState("")
   const [tempLocation, setTempLocation] = useState("")
+
+  const { imageUri, handleImagePicker } = useImagePicker()
+  const { isPending: isUploadingImage, mutateAsync: uploadGroupImageAsync } = useUploadGroupImage()
 
   const handlePressLeave = () => {
     setIsModalVisible(true)
@@ -153,6 +162,11 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const handleSave = async () => {
     try {
+      if (imageUri) {
+        const url = await uploadGroupImageAsync({ groupId, uri: imageUri })
+        updateGroupPhoto({ id: groupData.id, avatar_url: url })
+      }
+
       if (tempName !== groupData.name) {
         updateGroupName({ id: groupData.id, name: tempName })
       }
@@ -304,7 +318,38 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
       {/* Group Info (Conditionally Rendered) */}
       <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
-        <Text style={themed(themedStyles.groupIcon)}>{groupData.icon}</Text>
+        <View style={{ alignItems: "center", marginBottom: spacing.md }}>
+          <View style={{ position: "relative" }}>
+            <AutoImage
+              source={
+                imageUri || groupData?.avatar_url
+                  ? { uri: imageUri ?? groupData?.avatar_url }
+                  : require("../../assets/images/default-avatar.png")
+              }
+              style={{ width: 100, height: 100, borderRadius: 50 }}
+              resizeMode="cover"
+            />
+            {isEditing && (
+              <TouchableOpacity
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  borderRadius: 50,
+                  backgroundColor: "rgba(0,0,0,0.6)",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+                onPress={handleImagePicker}
+                activeOpacity={0.8}
+              >
+                <Text style={{ color: "#fff", fontSize: 20 }}>✏️</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
         {isEditing ? (
           <TextInput

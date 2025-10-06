@@ -72,8 +72,6 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const { isPending: isUploadingImage, mutateAsync: uploadProfilePictureAsync } =
     useUploadProfileImage()
 
-  console.log(profile)
-
   useEffect(() => {
     if (userPreferencesData && showPreferencesModal) {
       const ids = userPreferencesData?.preferences?.map((p: any) => p.id) || []
@@ -207,7 +205,6 @@ export const ProfileScreen = observer(function ProfileScreen() {
     setIsEditing(false)
   }
 
-  console.log("Profile data:", profile)
   if (!profile) {
     return null
   }
