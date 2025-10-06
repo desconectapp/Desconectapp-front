@@ -20,21 +20,26 @@ import { useAppTheme } from "@/utils/useAppTheme"
 
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
-import { useExitGroup, useGroupById, useChangeGroupStatus, updateGroupDescription, updateGroupName as useUpdateGroupName, updateGroupLocation as useUpdateGroupLocation} from "@/hooks/Groups"
+import {
+  useExitGroup,
+  useGroupById,
+  useChangeGroupStatus,
+  updateGroupDescription,
+  updateGroupName as useUpdateGroupName,
+  updateGroupLocation as useUpdateGroupLocation,
+} from "@/hooks/Groups"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
 import { GroupData, Member } from "@/services/groups/Groups.types"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { FontAwesome } from '@expo/vector-icons';
-
+import { FontAwesome } from "@expo/vector-icons"
 
 type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
 
 export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any) {
   const { groupId } = route.params
-  
 
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
@@ -49,157 +54,160 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 
   const { data: groupData, isLoading } = useGroupById(groupId)
 
-  const isPrivate = !groupData?.public;
+  const isPrivate = !groupData?.public
   const { mutateAsync: statusChangeAsync } = useChangeGroupStatus()
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
-  const { mutate: updateDescription } = updateGroupDescription();
-  const { mutate: updateGroupName } = useUpdateGroupName();
-  const { mutate: updateGroupLocation } = useUpdateGroupLocation();
+  const { mutate: updateDescription } = updateGroupDescription()
+  const { mutate: updateGroupName } = useUpdateGroupName()
+  const { mutate: updateGroupLocation } = useUpdateGroupLocation()
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState("")
   const [tempDescription, setTempDescription] = useState("")
   const [tempLocation, setTempLocation] = useState("")
 
   const handlePressLeave = () => {
-    setIsModalVisible(true);
-  };
+    setIsModalVisible(true)
+  }
 
   const handleConfirmLeave = () => {
-    setIsModalVisible(false);
-    leaveGroup();
-  };
+    setIsModalVisible(false)
+    leaveGroup()
+  }
 
   const handleCancelLeave = () => {
-    setIsModalVisible(false);
-  };
+    setIsModalVisible(false)
+  }
 
   useEffect(() => {
     if (groupData) {
-      setTempName(groupData.name);
-      setTempDescription(groupData.description ?? "");
-      setTempLocation(groupData.location ?? "");
+      setTempName(groupData.name)
+      setTempDescription(groupData.description ?? "")
+      setTempLocation(groupData.location ?? "")
     }
-  }, [groupData]);
+  }, [groupData])
 
-  const renderMember = ({ item }: { item: Member }) => (
+  const renderMember = ({ item }: { item: Member }) => {
+    return (
       <View style={[styles.memberItem, themed(themedStyles.memberItem)]}>
-      <View style={[styles.memberAvatar, themed(themedStyles.memberAvatar)]}>
-          {item.picture ? (
-          <Image
-              source={{ uri: item.picture }}
+        <View style={[styles.memberAvatar, themed(themedStyles.memberAvatar)]}>
+          {item.avatar_url ? (
+            <Image
+              source={{ uri: item.avatar_url }}
               style={themed(themedStyles.memberAvatarImage)}
-          />
-      ) : (
-          <View style={themed(themedStyles.memberAvatarPlaceholder)}>
-          <Text style={themed(themedStyles.memberAvatarText)}>
-              {item.name.charAt(0).toUpperCase()}
-          </Text>
-          </View>
-      )}
+            />
+          ) : (
+            <View style={themed(themedStyles.memberAvatarPlaceholder)}>
+              <Text style={themed(themedStyles.memberAvatarText)}>
+                {item.name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </View>
+        <Text style={themed(themedStyles.memberName)}>{item.name}</Text>
       </View>
-      <Text style={themed(themedStyles.memberName)}>{item.name}</Text>
-      </View>
-  )
+    )
+  }
 
   if (isLoading) {
-      return <Text>Loading...</Text>
+    return <Text>Loading...</Text>
   }
 
   if (!groupData) {
     return (
-        <View>
-            <Text>Group not found or has been left.</Text>
-            <Button onPress={() => navigation.goBack()} text="Go Back" />
-        </View>
-    );
+      <View>
+        <Text>Group not found or has been left.</Text>
+        <Button onPress={() => navigation.goBack()} text="Go Back" />
+      </View>
+    )
   }
 
   const leaveGroup = async () => {
     try {
       navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: "Main",
-              params: {
-                screen: "Tabs",
-                params: { screen: "SearchScreen" },
-              },
+        index: 0,
+        routes: [
+          {
+            name: "Main",
+            params: {
+              screen: "Tabs",
+              params: { screen: "SearchScreen" },
             },
-          ],
-        });
-        
-      await exitGroupAsync(groupId);
+          },
+        ],
+      })
 
-      await queryClient.removeQueries({ queryKey: ["group", groupId] });
-      
-      await queryClient.invalidateQueries({ queryKey: ["groups"] });
+      await exitGroupAsync(groupId)
 
-      showToast("Success", "You have left the group successfully.");
+      await queryClient.removeQueries({ queryKey: ["group", groupId] })
+
+      await queryClient.invalidateQueries({ queryKey: ["groups"] })
+
+      showToast("Success", "You have left the group successfully.")
     } catch (error) {
-        console.error("Error leaving group:", error);
-        showToast("Error", "Failed to leave the group. Please try again.");
+      console.error("Error leaving group:", error)
+      showToast("Error", "Failed to leave the group. Please try again.")
     }
   }
 
   const handleSave = async () => {
-  try {
-    if (tempName !== groupData.name) {
-      updateGroupName({ id: groupData.id, name: tempName }); 
-    }
+    try {
+      if (tempName !== groupData.name) {
+        updateGroupName({ id: groupData.id, name: tempName })
+      }
 
-    if (tempDescription !== groupData.description) {
-      updateDescription({ id: groupData.id, description: tempDescription });
-    }
+      if (tempDescription !== groupData.description) {
+        updateDescription({ id: groupData.id, description: tempDescription })
+      }
 
-    if (tempLocation !== groupData.location) {
-        updateGroupLocation({ id: groupData.id, location: tempLocation });
-    }
-    
-    setIsEditing(false);
-    queryClient.setQueryData(['group', groupId], (oldData: GroupData) => ({
+      if (tempLocation !== groupData.location) {
+        updateGroupLocation({ id: groupData.id, location: tempLocation })
+      }
+
+      setIsEditing(false)
+      queryClient.setQueryData(["group", groupId], (oldData: GroupData) => ({
         ...oldData,
         name: tempName,
         description: tempDescription,
-      }));
-  } catch (error) {
-    console.error("Failed to save changes:", error);
+      }))
+    } catch (error) {
+      console.error("Failed to save changes:", error)
+    }
   }
-};
 
   const handleCancelEdit = () => {
     // Reset temp state to original values
-    setTempName(groupData.name);
-    setTempDescription(groupData.description ?? "");
-    setIsEditing(false);
-  };
-
+    setTempName(groupData.name)
+    setTempDescription(groupData.description ?? "")
+    setIsEditing(false)
+  }
 
   const handleStatusChange = async (newStatus: boolean) => {
     try {
-      await statusChangeAsync({ id: groupId, public_g: newStatus });
-      setModalVisible(false);
-      queryClient.setQueryData(['group', groupId], (oldData: GroupData) => ({
+      await statusChangeAsync({ id: groupId, public_g: newStatus })
+      setModalVisible(false)
+      queryClient.setQueryData(["group", groupId], (oldData: GroupData) => ({
         ...oldData,
         status: newStatus,
-      }));
+      }))
     } catch (error) {
-      console.error("Failed to change group status:", error);
+      console.error("Failed to change group status:", error)
     }
-  };
+  }
 
   const handleModalPress = () => {
-    setModalVisible(true);
-  };
+    setModalVisible(true)
+  }
 
   const renderModalContent = () => {
     if (isPrivate) {
       return (
         <>
           <Text style={styles.modalTitle}>Would you like to make the group public?</Text>
-          <Text style={styles.modalDescription}>This will allow others to view and join the group.</Text>
+          <Text style={styles.modalDescription}>
+            This will allow others to view and join the group.
+          </Text>
           <View style={styles.modalButtonsContainer}>
             <TouchableOpacity
               style={[styles.modalButton, themed(themedStyles.cancelButton)]}
@@ -215,12 +223,14 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             </TouchableOpacity>
           </View>
         </>
-      );
+      )
     } else {
       return (
         <>
           <Text style={styles.modalTitle}>Would you like to make the group private?</Text>
-          <Text style={styles.modalDescription}>This will prevent others from viewing and joining the group.</Text>
+          <Text style={styles.modalDescription}>
+            This will prevent others from viewing and joining the group.
+          </Text>
           <View style={styles.modalButtonsContainer}>
             <TouchableOpacity
               style={[styles.modalButton, themed(themedStyles.cancelButton)]}
@@ -236,166 +246,159 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             </TouchableOpacity>
           </View>
         </>
-      );
+      )
     }
-  };
-
+  }
 
   return (
-      <SafeAreaView
-          style={[styles.container, themed(themedStyles.container)]}
-          >
-          <View style={[styles.header, themed(themedStyles.header), $topInsets]}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-              activeOpacity={0.7}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
-            >
-              <Text style={themed(themedStyles.backButtonText)}>←</Text>
-            </TouchableOpacity>
-            
-            <Text style={themed(themedStyles.headerTitle)}>Group Info</Text>
-            
-            {/* Conditional Edit/Save/Cancel Buttons */}
-            {isEditing ? (
-                <View style={styles.headerButtonContainer}>
-                    <Pressable onPress={handleCancelEdit}>
-                        <Text style={themed(themedStyles.headerCancelButton)}>Cancel</Text>
-                    </Pressable>
-                    <Pressable onPress={handleSave} style={{ marginLeft: spacing.sm }}>
-                        <Text style={themed(themedStyles.headerButton)}>Save</Text>
-                    </Pressable>
-                </View>
-            ) : (
-                <Pressable onPress={() => setIsEditing(true)}>
-                    <Text style={themed(themedStyles.editButtonText)}>✏️</Text>
-                </Pressable>
-            )}
-            
-            {/* Lock Icon */}
-            <TouchableOpacity
-              style={styles.lockButton}
-              onPress={handleModalPress}
-            >
-              <FontAwesome
-                name={isPrivate ? "lock" : "unlock"}
-                size={24}
-                color={theme.colors.tint}
-              />
-            </TouchableOpacity>
-          </View>
+    <SafeAreaView style={[styles.container, themed(themedStyles.container)]}>
+      <View style={[styles.header, themed(themedStyles.header), $topInsets]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
+        >
+          <Text style={themed(themedStyles.backButtonText)}>←</Text>
+        </TouchableOpacity>
 
-          {/* Modal */}
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={modalVisible}
-            onRequestClose={() => {
-              setModalVisible(false);
-            }}
-          >
-            <View style={styles.centeredView}>
-              <View style={[styles.modalView, themed(themedStyles.modalView)]}>
-                {renderModalContent()}
+        <Text style={themed(themedStyles.headerTitle)}>Group Info</Text>
+
+        {/* Conditional Edit/Save/Cancel Buttons */}
+        {isEditing ? (
+          <View style={styles.headerButtonContainer}>
+            <Pressable onPress={handleCancelEdit}>
+              <Text style={themed(themedStyles.headerCancelButton)}>Cancel</Text>
+            </Pressable>
+            <Pressable onPress={handleSave} style={{ marginLeft: spacing.sm }}>
+              <Text style={themed(themedStyles.headerButton)}>Save</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable onPress={() => setIsEditing(true)}>
+            <Text style={themed(themedStyles.editButtonText)}>✏️</Text>
+          </Pressable>
+        )}
+
+        {/* Lock Icon */}
+        <TouchableOpacity style={styles.lockButton} onPress={handleModalPress}>
+          <FontAwesome name={isPrivate ? "lock" : "unlock"} size={24} color={theme.colors.tint} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(false)
+        }}
+      >
+        <View style={styles.centeredView}>
+          <View style={[styles.modalView, themed(themedStyles.modalView)]}>
+            {renderModalContent()}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Group Info (Conditionally Rendered) */}
+      <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
+        <Text style={themed(themedStyles.groupIcon)}>{groupData.icon}</Text>
+
+        {isEditing ? (
+          <TextInput
+            style={themed(themedStyles.groupNameInput)}
+            value={tempName}
+            onChangeText={setTempName}
+            placeholder="Group Name"
+          />
+        ) : (
+          <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
+        )}
+
+        {isEditing ? (
+          <TextInput
+            style={themed(themedStyles.groupLocationInput)}
+            value={tempLocation}
+            onChangeText={setTempLocation}
+            placeholder="Group Location"
+          />
+        ) : (
+          <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
+        )}
+
+        {isEditing ? (
+          <TextInput
+            style={themed(themedStyles.groupDescriptionInput)}
+            value={tempDescription}
+            onChangeText={setTempDescription}
+            multiline
+            placeholder="Group Description"
+          />
+        ) : (
+          <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
+        )}
+      </View>
+
+      {/* Members List */}
+      <FlatList
+        data={groupData.members}
+        keyExtractor={(item) => item.id}
+        renderItem={renderMember}
+        contentContainerStyle={styles.membersListContent}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* Footer */}
+      <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
+        <Button
+          text="Leave Group"
+          preset="default"
+          style={[styles.leaveButton, themed(themedStyles.leaveButton)]}
+          textStyle={[styles.leaveButtonText, themed(themedStyles.leaveButtonText)]}
+          pressedStyle={themed(themedStyles.pressedLeaveButton)}
+          pressedTextStyle={themed(themedStyles.pressedLeaveButtonText)}
+          onPress={handlePressLeave}
+        />
+
+        {/* The Modal Component */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={isModalVisible}
+          onRequestClose={handleCancelLeave}
+        >
+          <View style={styles.centeredView}>
+            <View style={[styles.modalView, themed(themedStyles.modalView)]}>
+              <Text style={styles.modalTitle}>Leave Group?</Text>
+              <Text style={styles.modalDescription}>
+                Are you sure you want to leave this group? This can not be undone.
+              </Text>
+              <View style={styles.modalButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={handleCancelLeave}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    styles.acceptLeaveButton,
+                    themed(themedStyles.acceptLeaveButton),
+                  ]}
+                  onPress={handleConfirmLeave}
+                >
+                  <Text style={styles.modalButtonText}>Leave</Text>
+                </TouchableOpacity>
               </View>
             </View>
-          </Modal>
-
-          {/* Group Info (Conditionally Rendered) */}
-          <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
-              <Text style={themed(themedStyles.groupIcon)}>{groupData.icon}</Text>
-              
-              {isEditing ? (
-                  <TextInput
-                    style={themed(themedStyles.groupNameInput)}
-                    value={tempName}
-                    onChangeText={setTempName}
-                    placeholder="Group Name"
-                  />
-              ) : (
-                  <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
-              )}
-
-              {isEditing ? (
-                  <TextInput
-                    style={themed(themedStyles.groupLocationInput)}
-                    value={tempLocation}
-                    onChangeText={setTempLocation}
-                    placeholder="Group Location"
-                  />
-              ) : (
-                  <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
-              )}
-
-              {isEditing ? (
-                  <TextInput
-                    style={themed(themedStyles.groupDescriptionInput)}
-                    value={tempDescription}
-                    onChangeText={setTempDescription}
-                    multiline
-                    placeholder="Group Description"
-                  />
-              ) : (
-                  <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
-              )}
           </View>
-
-          {/* Members List */}
-          <FlatList
-              data={groupData.members}
-              keyExtractor={(item) => item.id}
-              renderItem={renderMember}
-              contentContainerStyle={styles.membersListContent}
-              showsVerticalScrollIndicator={false}
-          />
-
-
-          {/* Footer */}
-          <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
-            <Button
-              text="Leave Group"
-              preset="default"
-              style={[styles.leaveButton, themed(themedStyles.leaveButton)]}
-              textStyle={[styles.leaveButtonText, themed(themedStyles.leaveButtonText)]}
-              pressedStyle={themed(themedStyles.pressedLeaveButton)}
-              pressedTextStyle={themed(themedStyles.pressedLeaveButtonText)}
-              onPress={handlePressLeave}
-            />
-
-            {/* The Modal Component */}
-            <Modal
-              animationType="fade"
-              transparent={true}
-              visible={isModalVisible}
-              onRequestClose={handleCancelLeave}
-            >
-              <View style={styles.centeredView}>
-                <View style={[styles.modalView, themed(themedStyles.modalView)]}>
-                  <Text style={styles.modalTitle}>Leave Group?</Text>
-                  <Text style={styles.modalDescription}>
-                    Are you sure you want to leave this group? This can not be undone.
-                  </Text>
-                  <View style={styles.modalButtonsContainer}>
-                    <TouchableOpacity
-                      style={[styles.modalButton, styles.cancelButton]}
-                      onPress={handleCancelLeave}
-                    >
-                      <Text style={styles.modalButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.modalButton, styles.acceptLeaveButton, themed(themedStyles.acceptLeaveButton)]}
-                      onPress={handleConfirmLeave}
-                    >
-                      <Text style={styles.modalButtonText}>Leave</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-          </View>
-      </SafeAreaView>
-    )
+        </Modal>
+      </View>
+    </SafeAreaView>
+  )
 })
 
 export const styles = StyleSheet.create({
@@ -446,18 +449,18 @@ export const styles = StyleSheet.create({
   // Modal
   centeredView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   } as ViewStyle,
-  
+
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 20,
     padding: spacing.xl,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -469,43 +472,43 @@ export const styles = StyleSheet.create({
 
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: spacing.sm,
-    textAlign: 'center',
+    textAlign: "center",
   } as TextStyle,
 
   modalDescription: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: spacing.md,
   } as TextStyle,
 
   modalButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
   } as ViewStyle,
 
   modalButton: {
     borderRadius: 10,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    width: '45%',
-    alignItems: 'center',
+    width: "45%",
+    alignItems: "center",
   } as ViewStyle,
 
   acceptButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: "#2196F3",
   } as ViewStyle,
 
   cancelButton: {
-    backgroundColor: '#ddd',
+    backgroundColor: "#ddd",
   } as ViewStyle,
 
   modalButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   } as TextStyle,
 
   // Group info
@@ -547,7 +550,7 @@ export const styles = StyleSheet.create({
 
   // Members
   membersListContent: {
-    paddingBottom: 100
+    paddingBottom: 100,
   } as ViewStyle,
 
   memberItem: {
@@ -609,14 +612,12 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
 })
 
-
-
 export const themedStyles = {
   container: (theme: any): ViewStyle => ({
     flex: 1,
     backgroundColor: theme.colors.background,
   }),
-  
+
   header: (theme: any): ViewStyle => ({
     backgroundColor: theme.colors.background,
     borderBottomColor: theme.colors.border,
@@ -627,7 +628,7 @@ export const themedStyles = {
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   }),
-  
+
   backButtonText: (theme: any): TextStyle => ({
     fontSize: 24,
     color: theme.colors.tint,
@@ -640,8 +641,8 @@ export const themedStyles = {
     fontWeight: "600",
     color: theme.colors.text,
     textAlign: "center",
-    flex: 1, 
-    marginRight: spacing.md
+    flex: 1,
+    marginRight: spacing.md,
   }),
   headerButton: (theme: any): TextStyle => ({
     fontSize: 16,
@@ -662,9 +663,9 @@ export const themedStyles = {
     borderBottomColor: theme.colors.border,
   }),
   groupIcon: (_theme: any): TextStyle => ({
-    fontSize: 60,         // bigger font size
-    lineHeight: 72,       // slightly larger lineHeight
-    height: 72,           // match lineHeight
+    fontSize: 60, // bigger font size
+    lineHeight: 72, // slightly larger lineHeight
+    height: 72, // match lineHeight
     textAlignVertical: "center",
     textAlign: "center",
     marginBottom: spacing.sm,
@@ -798,12 +799,12 @@ export const themedStyles = {
     color: "#e53935",
     opacity: 0.9,
   }),
-  
+
   modalView: (theme: any): ViewStyle => ({
     backgroundColor: theme.colors.background,
     borderRadius: 20,
     padding: spacing.xl,
-    alignItems: 'center',
+    alignItems: "center",
     shadowColor: theme.colors.text,
     shadowOffset: {
       width: 0,
@@ -815,7 +816,7 @@ export const themedStyles = {
   }),
 
   modalInput: (theme: any): TextStyle => ({
-    width: '100%',
+    width: "100%",
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: spacing.sm,
@@ -823,7 +824,7 @@ export const themedStyles = {
     marginBottom: spacing.md,
     color: theme.colors.text,
   }),
-  
+
   acceptButton: (theme: any): ViewStyle => ({
     backgroundColor: theme.colors.tint,
   }),
@@ -833,7 +834,7 @@ export const themedStyles = {
   }),
 
   cancelButton: (theme: any): ViewStyle => ({
-    backgroundColor: '#ddd',
+    backgroundColor: "#ddd",
   }),
 
   editButtonText: (theme: any): TextStyle => ({
@@ -842,3 +843,4 @@ export const themedStyles = {
     marginLeft: spacing.sm,
   }),
 }
+

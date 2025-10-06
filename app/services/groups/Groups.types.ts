@@ -2,7 +2,7 @@ export interface Member {
   id: string
   uuid: string
   name: string
-  picture?: string
+  avatar_url?: string
 }
 
 export interface GroupData {
