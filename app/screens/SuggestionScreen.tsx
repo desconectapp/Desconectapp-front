@@ -85,11 +85,11 @@ export const SuggestionScreen = observer(({ route }: any) => {
 
       <View style={styles.heroImageContainer}>
         <Animated.Image
-          source={{
-            uri:
-              group.image ??
-              "https://www.hoysejuega.com/uploads/Modules/ImagenesComplejos/800_600_futbol-point-1.png",
-          }}
+          source={
+            group.image
+              ? { uri: group.image }
+              : require("../../assets/images/desconectapp_icon.jpeg")
+          }
           style={styles.heroImage}
           sharedTransitionTag="2"
         />
