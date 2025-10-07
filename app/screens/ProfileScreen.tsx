@@ -120,7 +120,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
 
   const handleSavePreferences = async () => {
     try {
-      await addPreferences.mutateAsync(selectedPreferences)
+      await addPreferences.mutateAsync({activity_ids: selectedPreferences})
       showToast("Preferences Updated", "Your preferences were saved successfully")
       setShowPreferencesModal(false)
     } catch (err) {
