@@ -8,12 +8,11 @@ import {
   type TextStyle,
   type ImageStyle,
   TouchableOpacity,
-  Image,
   Dimensions,
   Modal,
   FlatList,
 } from "react-native"
-import { Screen, TextField, Button, Text } from "@/components"
+import { Screen, TextField, Button, Text, AutoImage } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm, Controller } from "react-hook-form"
@@ -22,10 +21,19 @@ import { chatsService } from "@/services/chat"
 import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
+
 import type { AppStackScreenProps } from "@/navigators"
-import { useAddPreferencesBatch, useEditProfile, useProfile, useActivities, useUserPreferences } from "@/hooks/Users"
+
 import { useStores } from "@/models"
 import { Pressable } from "react-native"
+import { useUploadProfileImage } from "@/hooks/Chats"
+import {
+  useAddPreferencesBatch,
+  useEditProfile,
+  useProfile,
+  useActivities,
+  useUserPreferences,
+} from "@/hooks/Users"
 
 const defaultAvatar = require("../../assets/images/default-avatar.png")
 
@@ -47,7 +55,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const { showToast } = useAppToast()
 
   const { data: profile } = useProfile()
-  const { profileImage, handleImagePicker } = useImagePicker()
+  const { imageUri, handleImagePicker } = useImagePicker()
   const { mutateAsync: editProfileMutateAsync } = useEditProfile()
   const addPreferences = useAddPreferencesBatch()
   const { sessionStore } = useStores()
@@ -62,6 +70,9 @@ export const ProfileScreen = observer(function ProfileScreen() {
 
   const { data: prefsData, isFetching } = useActivities(limit, offset, query)
   const { data: userPreferencesData } = useUserPreferences()
+
+  const { isPending: isUploadingImage, mutateAsync: uploadProfilePictureAsync } =
+    useUploadProfileImage()
 
   useEffect(() => {
     if (userPreferencesData && showPreferencesModal) {
@@ -155,11 +166,24 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const onSubmit = async (data: ProfileFormData) => {
     setIsSaving(true)
     try {
+      let url
+      if (imageUri) {
+        console.log("Uploading image:", imageUri, "for user:", sessionStore.user_uuid)
+        if (sessionStore.user_uuid != null) {
+          url = await uploadProfilePictureAsync({ userId: sessionStore.user_uuid, uri: imageUri })
+        } else {
+          console.warn("No user ID available for image upload")
+        }
+      }
+
+      console.log("Updating profile with data:", data, "and image URL:", url)
+
       await editProfileMutateAsync({
         ...profile,
         ...data,
-        image: profileImage,
+        avatar_url: url || profile?.avatar_url,
       })
+
       showToast("Profile Updated", "Your profile has been successfully updated")
       setIsEditing(false)
       reset(data)
@@ -183,6 +207,10 @@ export const ProfileScreen = observer(function ProfileScreen() {
     setIsEditing(false)
   }
 
+  if (!profile) {
+    return null
+  }
+
   return (
     <Screen
       contentContainerStyle={[$container, $bottomContainerInsets]}
@@ -201,8 +229,12 @@ export const ProfileScreen = observer(function ProfileScreen() {
         <View style={$profileContent}>
           <View style={$profileImageSection}>
             <View style={$imageWrapper}>
-              <Image
-                source={profileImage ? { uri: profileImage } : defaultAvatar}
+              <AutoImage
+                source={
+                  imageUri || profile?.avatar_url
+                    ? { uri: imageUri ?? profile?.avatar_url }
+                    : defaultAvatar
+                }
                 style={$profileImage}
                 resizeMode="cover"
               />
@@ -283,7 +315,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
               style={themed($saveButton)}
               textStyle={themed($saveButtonText)}
               loading={isSaving}
-              disabled={isSaving || (!isDirty && profileImage === null)}
+              disabled={isUploadingImage || isSaving || (!isDirty && imageUri === null)}
             />
 
             <Button

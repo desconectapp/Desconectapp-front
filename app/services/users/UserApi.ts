@@ -1,7 +1,6 @@
 import { api } from "../api"
 import {
   CreateProfileData,
-  Preference,
   ProfileData,
   SessionData,
   UserResponse,

@@ -19,6 +19,7 @@ import { useNavigation } from "@react-navigation/native"
 import type { AppStackScreenProps } from "@/navigators"
 import { ActivityRequest } from "@/services/activities/Activities.types"
 import { useActivityRequests } from "@/hooks/Search"
+import { formatWeekTimeslots } from "@/utils/utils"
 
 const { width } = Dimensions.get("window")
 
@@ -64,23 +65,6 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
       // Default navigation or action
       console.log("Activity request pressed:", item.id)
     }
-  }
-
-  const formatWeekTimeslots = (weekTimeslots: number[]) => {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-    const selectedDays = weekTimeslots
-      .map((timeslot) => {
-        // Convert timeslot to day (each day has 48 half-hour timeslots)
-        const day = Math.floor(timeslot / 48)
-        if (day > 6 || day < 0) {
-          return null
-        }
-        return days[day]
-      })
-      .filter(Boolean)
-
-    return [...new Set(selectedDays)].join(", ")
   }
 
   const formatDate = (dateString: string) => {

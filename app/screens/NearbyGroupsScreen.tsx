@@ -2,7 +2,8 @@ import React, { useState, useCallback, useRef, useEffect } from "react"
 import { View, ViewStyle, TextStyle } from "react-native"
 import { Screen, Text } from "@/components"
 import { observer } from "mobx-react-lite"
-import { MapGroup, MapViewComponent } from "@/components/Location/MapView"
+import { MapViewComponent } from "@/components/Location/MapView"
+import { MapGroup } from "@/services/groups/Groups.types"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 import { groupsService } from "@/services/groups"
@@ -14,16 +15,16 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
   const [groups, setGroups] = useState<MapGroup[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
+  console.log("groups:", groups)
   // Debounced fetch function
   const fetchNearbyGroups = useCallback(async (center: [number, number], radiusKm: number) => {
     try {
       setIsLoading(true)
-      console.log(`Fetching groups for center: [${center[1]}, ${center[0]}], radius: ${radiusKm}km`)
+      console.log(`Fetching groups for center: [${center[0]}, ${center[1]}], radius: ${radiusKm}km`)
       
       const fetchedGroups = await groupsService.getNearbyGroups(
-        center[1], // latitude
-        center[0], // longitude
+        center[0], // latitude
+        center[1], // longitude
         radiusKm
       )
       

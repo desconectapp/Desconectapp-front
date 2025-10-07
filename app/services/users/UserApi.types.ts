@@ -26,7 +26,7 @@ export interface CreateProfileData {
 
 export interface ProfileData {
   name: string
-  image: string | null
+  avatar_url: string | null
   city: string
   gender: string
   current_situation: string

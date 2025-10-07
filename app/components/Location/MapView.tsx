@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Text, View, StyleSheet, Alert, Platform, PermissionsAndroid } from "react-native"
+import { Text, View, StyleSheet, Alert, Platform, PermissionsAndroid, Image } from "react-native"
 import MapLibreGL from "@maplibre/maplibre-react-native"
 import { useEffect } from "react"
 import Radar from "react-native-radar"
@@ -9,6 +9,9 @@ import {
 import { selectedLocation } from "types"
 import { LocationInfo } from "./LocationInfo"
 import { CustomSlider } from "../Custom/CustomSlider"
+import { MapGroup } from "@/services/groups/Groups.types"
+import { GroupMapIcon } from "./GroupMapIcon"
+import { GroupMapInfoCard } from "./GroupMapInfoCard"
 
 
 const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ""
@@ -20,16 +23,6 @@ MapLibreGL.setAccessToken(apiKey) // No token needed for OpenStreetMap
 
 const BSASCOORDS = [-58.4173, -34.6118] // Buenos Aires coords
 
-export interface MapGroup {
-  id: string
-  name: string
-  icon: string
-  coordinates: [number, number] // [longitude, latitude]
-  radius?: number // in km
-  location: string
-  description?: string
-  membersCount?: number
-}
 
 export interface MapViewProps {
   // Para busqueda de grupo
@@ -238,29 +231,6 @@ export const MapViewComponent = ({
     }
   }
 
-  // TODO: mover esto a un utils/el style global
-  // Generate a pastel color based on coordinates
-  const getColorFromCoords = ([lng, lat]: [number, number]) => {
-    // Simple hash function
-    const hash = Math.abs(Math.sin(lng * 1000 + lat * 1000) * 10000)
-    // Generate pastel color
-    const r = Math.floor((hash % 128) + 127)
-    const g = Math.floor(((hash / 2) % 128) + 127)
-    const b = Math.floor(((hash / 3) % 128) + 127)
-    return `rgb(${r},${g},${b})`
-  }
-
-  const getMarkerStyle = (marker: MapGroup) => ({
-    backgroundColor: getColorFromCoords(marker.coordinates),
-    borderRadius: 45,
-    width: 65,
-    height: 65,
-    justifyContent: "center" as const,
-    alignItems: "center" as const,
-    borderWidth: 2,
-    borderColor: "white",
-  })
-
   // Esto tambien podria ir a un utils
   // Helper function to create a circle geometry from center point and radius in km
   const createCircleGeoJSON = (center: [number, number], radiusKm: number) => {
@@ -377,28 +347,7 @@ export const MapViewComponent = ({
             coordinate={group.coordinates}
             onSelected={() => handleGroupPress(group)}
           >
-            <View style={[getMarkerStyle(group), { 
-              width: 54, 
-              height: 54, 
-              borderRadius: 27,
-              opacity: 1,
-            }]}>
-              <Text style={styles.markerEmoji}>{group.icon ?? "G"}</Text>
-              <Text
-                style={{
-                  color: "white",
-                  fontWeight: "bold",
-                  fontSize: 10,
-                  textAlign: "center",
-                  marginTop: 2,
-                  maxWidth: 44,
-                }}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {group.name}
-              </Text>
-            </View>
+              <GroupMapIcon group={group} />
             <MapLibreGL.Callout title={group.name} />
           </MapLibreGL.PointAnnotation>
         ))}
@@ -433,35 +382,9 @@ export const MapViewComponent = ({
       {/* GRUPOS: Para cuando selecciono un grupo */}
       {/* Para el grupo, poner boton de entrar al grupo y eso */}
       {selectedMarker && (
-        <LocationInfo height={150}>
-          <Text style={{ color: "white", fontWeight: "bold", fontSize: 20, marginBottom: 6 }}>
-            {selectedMarker.name || "Grupo"}
-          </Text>
-          <Text style={{ color: "white", fontSize: 14 }}>📍 {selectedMarker.location}</Text>
-          {selectedMarker.description && (
-            <Text style={{ color: "white", fontSize: 13, marginTop: 4, textAlign: "center" }}>
-              {selectedMarker.description}
-            </Text>
-          )}
-          {typeof selectedMarker.membersCount === "number" && (
-            <Text style={{ color: "white", fontSize: 13, marginTop: 4 }}>
-              {selectedMarker.membersCount} Miembros 👥
-            </Text>
-          )}
-
-          <TouchableOpacity
-            style={{
-              marginTop: 12,
-              paddingVertical: 8,
-              paddingHorizontal: 20,
-              backgroundColor: "#4a90e2",
-              borderRadius: 20,
-            }}
-            onPress={() => console.log("Ver grupo", selectedMarker.id)}
-          >
-            <Text style={{ color: "white", fontWeight: "bold" }}>Ver grupo</Text>
-          </TouchableOpacity>
-        </LocationInfo>
+        // <LocationInfo height={150}>
+          <GroupMapInfoCard group={selectedMarker} />
+        // </LocationInfo>
       )}
     </View>
   )

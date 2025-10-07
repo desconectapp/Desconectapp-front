@@ -2,7 +2,7 @@ export interface Member {
   id: string
   uuid: string
   name: string
-  picture?: string
+  avatar_url?: string
 }
 
 export interface GroupData {
@@ -14,7 +14,17 @@ export interface GroupData {
   icon: string
   location: string
   public: boolean
+  avatar_url: string | null
   members: Member[]
+}
+
+export interface CreateGroupParams {
+  name: string | null;
+  description: string | null;
+  location: string | null;
+  activity_id: number;
+  public: boolean | false;
+  user_ids: number[];
 }
 
 export interface Group {
@@ -26,6 +36,7 @@ export interface Group {
   icon: string
   location: string
   members_count: number
+  avatar_url: string | null
 }
 
 export interface PaginatedUserGroups {
@@ -41,7 +52,23 @@ export interface OpenGroup {
 	activity_name: string
 	member_count:	number
 	photo:	string
+  avatar_url: string | null
+  week_timeslots?: string[]
 }
+
+export interface MapGroup {
+  id: string
+  name: string
+  icon: string
+  coordinates: [number, number] // [longitude, latitude]
+  radius?: number // in km
+  location: string
+  description?: string
+  membersCount?: number
+  avatarUrl?: string
+  week_timeslots?: number[]
+}
+
 
 export interface PaginatedOpenGroup {
   groups: OpenGroup[]

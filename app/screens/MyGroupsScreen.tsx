@@ -17,7 +17,7 @@ import { Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
-import { useNavigation } from "@react-navigation/native"
+import { useIsFocused, useNavigation } from "@react-navigation/native"
 import { PhotoGallerySlider, type PhotoItem } from "@/components/Custom/PhotoGallerySlider"
 import { useGroups } from "@/hooks/Groups"
 import { spacing } from "@/theme"
@@ -29,7 +29,8 @@ type NavigationProp = AppStackScreenProps<"MyGroupsScreen">["navigation"]
 export const MyGroupsScreen = observer(function MyGroupsScreen() {
   const { themed, theme } = useAppTheme()
   const navigation = useNavigation<NavigationProp>()
-  const { data: paginatedGroups, isLoading, refetch } = useGroups()
+  const isFocused = useIsFocused()
+  const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
 
 
