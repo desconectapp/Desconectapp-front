@@ -2,12 +2,34 @@ import { api } from "../api"
 import { SupabaseToken, Message } from "./Chats.types"
 import { getSupabaseClient, clearSupabaseCache } from "../../supabase-client"
 
+// Cache for the Supabase token to avoid multiple API calls
+let cachedSupabaseToken: string | null = null
+let tokenExpirationTime: number | null = null
+
 const getSupabaseClientWithToken = async () => {
+  const now = Date.now()
+  
+  // Check if we have a valid cached token
+  if (cachedSupabaseToken && tokenExpirationTime && now < tokenExpirationTime) {
+    return getSupabaseClient(cachedSupabaseToken)
+  }
+  
+  // Fetch new token if cache is invalid
   const tokenData = await chatsService.getToken()
   if (!tokenData?.supabase_token) {
     throw new Error("No se pudo obtener el token de Supabase")
   }
+  
+  // Cache the token with expiration
+  cachedSupabaseToken = tokenData.supabase_token
+  tokenExpirationTime = now + (14 * 60 * 1000) // 14 minutes (1 minute before actual expiration)
+  
   return getSupabaseClient(tokenData.supabase_token)
+}
+
+// Alternative function that accepts a token directly (to be used with React Query)
+export const getSupabaseClientWithProvidedToken = (token: string) => {
+  return getSupabaseClient(token)
 }
 
 export const chatsService = {
@@ -59,6 +81,9 @@ export const chatsService = {
 
   clearSupabaseCache: () => {
     clearSupabaseCache()
+    // Also clear our token cache
+    cachedSupabaseToken = null
+    tokenExpirationTime = null
   },
 
   subscribeToMessages: async (groupId: string, onMessage: (message: Message) => void, onError?: (error: any) => void) => {

@@ -19,6 +19,7 @@ export const RootStoreModel = types.model("RootStore").props({
     supabase_expires_at: new Date(),
   }),
   requestStore: types.optional(RequestStoreModel, {
+    user_id: 0,
     activities: [],
     location: null,
     schedules: [],

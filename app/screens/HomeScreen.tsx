@@ -41,6 +41,7 @@ export const HomeScreen = observer(function HomeScreen() {
   const { data: recommendedGroups, isLoading: isLoadingRecs, refetch: refetchRecs } = useGroupsRecs(0)
   const [refreshingRecs, setRefreshingRecs] = useState(false)
 
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     setRefreshingRecs(true)

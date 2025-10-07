@@ -41,7 +41,6 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
   const handleSearch = () => {
     const requestData = requestStore.getRequestData()
     
-    // Add user ID to the request data
     const requestDataWithUser = {
       ...requestData,
       user_id: sessionStore.user_id,

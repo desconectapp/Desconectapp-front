@@ -13,7 +13,6 @@ export const userService = {
     if (!response.ok) {
       throw new Error("Error al cargar usuarios")
     }
-    console.log("Usuarios obtenidos:", response.data)
     return response.data
   },
 
@@ -32,9 +31,7 @@ export const userService = {
 
   login: async (data: { email: string; password: string }): Promise<SessionData | undefined> => {
     const response = await api.apisauce.post<SessionData>("/auth/login", data)
-    console.log("API:LOGIN: Respuesta del servidor:", response.ok)
     if (!response.ok) {
-      console.log(response.data)
       throw new Error("Error al iniciar sesión")
     }
     try {
@@ -44,7 +41,6 @@ export const userService = {
       throw new Error("Error al procesar la sesión")
     }
 
-    console.log("API:LOGIN: Sesión iniciada:", response.data)
     return response.data
   },
 
@@ -58,12 +54,10 @@ export const userService = {
   },
 
   createProfile: async (data: CreateProfileData): Promise<void> => {
-    console.log("Creando perfil con datos:", data)
     const response = await api.apisauce.post<void>("/users/profile", data)
     if (!response.ok) {
       throw new Error("Error al crear perfil")
     }
-    console.log("Perfil creado:", response.data)
     return response.data
   },
 
@@ -72,7 +66,6 @@ export const userService = {
     if (!response.ok) {
       throw new Error("Error al obtener perfil")
     }
-    console.log("Obteniendo perfil del usuario", response.data)
     return response.data
   },
 
@@ -106,7 +99,6 @@ export const userService = {
       throw new Error("Error al validar email")
     }
 
-    console.log(response.data)
     return response.data
   },
 
