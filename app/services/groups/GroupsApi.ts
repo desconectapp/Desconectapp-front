@@ -7,7 +7,6 @@ export const groupsService = {
     if (!response.ok) {
       throw new Error("Error al cargar los grupos")
     }
-	console.log("FETCHING GROUPS: ", response.data)
     return response.data
   },
 
@@ -39,7 +38,6 @@ export const groupsService = {
 
   getGroupById: async (id: string): Promise<GroupData | undefined> => {
     const response = await api.apisauce.get<GroupData>(`/groups/${id}`)
-	console.log(response)
     if (!response.ok) {
       throw new Error("Error al cargar el grupo")
     }

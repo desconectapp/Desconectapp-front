@@ -122,13 +122,7 @@ export const chatsService = {
           onMessage(payload.new as Message)
         },
       )
-      .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-        } else if (status === "CHANNEL_ERROR") {
-          console.error("Channel subscription error")
-          onError?.(new Error("Channel subscription failed"))
-        }
-      })
+      .subscribe()
 
     return subscription
   },

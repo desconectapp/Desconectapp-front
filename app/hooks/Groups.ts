@@ -13,7 +13,7 @@ export const useExitGroup = () => {
   })
 }
 
-export const useGroups = () => {
+export const useGroups = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ["groups"],
     queryFn: async () => {
@@ -21,10 +21,11 @@ export const useGroups = () => {
       if (!response) throw new Error("Error al cargar grupos")
       return response
     },
+    enabled: options?.enabled ?? true,
   })
 }
 
-export const useGroupsRecs = (activity_id: number) => {
+export const useGroupsRecs = (activity_id: number, options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ["groupsRecs", activity_id],
     queryFn: async () => {
@@ -32,10 +33,11 @@ export const useGroupsRecs = (activity_id: number) => {
       if (!response) throw new Error("Error al cargar grupos")
       return response
     },
+    enabled: options?.enabled ?? true,
   })
 }
 
-export const useGroupById = (id: string) => {
+export const useGroupById = (id: string, options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ["groups", id],
     queryFn: async () => {
@@ -43,6 +45,7 @@ export const useGroupById = (id: string) => {
       if (!response) throw new Error("Error al cargar grupos")
       return response
     },
+    enabled: options?.enabled ?? true,
   })
 }
 

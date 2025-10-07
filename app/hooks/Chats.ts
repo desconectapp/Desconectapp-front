@@ -111,6 +111,7 @@ export const useCreateMessage = () => {
 export const useMessageSubscription = (
   groupId: string,
   onNewMessage?: (message: Message) => void,
+  options?: { enabled?: boolean },
 ) => {
   const subscriptionRef = useRef<any>(null)
   const queryClient = useQueryClient()
@@ -141,6 +142,8 @@ export const useMessageSubscription = (
 
   useEffect(() => {
     if (!tokenData?.token) return
+    if (options?.enabled !== true) return
+    if (!groupId) return
 
     const setupSubscription = async () => {
       try {
@@ -172,14 +175,7 @@ export const useMessageSubscription = (
               handleNewMessage(payload.new as Message)
             },
           )
-          .subscribe((status) => {
-            if (status === "SUBSCRIBED") {
-              // Connected successfully
-            } else if (status === "CHANNEL_ERROR") {
-              console.error("Channel subscription error")
-              handleError(new Error("Channel subscription failed"))
-            }
-          })
+          .subscribe()
 
         subscriptionRef.current = subscription
       } catch (error) {
@@ -195,7 +191,7 @@ export const useMessageSubscription = (
         subscriptionRef.current = null
       }
     }
-  }, [groupId, handleNewMessage, handleError, tokenData?.token])
+  }, [groupId, handleNewMessage, handleError, tokenData?.token, options?.enabled])
 
   return {
     isSubscribed: !!subscriptionRef.current,

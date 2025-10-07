@@ -28,7 +28,7 @@ import {
   useMessageSubscription,
   useUploadGroupImage,
 } from "@/hooks/Chats"
-import { useNavigation } from "@react-navigation/native"
+import { useIsFocused, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { MainStackParamList } from "@/navigators/MainNavigator"
 import useImagePicker from "@/hooks/Image"
@@ -49,6 +49,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const [inputText, setInputText] = useState("")
   const flatListRef = useRef<FlatList>(null)
   const navigation = useNavigation<NavigationProp>()
+  const isFocused = useIsFocused()
   const { sessionStore } = useStores()
 
   const { imageUri, setImage, handleImagePicker } = useImagePicker()
@@ -89,7 +90,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     [sessionStore.user_uuid, membersMap],
   )
 
-  const { isSubscribed } = useMessageSubscription(groupId, handleNewMessage)
+  const { isSubscribed } = useMessageSubscription(groupId, handleNewMessage, { enabled: isFocused })
 
   // Memoize the formatted messages to prevent unnecessary re-renders
   const formattedMessages = useMemo(() => {

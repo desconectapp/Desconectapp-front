@@ -17,7 +17,7 @@ import { AutoImage, Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
-import { useNavigation } from "@react-navigation/native"
+import { useIsFocused, useNavigation } from "@react-navigation/native"
 import { PhotoGallerySlider, type PhotoItem } from "@/components/Custom/PhotoGallerySlider"
 import { useGroups, useGroupsRecs } from "@/hooks/Groups"
 import { spacing } from "@/theme"
@@ -33,7 +33,8 @@ export const HomeScreen = observer(function HomeScreen() {
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const navigation = useNavigation<AppStackScreenProps<"HomeScreen">["navigation"]>()
 
-  const { data: paginatedGroups, isLoading, refetch } = useGroups()
+  const isFocused = useIsFocused()
+  const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
 
@@ -41,7 +42,7 @@ export const HomeScreen = observer(function HomeScreen() {
     data: recommendedGroups,
     isLoading: isLoadingRecs,
     refetch: refetchRecs,
-  } = useGroupsRecs(0)
+  } = useGroupsRecs(0, { enabled: isFocused })
   const [refreshingRecs, setRefreshingRecs] = useState(false)
 
   const onRefresh = useCallback(async () => {
