@@ -19,6 +19,7 @@ import { useNavigation } from "@react-navigation/native"
 import type { AppStackScreenProps } from "@/navigators"
 import { ActivityRequest } from "@/services/activities/Activities.types"
 import { useActivityRequests } from "@/hooks/Search"
+import { formatWeekTimeslots } from "@/utils/utils"
 
 const { width } = Dimensions.get("window")
 
@@ -27,7 +28,7 @@ const { width } = Dimensions.get("window")
 //   user_id: string
 //   activity_id: string
 //   description: string
-//   week_hours: number[]
+//   week_timeslots: number[]
 //   participants_needed: number
 //   maximum_participants: number
 //   latitude: number
@@ -64,22 +65,6 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
       // Default navigation or action
       console.log("Activity request pressed:", item.id)
     }
-  }
-
-  const formatWeekHours = (weekHours: number[]) => {
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-    const selectedDays = weekHours
-      .map((hour) => {
-        const day = Math.floor(hour / 24)
-        if (day > 6 || day < 0) {
-          return null
-        }
-        return days[day]
-      })
-      .filter(Boolean)
-
-    return [...new Set(selectedDays)].join(", ")
   }
 
   const formatDate = (dateString: string) => {
@@ -131,7 +116,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
           <View style={$detailItem}>
             <Text style={themed($detailLabel)}>Available on</Text>
             <Text style={themed($detailValue)}>
-              {formatWeekHours(item.week_hours) || "Flexible"}
+              {formatWeekTimeslots(item.week_timeslots) || "Flexible"}
             </Text>
           </View>
 
@@ -141,7 +126,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
           </View>
         </View>
 
-        <View style={$footer}>
+        <View style={themed($footer)}>
           <Text style={themed($dateText)}>Created: {formatDate(item.created_at)}</Text>
 
           <Text
@@ -198,18 +183,15 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
 
     return (
       <FlatList
+        style={{ flex: 1 }} // asegurar que la lista ocupe el espacio disponible
         data={data}
         renderItem={renderActivityRequest}
         keyExtractor={(item) => item.id}
         contentContainerStyle={$listContainer}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            colors={[theme.colors.tint]}
-          />
-        }
+        // usar las props nativas de FlatList para pull-to-refresh
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
     )
   }
@@ -343,14 +325,14 @@ const $detailValue = (theme: any): TextStyle => ({
   fontWeight: "500",
 })
 
-const $footer: ViewStyle = {
+const $footer = (theme: any): ViewStyle => ({
   borderTopWidth: 1,
-  borderTopColor: "#f0f0f0",
+  borderTopColor: theme.colors.border,
   paddingTop: spacing.sm,
   flex: 1,
   flexDirection: "row",
   justifyContent: "space-between",
-}
+})
 
 const $dateText = (theme: any): TextStyle => ({
   fontSize: 12,

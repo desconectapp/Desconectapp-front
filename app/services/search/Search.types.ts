@@ -20,13 +20,6 @@ export interface ActivitySearchRequest {
   search_radius: number;
   max_participants: number;
   participants_needed: number;
-  schedules: BackendSchedules;
+  timeslots: number[];
 }
 
-export type TimeSlot = {
-  start: number;
-  end: number;
-};
-export interface BackendSchedules {
-  [day: string]: TimeSlot[];
-};

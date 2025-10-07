@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import { Screen } from "../components/Screen"
 import { Text } from "../components/Text"
+import { Button } from "../components/Button"
+import { TextField } from "../components/TextField"
 import { 
   View, 
   StyleSheet, 
@@ -8,7 +10,12 @@ import {
   TouchableOpacity, 
   Modal, 
   Animated,
-  Dimensions
+  Dimensions,
+  FlatList,
+  ListRenderItem,
+  TextInput,
+  Alert,
+  ScrollView
 } from "react-native"
 import { Picker } from "@react-native-picker/picker"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -19,311 +26,378 @@ import { ActivitiesForm } from "@/components/Custom/ActivitiesForm"
 import { TimePickerForm } from "@/components/Custom/TimePickerForm"
 import LocationForm from "@/components/Custom/LocationForm"
 import MapView from "react-native-maps"
+import { useStores } from "@/models"
+import { containers, buttons, buttonTexts, texts, inputs, chips, separators } from "@/theme/commonStyles"
+import { CustomSlider } from "@/components"
+import { Activity } from "@/services/activities/Activities.types"
 
 const { width } = Dimensions.get('window')
 
 export function SearchScreen() {
-  const { themed } = useAppTheme()
-  const [modalMode, setModalMode] = useState<"selectActivity" | "selectLocation" | "selectTime" | null>(null)
-  const [selectedPreferences, setSelectedPreferences] = useState<any[]>([])
-  const [selectedCoordinates, setSelectedCoordinates] = useState<{
-    latitude: number
-    longitude: number  
-  } | null>(null)
+  const { themed, theme } = useAppTheme()
+  const { requestStore } = useStores()
   const navigation = useNavigation<AppStackScreenProps<"Main">["navigation"]>()
-
-  // Animation values
-  const scaleAnim = useRef(new Animated.Value(1)).current
-  const glowAnim = useRef(new Animated.Value(0)).current
-  const rotateAnim = useRef(new Animated.Value(0)).current
-  const shimmerAnim = useRef(new Animated.Value(-1)).current
-
-  // Continuous glow animation
+  
+  // Activities state
+  const [allActivities, setAllActivities] = useState<Activity[]>([])
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  
+  // Participants state
+  const [minParticipants, setMinParticipants] = useState(3)
+  const [maxParticipants, setMaxParticipants] = useState(5)
+  
+  // Activities API
+  const limit = 20
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const { data, isLoading, isError, isFetching } = useActivities(limit, offset)
+  
   useEffect(() => {
-    const glowAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: false,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: false,
-        }),
-      ])
-    )
-
-    const shimmerAnimation = Animated.loop(
-      Animated.timing(shimmerAnim, {
-        toValue: 1,
-        duration: 3000,
-        useNativeDriver: false,
-      })
-    )
-
-    glowAnimation.start()
-    shimmerAnimation.start()
-
-    return () => {
-      glowAnimation.stop()
-      shimmerAnimation.stop()
+    if (isError) {
+      console.error("Error loading activities")
+      return
     }
-  }, [])
+    
+    if (data && data.length > 0) {
+      setAllActivities((prev) => {
+        const existingIds = new Set(prev.map(item => item.id))
+        const newItems = data.filter(item => !existingIds.has(item.id))
+        return [...prev, ...newItems]
+      })
+      if (data.length < limit) {
+        setHasMore(false)
+      }
+    } else if (data && data.length === 0) {
+      setHasMore(false)
+    }
+  }, [data, isError])
 
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.95,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start()
+  const loadMoreActivities = () => {
+    if (!isFetching && !isLoading && hasMore && !isError) {
+      setOffset((prev) => prev + limit)
+    }
   }
 
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 100,
-        friction: 3,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rotateAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start()
+  // Filter activities based on search query
+  const filteredActivities = allActivities.filter(activity =>
+    activity.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const handleActivitySelect = (activity: Activity) => {
+    setSelectedActivity(activity)
   }
 
-  const handlePress = () => {
-    // Add a quick pulse animation on press
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1.05,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start()
-
-    navigation.navigate("ActivityPickerScreen")
+  const handleMinParticipantsChange = (value: number) => {
+    setMinParticipants(value)
+    if (maxParticipants <= value) {
+      setMaxParticipants(value + 1 <= 10 ? value + 1 : 10)
+    }
   }
 
-  const glowOpacity = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, 0.8],
-  })
+  const handleMaxParticipantsChange = (value: number) => {
+    setMaxParticipants(value)
+    if (minParticipants > value) {
+      setMinParticipants(value - 1 >= 3 ? value - 1 : 3)
+    }
+  }
 
-  const glowRadius = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [10, 25],
-  })
+  const handleSearch = () => {
+    if (!selectedActivity) {
+      Alert.alert("Error", "Por favor selecciona una actividad")
+      return
+    }
 
-  const rotateInterpolate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '2deg'],
-  })
+    try {
+      // Save to store
+      requestStore.setActivity(selectedActivity)
+      requestStore.setMinParticipants(minParticipants)
+      requestStore.setMaxParticipants(maxParticipants)
+      
+      // Navigate to location picker
+      navigation.navigate("LocationPickerScreen" as any)
+    } catch (error) {
+      console.error("Error starting search:", error)
+      Alert.alert("Error", "Hubo un problema al iniciar la búsqueda")
+    }
+  }
 
-  const shimmerTranslate = shimmerAnim.interpolate({
-    inputRange: [-1, 1],
-    outputRange: [-width, width],
-  })
+  const renderActivityItem: ListRenderItem<Activity> = ({ item }) => {
+    const isSelected = selectedActivity?.id === item.id
+    
+    return (
+      <TouchableOpacity
+        style={[
+          themed(chips.base),
+          themed(isSelected ? chips.selected : chips.unselected),
+          styles.activityChip
+        ]}
+        onPress={() => handleActivitySelect(item)}
+      >
+        <Text style={[
+          themed(chips.text),
+          themed(isSelected ? chips.textSelected : chips.textUnselected)
+        ]}>
+          {item.icon} {item.name}
+        </Text>
+      </TouchableOpacity>
+    )
+  }
 
   return (
     <Screen
-      preset="scroll"
-      contentContainerStyle={[$container, $bottomContainerInsets]}
-      backgroundColor={themed($screenBackground)}
+      preset="auto"
+      contentContainerStyle={[containers.screen, styles.container]}
+      backgroundColor={themed(() => theme.colors.background)}
     >
-      <Text preset="heading" text="Búsqueda" style={$heading} />
-      <View style={styles.form}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "center",
-            marginTop: 130,
-            alignContent: "center",
-          }}
-        >
-          {/* Glow effect container */}
-          <Animated.View
-            style={[
-              styles.glowContainer,
-              {
-                shadowOpacity: glowOpacity,
-                shadowRadius: glowRadius,
-              }
-            ]}
-          >
-            <Animated.View
-              style={[
-                styles.buttonContainer,
-                {
-                  transform: [
-                    { scale: scaleAnim },
-                    { rotate: rotateInterpolate }
-                  ],
-                }
-              ]}
-            >
-              <TouchableOpacity
-                style={styles.searchButton}
-                onPressIn={handlePressIn}
-                onPressOut={handlePressOut}
-                onPress={handlePress}
-                activeOpacity={1}
-              >
-                {/* Glass overlay */}
-                <View style={styles.glassOverlay} />
-                
-                {/* Shimmer effect */}
-                <Animated.View
-                  style={[
-                    styles.shimmer,
-                    {
-                      transform: [{ translateX: shimmerTranslate }],
-                    }
-                  ]}
+      {/* Header */}
+      <Text preset="heading" style={[themed(texts.heading), styles.title]}>
+        ¿Qué quieres hacer? 🎯
+      </Text>
+
+      {/* Search Input */}
+      <View style={styles.searchSection}>
+        <Text style={[themed(texts.label), styles.sectionTitle]}>
+          Buscar actividad
+        </Text>
+        <TextInput
+          style={[themed(inputs.base), themed(inputs.text)]}
+          placeholder="Buscar actividades..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor={theme.colors.textDim}
+        />
+      </View>
+
+      {/* Activities Carousel */}
+      <View style={styles.activitiesSection}>
+        <Text style={[themed(texts.label), styles.sectionTitle]}>
+          Actividades
+        </Text>
+
+        <View style={styles.carouselContainer}>
+            {isLoading && allActivities.length === 0 ? (
+              <View style={[containers.centered, styles.loadingContainer]}>
+                <Text style={themed(texts.bodySmall)}>Cargando actividades...</Text>
+              </View>
+            ) : isError ? (
+              <View style={[containers.centered, styles.loadingContainer]}>
+                <Text style={themed(texts.error)}>Error al cargar actividades</Text>
+              </View>
+            ) : (
+              <View style={{ position: 'relative' }}>
+                <FlatList
+                  data={filteredActivities}
+                  renderItem={renderActivityItem}
+                  keyExtractor={(item) => item.id.toString()}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.carouselContent}
+                  onEndReached={loadMoreActivities}
+                  onEndReachedThreshold={0.8}
+                  ListEmptyComponent={
+                    searchQuery ? (
+                      <View style={[containers.centered, styles.emptyContainer]}>
+                        <Text style={themed(texts.bodySmall)}>
+                          No se encontró "{searchQuery}"
+                        </Text>
+                        <TouchableOpacity
+                          style={[themed(buttons.secondary), styles.suggestButton]}
+                          onPress={() => {
+                            const customActivityObj: Activity = {
+                              id: -1,
+                              name: searchQuery.trim(),
+                              icon: "✨"
+                            }
+                            setSelectedActivity(customActivityObj)
+                            setSearchQuery("")
+                          }}
+                        >
+                          <Text style={themed(buttonTexts.secondary)}>
+                            ✨ Agregar "{searchQuery}" como actividad
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View style={[containers.centered, styles.emptyContainer]}>
+                        <Text style={themed(texts.bodySmall)}>
+                          No hay actividades disponibles
+                        </Text>
+                      </View>
+                    )
+                  }
                 />
+                {filteredActivities.length > 3 && (
+                  <View style={styles.scrollHintContainer}>
+                    <Text style={[themed(texts.caption), styles.scrollHint]}>
+                      ➡️ Desliza para ver más
+                    </Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
 
-                {/* Content */}
-                <View style={styles.buttonContent}>
-                  <Text style={styles.text}>Búsqueda 🔍</Text>
-                </View>
+        {/* Selected Activity Display */}
+        {selectedActivity && (
+          <View style={[themed(containers.card), styles.selectedActivityCard]}>
+            <Text style={[themed(texts.title), styles.selectedActivityText]}>
+              {selectedActivity.icon} {selectedActivity.name}
+            </Text>
+          </View>
+        )}
+      </View>
 
-                {/* Border glow */}
-                <View style={styles.borderGlow} />
-              </TouchableOpacity>
-            </Animated.View>
-          </Animated.View>
+      {/* Participants Section */}
+      <View style={styles.participantsSection}>
+        <Text style={[themed(texts.label), styles.sectionTitle]}>
+          Participantes ({minParticipants}-{maxParticipants}) {'🙂'.repeat(minParticipants)} 
+          {'🫥'.repeat(Math.max(0, maxParticipants - minParticipants))}
+        </Text>
+      
+        
+        <View style={styles.participantsRow}>
+          <View style={styles.sliderWrapper}>
+            <CustomSlider
+              label="Min"
+              value={minParticipants}
+              min={3}
+              max={10}
+              step={1}
+              onValueChange={handleMinParticipantsChange}
+              formatValue={(value) => `${value}`}
+              showButtons={false}
+            />
+          </View>
+
+          <View style={styles.sliderWrapper}>
+            <CustomSlider
+              label="Max"
+              value={maxParticipants}
+              min={3}
+              max={10}
+              step={1}
+              onValueChange={handleMaxParticipantsChange}
+              formatValue={(value) => `${value}`}
+              showButtons={false}
+            />
+          </View>
         </View>
       </View>
+
+      {/* Next Button */}
+      <Button
+        text="Siguiente"
+        style={[
+          themed(buttons.primary),
+          styles.searchButton,
+          !selectedActivity && themed(buttons.primaryDisabled)
+        ]}
+        textStyle={[
+          themed(buttonTexts.primary),
+          !selectedActivity && themed(buttonTexts.primaryDisabled)
+        ]}
+        disabled={!selectedActivity}
+        onPress={handleSearch}
+      />
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  button: {
-    marginTop: 24,
+  container: {
+    paddingBottom: 16,
   },
-  form: {
-    gap: 16,
-    marginTop: 24,
+  title: {
+    textAlign: "center",
+    marginBottom: 16,
   },
-  glowContainer: {
-    shadowColor: "#ff5c5c",
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 20,
+  searchSection: {
+    marginBottom: 16,
   },
-  buttonContainer: {
-    borderRadius: 35,
+  sectionTitle: {
+    marginBottom: 6,
   },
-  searchButton: {
-    backgroundColor: "rgba(255, 92, 92, 0.9)",
-    width: 200,
-    height: 200,
-    borderRadius: 500,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    position: "relative",
-    // Glass effect
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    // Enhanced shadow for depth
-    ...Platform.select({
-      ios: {
-        shadowColor: "#ff5c5c",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 15,
-      },
-      android: {
-        elevation: 15,
-      },
-    }),
+  activitiesSection: {
+    marginBottom: 16,
   },
-  glassOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
+  customActivityContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
   },
-  shimmer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    width: 50,
-    transform: [{ skewX: "-20deg" }],
-  },
-  buttonContent: {
-    zIndex: 2,
-    position: "relative",
-  },
-  borderGlow: {
-    position: "absolute",
-    top: -2,
-    left: -2,
-    right: -2,
-    bottom: -2,
-    borderRadius: 37,
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    zIndex: -1,
-  },
-  text: {
-    color: "white",
-    fontSize: 24,
-    fontWeight: "bold",
-    textShadowColor: "rgba(0, 0, 0, 0.3)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-})
-
-const $container = { padding: 20 }
-const $bottomContainerInsets = {}
-const $screenBackground = "background"
-const $heading = { marginBottom: 16 }
-
-const modalStyles = StyleSheet.create({
-  overlay: {
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+  customInput: {
     flex: 1,
   },
-  content: {
-    width: "90%",
-    maxHeight: "40%",
-    height: 500,
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 10,
-    overflow: "hidden",
+  addButton: {
+    paddingHorizontal: 20,
+    minWidth: 100,
   },
-  footer: {
-    backgroundColor: "#fff",
-    borderColor: "#ddd",
-    borderTopWidth: 1,
-    padding: 16,
+  carouselContainer: {
+    marginTop: 8,
+  },
+  carouselContent: {
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  activityChip: {
+    marginRight: 12,
+    minWidth: 120,
+  },
+  loadingContainer: {
+    paddingVertical: 20,
+  },
+  emptyContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  suggestButton: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  selectedActivityCard: {
+    marginTop: 8,
+    paddingVertical: 8,
+  },
+  selectedActivityText: {
+    textAlign: "center",
+  },
+  participantsSection: {
+    marginBottom: 16,
+  },
+  participantsVisual: {
+    textAlign: "center",
+    fontSize: 18,
+    marginBottom: 8,
+  },
+  participantsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  sliderWrapper: {
+    flex: 1,
+  },
+  searchButton: {
+    marginTop: 8,
+  },
+  activitiesSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  scrollHint: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  scrollHintContainer: {
+    position: "absolute",
+    bottom: -20,
+    right: 8,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
   },
 })

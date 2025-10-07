@@ -5,11 +5,12 @@ import {
   TextStyle,
   TouchableOpacity,
   ViewStyle,
+  Animated,
 } from "react-native"
 import { View } from "tamagui"
 import { Text } from "../Text"
 import { useActivities } from "@/hooks/Users"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
 
@@ -32,9 +33,37 @@ export function ActivitiesForm({
   const [allPreferences, setAllPreferences] = useState<any[]>([])
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true)
   const { themed } = useAppTheme()
+  const fadeAnim = useRef(new Animated.Value(1)).current
+  const flatListRef = useRef<FlatList>(null)
 
   const { data, isLoading, isError, isFetching } = useActivities(limit, offset)
+  
+  // Auto-hide scroll indicator after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      hideScrollIndicator()
+    }, 3000)
+    
+    return () => clearTimeout(timer)
+  }, [])
+  
+  const hideScrollIndicator = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowScrollIndicator(false)
+    })
+  }
+
+  const handleScroll = () => {
+    if (showScrollIndicator) {
+      hideScrollIndicator()
+    }
+  }
   
   useEffect(() => {
     if (isError) {
@@ -99,38 +128,50 @@ export function ActivitiesForm({
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={allPreferences}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          contentContainerStyle={$listContent}
-          columnWrapperStyle={$row}
-          ListHeaderComponent={
-            <View style={$header}>
-              <Text preset="heading" style={themed($title)}>
-                {title ?? "What are you into?"}
-              </Text>
-              <Text preset="subheading" style={themed($subtitle)}>
-                {description ?? "Choose your interests and hobbies. You can select multiple options."}
-              </Text>
-            </View>
-          }
-          ListFooterComponent={
-            <View style={$footer}>
-              <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
-              {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
-              {isLoading && allPreferences.length === 0 && (
-                <Text style={themed($selectedCount)}>Loading activities...</Text>
-              )}
-            </View>
-          }
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.6}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          windowSize={10}
-        />
+        <>
+          <FlatList
+            ref={flatListRef}
+            data={allPreferences}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            contentContainerStyle={$listContent}
+            columnWrapperStyle={$row}
+            ListHeaderComponent={
+              <View style={$header}>
+                <Text preset="heading" style={themed($title)}>
+                  {title ?? "What are you into?"}
+                </Text>
+                <Text preset="subheading" style={themed($subtitle)}>
+                  {description ?? "Choose your interests and hobbies. You can select multiple options."}
+                </Text>
+              </View>
+            }
+            ListFooterComponent={
+              <View style={$footer}>
+                <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
+                {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
+                {isLoading && allPreferences.length === 0 && (
+                  <Text style={themed($selectedCount)}>Loading activities...</Text>
+                )}
+              </View>
+            }
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.6}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            windowSize={10}
+          />
+          
+          {/* Scroll Indicator */}
+          {showScrollIndicator && allPreferences.length > 4 && (
+            <Animated.View style={[themed($scrollIndicator), { opacity: fadeAnim }]}>
+              <Text style={themed($scrollIndicatorText)}>⬇️ Desliza para ver más</Text>
+            </Animated.View>
+          )}
+        </>
       )}
     </View>
   )
@@ -262,5 +303,26 @@ const $continueButtonText = (theme: any): TextStyle => ({
 const $continueButtonTextDisabled = (theme: any): TextStyle => ({
   color: theme.colors.textDim,
   fontSize: 16,
+  fontWeight: "600",
+})
+
+const $scrollIndicator = (theme: any): ViewStyle => ({
+  position: "absolute",
+  bottom: spacing.xl,
+  right: spacing.lg,
+  backgroundColor: theme.colors.tint,
+  paddingHorizontal: spacing.md,
+  paddingVertical: spacing.sm,
+  borderRadius: spacing.md,
+  shadowColor: theme.colors.palette.neutral800,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5,
+})
+
+const $scrollIndicatorText = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontSize: 14,
   fontWeight: "600",
 })

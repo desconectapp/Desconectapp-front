@@ -1,59 +1,151 @@
 "use client"
 
 import { observer } from "mobx-react-lite"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import {
   View,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
   TouchableOpacity,
-  Image,
   Dimensions,
   Modal,
+  FlatList,
 } from "react-native"
 import { Screen, TextField, Button, Text, AutoImage } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm, Controller } from "react-hook-form"
 import { useAppToast } from "@/components/useToast"
+import { chatsService } from "@/services/chat"
 import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
+
 import type { AppStackScreenProps } from "@/navigators"
-import { useEditProfile, useProfile } from "@/hooks/Users"
+
 import { useStores } from "@/models"
 import { Pressable } from "react-native"
+import { useUploadProfileImage } from "@/hooks/Chats"
+import {
+  useAddPreferencesBatch,
+  useEditProfile,
+  useProfile,
+  useActivities,
+  useUserPreferences,
+} from "@/hooks/Users"
 
-// import defaultAvatar from "../../assets/images/default-avatar.png"
-import defaultAvatar from "../../assets/images/logo.png"
-import { ActivityRequestsList } from "@/components/Custom/ActivitiesRequestList"
+const defaultAvatar = require("../../assets/images/default-avatar.png")
 
 const { width, height } = Dimensions.get("window")
 
 interface ProfileFormData {
   name: string
   location: string
-  // workStatus: string
 }
 
 export const ProfileScreen = observer(function ProfileScreen() {
   const { themed, theme } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
-  const [isEditing, setIsEditing] = useState<boolean>(false)
-  const [isSaving, setIsSaving] = useState<boolean>(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false)
+
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
 
-  const [modalVisible, setModalVisible] = useState(false)
-
   const { data: profile } = useProfile()
-  const { profileImage, handleImagePicker } = useImagePicker()
+  const { imageUri, handleImagePicker } = useImagePicker()
   const { mutateAsync: editProfileMutateAsync } = useEditProfile()
-
-  const modalStyles = createModalStyles(theme)
-
+  const addPreferences = useAddPreferencesBatch()
   const { sessionStore } = useStores()
+
+  const [selectedPreferences, setSelectedPreferences] = useState<number[]>([])
+  const [allPreferences, setAllPreferences] = useState<any[]>([])
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const limit = 10
+  const [query, setQuery] = useState("")
+  const prevQuery = useRef("")
+
+  const { data: prefsData, isFetching } = useActivities(limit, offset, query)
+  const { data: userPreferencesData } = useUserPreferences()
+
+  const { isPending: isUploadingImage, mutateAsync: uploadProfilePictureAsync } =
+    useUploadProfileImage()
+
+  useEffect(() => {
+    if (userPreferencesData && showPreferencesModal) {
+      const ids = userPreferencesData?.preferences?.map((p: any) => p.id) || []
+
+      setSelectedPreferences(ids)
+      setAllPreferences((prev) => [
+        ...userPreferencesData.preferences,
+        ...prev.filter((p) => !ids.includes(p.id)),
+      ])
+    }
+  }, [userPreferencesData, showPreferencesModal])
+
+  useEffect(() => {
+    if (query !== prevQuery.current) {
+      prevQuery.current = query
+
+      if (prefsData) {
+        setAllPreferences((_prev) => prefsData)
+        setHasMore(prefsData.length >= limit)
+        setOffset(prefsData.length)
+      } else {
+        setHasMore(false)
+        setAllPreferences([])
+      }
+
+      return
+    }
+
+    if (prefsData && prefsData.length > 0) {
+      setAllPreferences((prev) => [...prev, ...prefsData])
+      if (prefsData.length < limit) setHasMore(false)
+    } else if (prefsData && prefsData.length === 0) {
+      setHasMore(false)
+    }
+  }, [prefsData, query, limit])
+
+  const handleEndReached = useCallback(() => {
+    if (!isFetching && hasMore) {
+      setOffset((prev) => prev + limit)
+    }
+  }, [isFetching, hasMore, limit])
+
+  const togglePreference = useCallback((id: number) => {
+    setSelectedPreferences((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    )
+  }, [])
+
+  const handleSavePreferences = async () => {
+    try {
+      await addPreferences.mutateAsync(selectedPreferences)
+      showToast("Preferences Updated", "Your preferences were saved successfully")
+      setShowPreferencesModal(false)
+    } catch (err) {
+      console.error(err)
+      showToast("Error", "Failed to save preferences")
+    }
+  }
+
+  const renderItem = ({ item }: any) => {
+    const selected = selectedPreferences.includes(item.id)
+    return (
+      <TouchableOpacity
+        key={item.id}
+        onPress={() => togglePreference(item.id)}
+        style={[$chip, themed(selected ? $chipSelected : $chipUnselected)]}
+      >
+        <Text style={$emoji}>{item.icon}</Text>
+        <Text style={themed(selected ? $chipTextSelected : $chipTextUnselected)}>{item.name}</Text>
+      </TouchableOpacity>
+    )
+  }
 
   const {
     control,
@@ -72,13 +164,26 @@ export const ProfileScreen = observer(function ProfileScreen() {
   })
 
   const onSubmit = async (data: ProfileFormData) => {
-    console.log(profileImage)
     setIsSaving(true)
     try {
+      let url
+      if (imageUri) {
+        console.log("Uploading image:", imageUri, "for user:", sessionStore.user_uuid)
+        if (sessionStore.user_uuid != null) {
+          url = await uploadProfilePictureAsync({ userId: sessionStore.user_uuid, uri: imageUri })
+        } else {
+          console.warn("No user ID available for image upload")
+        }
+      }
+
+      console.log("Updating profile with data:", data, "and image URL:", url)
+
       await editProfileMutateAsync({
+        ...profile,
         ...data,
-        image: profileImage,
+        avatar_url: url || profile?.avatar_url,
       })
+
       showToast("Profile Updated", "Your profile has been successfully updated")
       setIsEditing(false)
       reset(data)
@@ -91,6 +196,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
   }
 
   const logOut = () => {
+    // Clear Supabase token cache
+    chatsService.clearSupabaseCache()
     sessionStore.setSession(null)
     navigation.navigate("LoginScreen")
   }
@@ -100,11 +207,14 @@ export const ProfileScreen = observer(function ProfileScreen() {
     setIsEditing(false)
   }
 
+  if (!profile) {
+    return null
+  }
+
   return (
     <Screen
-      preset="scroll"
       contentContainerStyle={[$container, $bottomContainerInsets]}
-      backgroundColor={themed($screenBackground)}
+      backgroundColor={theme.colors.background}
     >
       <Text preset="heading" style={themed({ fontSize: 24, fontWeight: "bold" })}>
         My Profile
@@ -119,8 +229,12 @@ export const ProfileScreen = observer(function ProfileScreen() {
         <View style={$profileContent}>
           <View style={$profileImageSection}>
             <View style={$imageWrapper}>
-              <Image
-                source={profileImage ? { uri: profileImage } : defaultAvatar}
+              <AutoImage
+                source={
+                  imageUri || profile?.avatar_url
+                    ? { uri: imageUri ?? profile?.avatar_url }
+                    : defaultAvatar
+                }
                 style={$profileImage}
                 resizeMode="cover"
               />
@@ -131,7 +245,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
                   activeOpacity={0.8}
                 >
                   <View style={themed($imageEditButton)}>
-                    <Text style={themed($imageEditText)}>📷</Text>
+                    <Text style={themed($imageEditText)}>✏️</Text>
                   </View>
                 </TouchableOpacity>
               )}
@@ -201,7 +315,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
               style={themed($saveButton)}
               textStyle={themed($saveButtonText)}
               loading={isSaving}
-              disabled={isSaving || (!isDirty && profileImage === null)}
+              disabled={isUploadingImage || isSaving || (!isDirty && imageUri === null)}
             />
 
             <Button
@@ -214,32 +328,20 @@ export const ProfileScreen = observer(function ProfileScreen() {
         )}
       </Pressable>
 
-      <ActivityRequestsList onItemPress={(item) => setModalVisible(true)} />
-
-      <Modal
-        {...modalAnimationConfig}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+      <Pressable
+        onPress={() => setShowPreferencesModal(true)}
+        style={({ pressed }) => [
+          themed($editPreferencesButton),
+          {
+            width: "100%",
+            backgroundColor: pressed
+              ? theme.colors.separator
+              : themed($editPreferencesButton).backgroundColor,
+          },
+        ]}
       >
-        <View style={modalStyles.modalOverlay}>
-          <View style={modalStyles.modalContainer}>
-            <View style={modalStyles.modalHeader}>
-              <Text style={themed(modalStyles.modalTitle)}>Are you sure you want cancel this request?</Text>
-              <TouchableOpacity
-                style={modalStyles.modalCloseButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={modalStyles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={modalStyles.modalBody}>
-              <Pressable style={modalStyles.modalPrimaryButton} onPress={() => {}}>
-                <Text style={modalStyles.modalPrimaryButtonText}>Cancel</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <Text style={themed($settingsButtonText)}>{"Edit Preferences"}</Text>
+      </Pressable>
 
       <Pressable
         onPress={() => logOut()}
@@ -253,9 +355,109 @@ export const ProfileScreen = observer(function ProfileScreen() {
       >
         <Text style={themed($settingsButtonText)}>{"Log out"}</Text>
       </Pressable>
+
+      <Modal
+        visible={showPreferencesModal}
+        onRequestClose={() => setShowPreferencesModal(false)}
+        {...modalAnimationConfig}
+      >
+        <View style={createModalStyles(theme).modalOverlay}>
+          <View style={createModalStyles(theme).modalContainer}>
+            <View style={createModalStyles(theme).modalHeader}>
+              <Text style={createModalStyles(theme).modalTitle}>Select Preferences</Text>
+              <TouchableOpacity
+                onPress={() => setShowPreferencesModal(false)}
+                style={createModalStyles(theme).modalCloseButton}
+              >
+                <Text style={createModalStyles(theme).modalCloseText}>×</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TextField
+              value={query}
+              style={createModalStyles(theme).modalSearchInput}
+              containerStyle={createModalStyles(theme).modalSearchInputContainer}
+              onChangeText={(text) => {
+                setOffset(0)
+                setQuery(text)
+              }}
+              placeholder="Search preferences..."
+              autoCapitalize="none"
+            />
+
+            <FlatList
+              data={allPreferences}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={2}
+              contentContainerStyle={{ paddingBottom: spacing.lg }}
+              onEndReached={() => {
+                handleEndReached()
+              }}
+              onEndReachedThreshold={0.6}
+            />
+
+            <View style={createModalStyles(theme).modalFooter}>
+              <TouchableOpacity
+                style={createModalStyles(theme).modalSecondaryButton}
+                onPress={() => setShowPreferencesModal(false)}
+              >
+                <Text style={createModalStyles(theme).modalSecondaryButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={createModalStyles(theme).modalPrimaryButton}
+                onPress={handleSavePreferences}
+              >
+                <Text style={createModalStyles(theme).modalPrimaryButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   )
 })
+
+const $chip: ViewStyle = {
+  flex: 1,
+  borderRadius: 25,
+  paddingVertical: spacing.sm,
+  paddingHorizontal: spacing.md,
+  marginHorizontal: spacing.xs / 2,
+  alignItems: "center",
+  marginBottom: spacing.md,
+}
+
+const $chipSelected = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.tint,
+  borderColor: theme.colors.tint,
+  borderWidth: 2,
+})
+
+const $chipUnselected = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.backgroundMuted,
+  borderColor: theme.colors.border,
+  borderWidth: 2,
+})
+
+const $chipTextSelected = (theme: any): TextStyle => ({
+  color: theme.colors.tintInverse,
+  fontWeight: "600",
+  textAlign: "center",
+})
+
+const $chipTextUnselected = (theme: any): TextStyle => ({
+  color: theme.colors.text,
+  fontWeight: "600",
+  textAlign: "center",
+})
+
+const $emoji: TextStyle = {
+  fontSize: 26,
+  lineHeight: 32,
+  marginBottom: 4,
+}
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
@@ -282,15 +484,15 @@ const $settingsButtonText = (theme: any): TextStyle => ({
 const $profileCard = (theme: any): ViewStyle => ({
   marginTop: spacing.md,
 
-  backgroundColor: theme.colors.palette.neutral100,
+  backgroundColor: theme.colors.palette.neutral200,
   borderRadius: spacing.lg,
   padding: spacing.lg,
   marginBottom: spacing.xl,
-  shadowColor: theme.colors.palette.neutral900,
-  shadowOffset: {
-    width: 0,
-    height: 2,
-  },
+  // shadowColor: theme.colors.palette.neutral900,
+  // shadowOffset: {
+  //   width: 0,
+  //   height: 2,
+  // },
   shadowOpacity: 0.1,
   shadowRadius: 8,
   elevation: 4,
@@ -379,9 +581,20 @@ const $buttonContainer: ViewStyle = {
 
 const $saveButton = (theme: any): ViewStyle => ({
   backgroundColor: theme.colors.tint,
-  borderRadius: spacing.md,
-  minHeight: 50,
-  borderWidth: 1.5,
+  marginBottom: 8,
+  borderRadius: 20,
+  justifyContent: "center",
+  alignItems: "center",
+})
+
+const $editPreferencesButton = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.tint,
+  marginBottom: 8,
+  width: 40,
+  height: 40,
+  borderRadius: 20,
+  justifyContent: "center",
+  alignItems: "center",
 })
 
 const $saveButtonText = (theme: any): TextStyle => ({
@@ -661,6 +874,14 @@ export const createModalStyles = (theme: any) => ({
     color: theme.colors.textDim,
     marginTop: spacing.md,
   } as TextStyle,
+
+  modalSearchInputContainer: {
+    marginBottom: spacing.md,
+  } as ViewStyle,
+
+  modalSearchInput: {
+    fontSize: 16,
+  } as TextStyle,
 })
 
 export const modalAnimationConfig = {
@@ -673,4 +894,10 @@ export const bottomSheetAnimationConfig = {
   animationType: "slide" as const,
   transparent: true,
   statusBarTranslucent: true,
+}
+
+const $listWrapper: ViewStyle = {
+  flex: 1,
+  paddingBottom: spacing.lg,
+  backgroundColor: "transparent",
 }

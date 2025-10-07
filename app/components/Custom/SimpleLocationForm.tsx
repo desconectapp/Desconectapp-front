@@ -9,8 +9,11 @@ import {
   Platform,
 } from "react-native"
 import MapView, { Marker } from "react-native-maps"
+import { useAppTheme } from "@/utils/useAppTheme"
 
 export default function SimpleLocationForm() {
+  const { theme } = useAppTheme()
+  const styles = createThemedStyles(theme)
   const [mapReady, setMapReady] = useState(false)
 
   const fetchLocalidades = async (query: string) => {
@@ -130,51 +133,53 @@ export default function SimpleLocationForm() {
   )
 }
 
-const styles = StyleSheet.create({
+// Create theme-aware styles
+const createThemedStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
   searchSection: {
     padding: 8,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: theme.colors.border,
     padding: 8,
     borderRadius: 4,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
   },
   suggestionsList: {
     maxHeight: 150,
     marginTop: 4,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: theme.colors.border,
     borderRadius: 4,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
   },
   suggestion: {
     padding: 8,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: theme.colors.border,
   },
   suggestionText: {
     fontSize: 14,
-    color: "#333",
+    color: theme.colors.text,
   },
   selectedContainer: {
     marginTop: 16,
     padding: 8,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: theme.colors.backgroundMuted,
     borderRadius: 4,
   },
   selectedLabel: {
     fontWeight: "bold",
     marginBottom: 4,
+    color: theme.colors.text,
   },
   selectedText: {
     fontSize: 14,
-    color: "#666",
+    color: theme.colors.textMuted,
   },
   mapContainer: {
     flex: 1,

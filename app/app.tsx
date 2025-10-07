@@ -105,7 +105,7 @@ export function App() {
       .then(() => loadDateFnsLocale())
   }, [])
 
-  const { sessionStore } = useStores()
+  const { sessionStore, requestStore } = useStores()
 
   const { rootStore, rehydrated } = useInitialRootStore(() => {
     // This runs after the root store has been initialized and rehydrated.
@@ -113,14 +113,18 @@ export function App() {
     if (!s.token || !s.expiresAt || !s.refreshExpiresAt || !s.refreshToken) {
       api.setToken(null)
     } else {
-      console.log("setting saved token", s.token, s.expiresAt, s.refreshToken, s.refreshExpiresAt)
       api.setToken({
         token: s.token,
         expires_at: s.expiresAt,
         refresh_token: s.refreshToken,
         refresh_expires_at: s.refreshExpiresAt,
         user_id: "",
+        user_uuid: "",
       })
+      
+      if (s.user_id) {
+        rootStore.requestStore.setUserId(s.user_id)
+      }
     }
 
     function callbackRefreshToken(s: SessionData | null) {
@@ -130,12 +134,16 @@ export function App() {
       }
 
       sessionStore.setSession({
-        user_id: s?.user_id,
+        user_id: Number(s?.user_id),
+        user_uuid: s?.user_uuid,
         token: s?.token,
         expiresAt: s?.expires_at,
         refreshToken: s?.refresh_token,
         refreshExpiresAt: s?.refresh_expires_at,
       })
+      
+      // Set the user_id in requestStore as well
+      requestStore.setUserId(Number(s?.user_id))
     }
 
     api.setCallbackRefreshSession(callbackRefreshToken)

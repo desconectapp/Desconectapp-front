@@ -5,205 +5,150 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
 import { Alert, View } from "react-native"
 import { observer } from "mobx-react-lite"
-
 import { useStores } from "@/models"
 import { useSearch } from "@/hooks/Search"
+import { containers, buttons, buttonTexts, texts } from "@/theme/commonStyles"
+import { useAppToast } from "@/components/useToast"
 
 type RequestConfirmationScreenProps = NativeStackScreenProps<MainStackParamList, "RequestConfirmationScreen">
 
 export const RequestConfirmationScreen = observer(function RequestConfirmationScreen({ route }: RequestConfirmationScreenProps) {
-  const { nextScreen } = route.params || {}
-  const { themed } = useAppTheme()
-
+  const { themed, theme } = useAppTheme()
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
-  const { requestStore } = useStores()
+  const { requestStore, sessionStore } = useStores()
   const search = useSearch()
-  const activity = requestStore.activity
-  const location = requestStore.location
-  const schedules = requestStore.schedules
-  const minParticipants = requestStore.minParticipants
-  const maxParticipants = requestStore.maxParticipants
-  const radiusKm = requestStore.radiusKm
+  const { showToast } = useAppToast()
 
-  // Helper function to format schedule display
   const formatSchedules = () => {
-    if (schedules.length === 0) {
+    if (requestStore.schedules.length === 0) {
       return "No hay horarios seleccionados"
     }
     
-    return schedules.map(daySchedule => {
+    return requestStore.schedules.map(daySchedule => {
       const timeSlotTexts = daySchedule.timeSlots.map(slot => `${slot.start} - ${slot.end}`)
       return `${daySchedule.day}: ${timeSlotTexts.join(", ")}`
     }).join("\n")
   }
+
   const formatLocation = () => {
-    if (!location) {
+    if (!requestStore.location) {
       return "No hay ubicación seleccionada"
     }
-    // split location y , and return onlty 2nd and 3rd part
-    const parts = location.address.split(", ")
-    return parts.length > 2 ? `${parts[1]}, ${parts[2]}` : location.address
+    const parts = requestStore.location.address.split(", ")
+    return parts.length > 2 ? `${parts[1]}, ${parts[2]}` : requestStore.location.address
   }
 
-   const handleSearch = () => {
-      // Agarrar la data del storage
-      const requestData = requestStore.getRequestData()
-      console.log("Datos de la búsqueda:", JSON.stringify(requestData, null, 2))
-
-      // TODO: Hacer la request al backend
-      // borrar datos de storage
-      // requestStore.clearRequest()
-      // redireccionar a home? 
-      // For now, just go back or navigate to a tab
-      // navigation.goBack()
-      search.mutateAsync(requestData)
-        .then(() => {
-          console.log("Búsqueda realizada con éxito")
-          requestStore.clearRequest() // Clear the request data after successful search
-        })
-        .catch(error => {
-          console.error("Error al realizar la búsqueda:", error)
-          Alert.alert("Error", "No se pudo realizar la búsqueda. Inténtalo de nuevo más tarde.")
-        })
-
-      navigation.navigate("Tabs")
-
+  const handleSearch = () => {
+    const requestData = requestStore.getRequestData()
+    
+    const requestDataWithUser = {
+      ...requestData,
+      user_id: sessionStore.user_id,
+      user_uuid: sessionStore.user_uuid
     }
+    
+    console.log("Datos de la búsqueda:", JSON.stringify(requestDataWithUser, null, 2))
+
+    search.mutate(requestDataWithUser, {
+      onSuccess: () => {
+     console.log("Búsqueda realizada con éxito")
+        showToast("¡Búsqueda creada! 🎉", "Pronto te notificaremos cuando encontremos coincidencias")
+        // requestStore.clearRequest()
+        navigation.navigate("Tabs")
+      }, onError: (error) => {
+        console.error("Error al realizar la búsqueda:", error)
+        Alert.alert("Error", "No se pudo realizar la búsqueda. Inténtalo de nuevo más tarde.")
+      }
+    })     
+  }
   
-    return (
-      <Screen
-        preset="scroll"
-        contentContainerStyle={[$container, $bottomContainerInsets]}
-        backgroundColor={themed($screenBackground)}
-      >
-        <Text preset="heading">Resumen de búsqueda</Text>
-        
-        {requestStore.isRequestComplete ? (
-          <View style={$statusContainer}>
-            <Text style={$completeText}>✅ Todos los datos están completos</Text>
-          </View>
-        ) : (
-          <View style={$statusContainer}>
-            <Text style={$incompleteText}>⚠️ Faltan datos por completar</Text>
-          </View>
+  return (
+    <Screen
+      preset="scroll"
+      contentContainerStyle={[containers.screen, themed($container)]}
+      backgroundColor={themed(() => theme.colors.background)}
+    >
+      {/* Header */}
+      <Text preset="heading" style={[themed(texts.heading), themed($title)]}>
+        ¡Todo listo para buscar!
+      </Text>
+    
+      
+      {/* Activity Section */}
+      <View style={[themed(containers.card), themed($section)]}>
+        <Text style={themed(texts.label)}>Actividad</Text>
+        <Text style={themed(texts.body)}>
+          {requestStore.activity ? requestStore.activity.name : "No seleccionada"}
+        </Text>
+      </View>
+
+      {/* Participants Section */}
+      <View style={[themed(containers.card), themed($section)]}>
+        <Text style={themed(texts.label)}>Participantes</Text>
+        <Text style={themed(texts.body)}>
+          De {requestStore.minParticipants} a {requestStore.maxParticipants} personas
+        </Text>
+      </View>
+
+      {/* Location Section */}
+      <View style={[themed(containers.card), themed($section)]}>
+        <Text style={themed(texts.label)}>Ubicación</Text>
+        <Text style={themed(texts.body)}>{formatLocation()}</Text>
+        {requestStore.location && (
+          <Text style={themed(texts.caption)}>
+            Radio de {requestStore.radiusKm} km
+          </Text>
         )}
-        
-        <View style={$sectionContainer}>
-          <Text preset="subheading">Queres hacer:</Text>
-          <Text>{activity ? activity.name : "No hay actividad seleccionada"}</Text>
-        </View>
+      </View>
 
-        <View style={$sectionContainer}>
-          <Text preset="subheading">Con un grupo:</Text>
-          <Text>{`De ${minParticipants} a ${maxParticipants} personas`}</Text>
-        </View>
+      {/* Schedule Section */}
+      <View style={[themed(containers.card), themed($section)]}>
+        <Text style={themed(texts.label)}>Horarios</Text>
+        <Text style={[themed(texts.body), themed($scheduleText)]}>
+          {formatSchedules()}
+        </Text>
+      </View>
 
-        <View style={$sectionContainer}>
-          <Text preset="subheading">Cerca de:</Text>
-          <Text>{formatLocation() || "No hay ubicación seleccionada"}</Text>
-          {location && (
-            <Text style={$radiusText}>
-              te moves hasta {radiusKm} km
-            </Text>
-          )}
-        </View>
+      {/* Search Button */}
+      <Button
+        text="🔍 Buscar"
+        style={[themed(buttons.primary), themed($searchButton)]}
+        textStyle={themed(buttonTexts.primary)}
+        onPress={handleSearch}
+      />
+    </Screen>
+  )
+})
 
-        <View style={$sectionContainer}>
-          <Text preset="subheading">Los dias:</Text>
-          <Text style={$scheduleText}>{formatSchedules()}</Text>
-        </View>
+const $container = (theme: any) => ({
+  paddingBottom: theme.spacing.lg,
+})
 
-        {/* Next Button */}    
-        <Button
-          text="Buscar"
-          style={[
-            $nextButton,
-            $nextButtonEnabled 
-          ]}
-          textStyle={[
-            $nextButtonText,
-            $nextButtonTextEnabled
-          ]}
-          
-          onPress={handleSearch}
-        />
-      </Screen>
-    )
-  })
-  
-  const $container = { padding: 20 }
-  const $bottomContainerInsets = {}
-  const $screenBackground = "background"
-  
-  const $sectionContainer = {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: "#000",
-    borderRadius: 8,
-  }
+const $title = (theme: any) => ({
+  textAlign: "center" as const,
+  marginBottom: theme.spacing.lg,
+})
 
-  const $statusContainer = {
-    marginBottom: 20,
-    padding: 10,
-    borderRadius: 8,
-    alignItems: "center" as const,
-  }
+const $statusComplete = (theme: any) => ({
+  backgroundColor: theme.colors.palette.success100,
+  borderColor: theme.colors.palette.success500,
+  borderWidth: 1,
+})
 
-  const $completeText = {
-    color: "#28a745",
-    fontWeight: "600" as const,
-    fontSize: 16,
-  }
+const $statusIncomplete = (theme: any) => ({
+  backgroundColor: theme.colors.palette.warning100,
+  borderColor: theme.colors.palette.warning500,
+  borderWidth: 1,
+})
 
-  const $incompleteText = {
-    color: "#ffc107",
-    fontWeight: "600" as const,
-    fontSize: 16,
-  }
+const $section = (theme: any) => ({
+  marginBottom: theme.spacing.md,
+})
 
-  const $scheduleText = {
-    lineHeight: 20,
-    whiteSpace: "pre-line" as const,
-  }
+const $scheduleText = (theme: any) => ({
+  lineHeight: 20,
+})
 
-  const $participantsText = {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#666",
-    fontStyle: "italic" as const,
-  }
-
-  const $radiusText = {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#666",
-    fontStyle: "italic" as const,
-  }
-  
-  const $nextButton = {
-    marginTop: 20,
-    height: 50,
-    borderRadius: 8,
-  }
-  
-  const $nextButtonEnabled = {
-    backgroundColor: "#007AFF",
-  }
-  
-  const $nextButtonDisabled = {
-    backgroundColor: "#E5E5EA",
-  }
-  
-  const $nextButtonText = {
-    fontSize: 18,
-    fontWeight: "600" as const,
-  }
-  
-  const $nextButtonTextEnabled = {
-    color: "#fff",
-  }
-  
-  const $nextButtonTextDisabled = {
-    color: "#8E8E93",
-  }
-  
+const $searchButton = (theme: any) => ({
+  marginTop: theme.spacing.lg,
+})

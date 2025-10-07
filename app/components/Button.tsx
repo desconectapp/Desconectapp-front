@@ -123,6 +123,7 @@ export function Button(props: ButtonProps) {
   } = props
 
   const { themed } = useAppTheme()
+  const { theme: { colors } } = useAppTheme()
 
   const preset: Presets = props.preset ?? "default"
   /**
@@ -162,7 +163,7 @@ export function Button(props: ButtonProps) {
     >
       {(state) =>
         loading ? (
-          <ActivityIndicator color="#fff" style={{ zIndex: 2 }} />
+          <ActivityIndicator color={colors.tintInverse} style={{ zIndex: 2 }} />
         ) : (
           <>
             {!!LeftAccessory && (
@@ -226,14 +227,14 @@ const $viewPresets: Record<Presets, ThemedStyleArray<ViewStyle>> = {
     $baseViewStyle,
     ({ colors }) => ({
       borderWidth: 1,
-      borderColor: colors.palette.neutral400,
-      backgroundColor: colors.palette.neutral100,
+      borderColor: colors.border,
+      backgroundColor: colors.background,
     }),
   ],
   filled: [
     $styles.row,
     $baseViewStyle,
-    ({ colors }) => ({ backgroundColor: colors.palette.neutral300 }),
+    ({ colors }) => ({ backgroundColor: colors.tint }),
   ],
   reversed: [
     $styles.row,
@@ -243,8 +244,8 @@ const $viewPresets: Record<Presets, ThemedStyleArray<ViewStyle>> = {
 }
 
 const $textPresets: Record<Presets, ThemedStyleArray<TextStyle>> = {
-  default: [$baseTextStyle],
-  filled: [$baseTextStyle],
+  default: [$baseTextStyle, ({ colors }) => ({ color: colors.text })],
+  filled: [$baseTextStyle, ({ colors }) => ({ color: colors.tintInverse })],
   reversed: [$baseTextStyle, ({ colors }) => ({ color: colors.palette.neutral100 })],
 }
 

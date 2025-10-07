@@ -1,7 +1,7 @@
 export interface Activity {
   id: number
   name: string
-  emoji: string
+  icon: string
 }
 
 export interface ActivityRequest {
@@ -9,7 +9,7 @@ export interface ActivityRequest {
   user_id: string
   activity_id: string
   description: string
-  week_hours: number[]
+  week_timeslots: number[]
   participants_needed: number
   maximum_participants: number
   latitude: number

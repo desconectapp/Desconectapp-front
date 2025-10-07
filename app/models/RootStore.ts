@@ -9,13 +9,17 @@ import { RequestStoreModel } from "./RequestStore"
 export const RootStoreModel = types.model("RootStore").props({
   signUpStore: types.optional(SignUpStoreModel, { preferences: [], userInfo: null }),
   sessionStore: types.optional(SessionModel, {
-    email: "",
+    user_id: 0,
+    user_uuid: "",
     expiresAt: "",
     refreshExpiresAt: "",
     refreshToken: "",
     token: "",
+    supabase_token: "",
+    supabase_expires_at: new Date(),
   }),
   requestStore: types.optional(RequestStoreModel, {
+    user_id: 0,
     activities: [],
     location: null,
     schedules: [],

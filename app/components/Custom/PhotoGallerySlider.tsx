@@ -67,7 +67,7 @@ export const PhotoGallerySlider = observer(function PhotoGallerySlider({
         <View style={themed($photoCard)}>
           <Animated.Image
             source={{ uri: item.image }}
-            style={[$photoImage, { width: itemWidth }]}
+            style={[themed($photoImage), { width: itemWidth }]}
             sharedTransitionTag={item.id}
           />
           <View style={themed($photoOverlay)}>
@@ -158,11 +158,11 @@ const $photoCard = (theme: any): ViewStyle => ({
   backgroundColor: theme.colors.background,
 })
 
-const $photoImage: ImageStyle = {
+const $photoImage = (theme: any): ImageStyle => ({
   height: width * 0.4,
   borderRadius: spacing.md,
-  backgroundColor: "#f0f0f0",
-}
+  backgroundColor: theme.colors.backgroundMuted,
+})
 
 const $photoOverlay: ViewStyle = {
   position: "absolute",

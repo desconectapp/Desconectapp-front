@@ -1,7 +1,6 @@
 import { api } from "../api"
 import {
   CreateProfileData,
-  Preference,
   ProfileData,
   SessionData,
   UserResponse,
@@ -13,7 +12,6 @@ export const userService = {
     if (!response.ok) {
       throw new Error("Error al cargar usuarios")
     }
-    console.log("Usuarios obtenidos:", response.data)
     return response.data
   },
 
@@ -32,9 +30,7 @@ export const userService = {
 
   login: async (data: { email: string; password: string }): Promise<SessionData | undefined> => {
     const response = await api.apisauce.post<SessionData>("/auth/login", data)
-    console.log("API:LOGIN: Respuesta del servidor:", response.ok)
     if (!response.ok) {
-      console.log(response.data)
       throw new Error("Error al iniciar sesión")
     }
     try {
@@ -44,7 +40,6 @@ export const userService = {
       throw new Error("Error al procesar la sesión")
     }
 
-    console.log("API:LOGIN: Sesión iniciada:", response.data)
     return response.data
   },
 
@@ -58,12 +53,10 @@ export const userService = {
   },
 
   createProfile: async (data: CreateProfileData): Promise<void> => {
-    console.log("Creando perfil con datos:", data)
-    const response = await api.apisauce.post<void>("/users/1/profile", data)
+    const response = await api.apisauce.post<void>("/users/profile", data)
     if (!response.ok) {
       throw new Error("Error al crear perfil")
     }
-    console.log("Perfil creado:", response.data)
     return response.data
   },
 
@@ -72,7 +65,6 @@ export const userService = {
     if (!response.ok) {
       throw new Error("Error al obtener perfil")
     }
-    console.log("Obteniendo perfil del usuario", response.data)
     return response.data
   },
 
@@ -84,10 +76,39 @@ export const userService = {
     return response.data
   },
 
-  addPreferences: async (preferenceIds: number[]): Promise<void> => {
-    const response = await api.apisauce.post<void>("/preferences", preferenceIds)
+  addPreferencesBatch: async (preferenceIds: number[]): Promise<void> => {
+    const response = await api.apisauce.post<void>("/preferences/batch", preferenceIds)
     if (!response.ok) {
       throw new Error("Error al editar perfil")
+    }
+    return response.data
+  },
+
+  validateEmail: async (code: string, user_id: number): Promise<void> => {
+    const response = await api.apisauce.post<void>("/auth/email/verify", { code, user_id })
+    if (!response.ok) {
+      throw new Error("Error al validar email")
+    }
+    return response.data
+  },
+
+  forgotPassword: async (email: string): Promise<number> => {
+    const response = await api.apisauce.post<void>("/auth/password/forgot", { email })
+    if (!response.ok) {
+      throw new Error("Error al validar email")
+    }
+
+    return response.data
+  },
+
+  resetPassword: async (code: string, newPassword: string, userId: number): Promise<void> => {
+    const response = await api.apisauce.post<void>("/auth/password/update", {
+      code,
+      new_password: newPassword,
+      user_id: userId,
+    })
+    if (!response.ok) {
+      throw new Error("Error al resetear password")
     }
     return response.data
   },

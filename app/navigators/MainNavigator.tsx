@@ -1,23 +1,42 @@
 // MainNavigator.tsx
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { PreferencesScreen, ProfileScreen, HomeScreen, SearchScreen, GroupScreen, LocationPickerScreen, SchedulePickerScreen, ActivityPickerScreen, RequestConfirmationScreen } from "@/screens"
+import {
+  PreferencesScreen,
+  ProfileScreen,
+  HomeScreen,
+  SearchScreen,
+  ActivityRequestsScreen,
+  GroupScreen,
+  LocationPickerScreen,
+  SchedulePickerScreen,
+  ActivityPickerScreen,
+  RequestConfirmationScreen,
+  CommunitiesScreen,
+  CreateGroupScreen,
+} from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6"
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
 import { View } from "tamagui"
 import { Animated, Pressable } from "react-native"
 import { useRef } from "react"
+import { MyGroupsScreen } from "@/screens/MyGroupsScreen"
 import { SuggestionScreen } from "@/screens/SuggestionScreen"
+import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
+import { NearbyGroupsScreen } from "@/screens/NearbyGroupsScreen"
 
 export type MainTabParamList = {
   HomeScreen: undefined
+  CommunitiesScreen: undefined
   SearchScreen: undefined
+  ActivityRequestsScreen: undefined
   ProfileScreen: undefined
 }
 
 export type MainStackParamList = {
-  Tabs: undefined
+  Tabs: { screen?: keyof MainTabParamList } | undefined
   PreferencesScreen: undefined
   GroupScreen: { groupId: string }
   SuggestionScreen: { id: string }
@@ -25,12 +44,16 @@ export type MainStackParamList = {
   SchedulePickerScreen: { nextScreen?: string }
   ActivityPickerScreen: { nextScreen?: string }
   RequestConfirmationScreen: { nextScreen?: string }
+  MyGroupsScreen: undefined
+  GroupInfoScreen: { groupId: string }
+  NearbyGroupsScreen: undefined
+  CreateGroupScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
 const Stack = createNativeStackNavigator<MainStackParamList>()
 
-const CustomTabBarButton = ({ children, onPress }: any) => {
+const CustomTabBarButton = ({ onPress }: any) => {
   const scaleAnim = useRef(new Animated.Value(1)).current
 
   const handlePressIn = () => {
@@ -43,26 +66,55 @@ const CustomTabBarButton = ({ children, onPress }: any) => {
 
   return (
     <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={onPress}
       style={{
         position: "absolute",
-        bottom: 5, // lo eleva del borde inferior
+        bottom: 5,
         alignSelf: "center",
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: "#4c8bf5",
+        width: 72,
+        height: 72,
+        borderRadius: 24,
         justifyContent: "center",
         alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 8,
-        elevation: 8,
+        overflow: "hidden",
         zIndex: 10,
       }}
     >
-      <AntDesign name="find" size={42} color="#fff" />
+      <Animated.View
+        style={{
+          transform: [{ scale: scaleAnim }],
+          width: "100%",
+          height: "100%",
+          borderRadius: 24,
+          backgroundColor: "rgba(200, 220, 180, 0.25)", // más claro
+          borderWidth: 1,
+          borderColor: "rgba(255,255,255,0.4)",
+          filter: "blur(15px)" as any,
+          shadowColor: "#84994F",
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.4,
+          shadowRadius: 15,
+          elevation: 12,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        {/* reflejito arriba */}
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            width: "100%",
+            height: "35%",
+            borderTopLeftRadius: 36,
+            borderTopRightRadius: 36,
+            backgroundColor: "rgba(255,255,255,0.3)", // más brillo
+          }}
+        />
+        <FontAwesome6 name="people-group" size={38} color="#fff" />
+      </Animated.View>
     </Pressable>
   )
 }
@@ -74,8 +126,16 @@ function TabNavigator() {
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <AntDesign name="home" size={size} color={color} />,
-          tabBarLabel: "Home",
+          tabBarIcon: ({ color, size }) => <AntDesign name="team" size={size} color={color} />,
+          tabBarLabel: "Groups",
+        }}
+      />
+      <Tab.Screen
+        name="CommunitiesScreen"
+        component={CommunitiesScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <AntDesign name="earth" size={size} color={color} />,
+          tabBarLabel: "Communities",
         }}
       />
       <Tab.Screen
@@ -85,6 +145,16 @@ function TabNavigator() {
           tabBarIcon: ({ color, size }) => <AntDesign name="find" size={28} color="#fff" />,
           tabBarLabel: "",
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
+        }}
+      />
+      <Tab.Screen
+        name="ActivityRequestsScreen"
+        component={ActivityRequestsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list-outline" size={size} color={color} />
+          ),
+          tabBarLabel: "Búsquedas",
         }}
       />
       <Tab.Screen
@@ -112,6 +182,7 @@ export function MainNavigator() {
         component={SuggestionScreen}
         options={{
           animation: "fade",
+          headerShown: false,
         }}
       />
       <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
@@ -120,7 +191,7 @@ export function MainNavigator() {
       <Stack.Screen
         name="LocationPickerScreen"
         component={LocationPickerScreen}
-        options={{ headerShown: true, title: "Ubicación" }}
+        options={{ headerShown: true, title: "Ubicación 📍" }}
       />
       <Stack.Screen
         name="SchedulePickerScreen"
@@ -137,7 +208,24 @@ export function MainNavigator() {
         component={RequestConfirmationScreen}
         options={{ headerShown: true, title: "Confirmar Busqueda" }}
       />
+      <Stack.Screen
+        name="MyGroupsScreen"
+        component={MyGroupsScreen}
+        options={{ title: "My Groups" }}
+      />
+      <Stack.Screen
+        name="GroupInfoScreen"
+        component={GroupInfoScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateGroupScreen"
+        component={CreateGroupScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Nearby Groups" }} />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
     </Stack.Navigator>
   )
 }
+

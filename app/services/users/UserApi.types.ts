@@ -26,7 +26,7 @@ export interface CreateProfileData {
 
 export interface ProfileData {
   name: string
-  image: string | null
+  avatar_url: string | null
   city: string
   gender: string
   current_situation: string
@@ -39,4 +39,5 @@ export interface SessionData {
   expires_at: string
   refresh_expires_at: string
   user_id: string
+  user_uuid: string
 }

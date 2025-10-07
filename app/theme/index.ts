@@ -76,5 +76,7 @@ export { colorsDark }
 export { spacingLight as spacing }
 
 export * from "./styles"
+export * from "./commonStyles"
+export * from "./themedStyles"
 export * from "./typography"
 export * from "./timing"

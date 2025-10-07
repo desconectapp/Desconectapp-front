@@ -1,6 +1,7 @@
 import { useStores, DaySchedule, TimeRange } from "@/models"
 import React, { useState, useCallback, useMemo } from "react"
 import { observer } from "mobx-react-lite"
+import { useAppTheme } from "@/utils/useAppTheme"
 import {
   View,
   Text,
@@ -10,8 +11,9 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  Alert,
 } from "react-native"
-import DateTimePickerModal from "react-native-modal-datetime-picker"
+import { CustomTimePicker } from "./CustomTimePicker"
 
 const days = ["L", "M", "X", "J", "V", "S", "D"]
 const dayMapping: { [key: string]: string } = {
@@ -31,15 +33,60 @@ const toMinutes = (time: string) => {
   return h * 60 + m
 }
 
+const fromMinutes = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
+}
+
+// Function to merge overlapping time slots
+const mergeTimeSlots = (timeSlots: TimeRange[]): TimeRange[] => {
+  if (timeSlots.length <= 1) return timeSlots
+
+  // Convert to minutes and sort by start time
+  const slotsInMinutes = timeSlots.map(slot => ({
+    start: toMinutes(slot.start),
+    end: toMinutes(slot.end),
+    original: slot
+  })).sort((a, b) => a.start - b.start)
+
+  const merged: typeof slotsInMinutes = []
+  let current = slotsInMinutes[0]
+
+  for (let i = 1; i < slotsInMinutes.length; i++) {
+    const next = slotsInMinutes[i]
+    
+    // Check if current and next overlap or are adjacent
+    if (current.end >= next.start) {
+      // Merge them - extend current to cover both
+      current.end = Math.max(current.end, next.end)
+    } else {
+      // No overlap, add current to merged and move to next
+      merged.push(current)
+      current = next
+    }
+  }
+  
+  // Don't forget to add the last slot
+  merged.push(current)
+
+  // Convert back to time strings
+  return merged.map(slot => ({
+    start: fromMinutes(slot.start),
+    end: fromMinutes(slot.end)
+  }))
+}
+
 const totalMinutes = 24 * 60
 
 export const TimePickerForm = observer(function TimePickerForm() {
-  const [isStartPickerVisible, setStartPickerVisible] = useState(false)
-  const [isEndPickerVisible, setEndPickerVisible] = useState(false)
+  const { themed, theme } = useAppTheme()
+  const styles = createThemedStyles(theme)
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedDays, setSelectedDays] = useState<string[]>([])
-  const [start, setStart] = useState("")
-  const [end, setEnd] = useState("")
+  const [start, setStart] = useState("09:00")
+  const [end, setEnd] = useState("10:00")
+  const [forceUpdate, setForceUpdate] = useState(0) // Add force update counter
   
   const { requestStore } = useStores()
 
@@ -59,12 +106,35 @@ export const TimePickerForm = observer(function TimePickerForm() {
       console.error('Error getting time slots for day:', day, error)
       return []
     }
-  }, [requestStore.schedules])
+  }, [requestStore.schedules]) // Made it depend on requestStore.schedules
 
-  // Memoize the formatTime function
-  const formatTime = useCallback((date: Date) =>
-    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
-  , [])
+  const handleStartTimeChange = useCallback((newStart: string) => {
+    setStart(newStart)
+    // If end time is not later than start time, adjust it
+    const startMinutes = toMinutes(newStart)
+    const endMinutes = toMinutes(end)
+    if (endMinutes <= startMinutes) {
+      // Set end time to 30 minutes after start time
+      const newEndMinutes = startMinutes + 30
+      if (newEndMinutes <= 23 * 60 + 30) { // Max time is 23:30
+        setEnd(fromMinutes(newEndMinutes))
+      }
+    }
+  }, [end])
+
+  const handleEndTimeChange = useCallback((newEnd: string) => {
+    setEnd(newEnd)
+    // If start time is not earlier than end time, adjust it
+    const startMinutes = toMinutes(start)
+    const endMinutes = toMinutes(newEnd)
+    if (startMinutes >= endMinutes) {
+      // Set start time to 30 minutes before end time
+      const newStartMinutes = endMinutes - 30
+      if (newStartMinutes >= 0) { // Min time is 00:00
+        setStart(fromMinutes(newStartMinutes))
+      }
+    }
+  }, [start])
 
   const toggleDay = useCallback((day: string) => {
     setSelectedDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]))
@@ -92,12 +162,16 @@ export const TimePickerForm = observer(function TimePickerForm() {
         const existingTimeSlots = getTimeSlotsByDay(dayCode)
         const newTimeSlot: TimeRange = { start, end }
 
-        // Add the new time slot to existing ones
-        const updatedTimeSlots = [...existingTimeSlots, newTimeSlot]
+        // Add the new time slot to existing ones and merge overlapping slots
+        const allTimeSlots = [...existingTimeSlots, newTimeSlot]
+        const mergedTimeSlots = mergeTimeSlots(allTimeSlots)
 
-        // Update store for this specific day
-        requestStore.setScheduleForDay(dayName, updatedTimeSlots)
+        // Update store for this specific day with merged slots
+        requestStore.setScheduleForDay(dayName, mergedTimeSlots)
       })
+
+      // Force re-render
+      setForceUpdate(prev => prev + 1)
 
       console.log("Horarios guardados en el store:", requestStore.schedules.slice())
       setModalVisible(false)
@@ -127,12 +201,31 @@ export const TimePickerForm = observer(function TimePickerForm() {
       // Update store for this day
       requestStore.setScheduleForDay(dayName, updatedTimeSlots)
 
+      // Force re-render
+      setForceUpdate(prev => prev + 1)
+
       console.log(`Rango eliminado para ${dayName}`)
     } catch (error) {
       console.error("Error removing range:", error)
     }
   }, [getTimeSlotsByDay, requestStore])
-
+  const handleClearSchedules = () => {
+    Alert.alert(
+      "¿Borrar todos los horarios?",
+      "Esta acción eliminará todos los horarios seleccionados.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Borrar", 
+          style: "destructive", 
+          onPress: () => {
+            requestStore.setSchedules([])
+            setForceUpdate(prev => prev + 1) // Force re-render
+          }
+        }
+      ]
+    )
+  }
   // Memoize day columns for better performance
   const renderDayColumns = useMemo(() => {
     return days.map((day) => {
@@ -159,12 +252,16 @@ export const TimePickerForm = observer(function TimePickerForm() {
                       styles.segment,
                       {
                         top: Math.max(0, topValue),
-                        height: Math.max(1, heightValue),
+                        height: Math.max(8, heightValue), // Minimum height for visibility
                       },
                     ]}
                     onLongPress={() => removeRange(day, i)}
                   >
-                    {/* opcional: ícono o nada */}
+                    <View style={styles.segmentContent}>
+                      <Text style={styles.segmentText}>
+                        {start.slice(0,2)}h-{end.slice(0,2)}h
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 )
               } catch (error) {
@@ -177,7 +274,7 @@ export const TimePickerForm = observer(function TimePickerForm() {
         </View>
       )
     })
-  }, [getTimeSlotsByDay, removeRange])
+  }, [getTimeSlotsByDay, removeRange, requestStore.schedules, forceUpdate]) // Added forceUpdate dependency
 
   return (
     <View style={styles.wrapper}>
@@ -188,16 +285,30 @@ export const TimePickerForm = observer(function TimePickerForm() {
           </Text>
         ))}
       </View>
-      <View style={{ flexDirection: "column", alignItems: "center" }}>
-        <ScrollView horizontal style={styles.scroll}>
-          {renderDayColumns}
+      <View style={{ flexDirection: "column", alignItems: "center", flex: 1 }}>
+        <ScrollView horizontal style={styles.scroll} showsHorizontalScrollIndicator={false}>
+          <View style={{ flexDirection: "row", paddingHorizontal: 5 }}>
+            {renderDayColumns}
+          </View>
         </ScrollView>
-        <TouchableOpacity
-          style={[styles.openBtn, { marginTop: 10 }]}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.openText}>Agregar horarios</Text>
-        </TouchableOpacity>
+        
+        {/* Buttons Row */}
+        <View style={styles.buttonsRow}>
+          <TouchableOpacity
+            style={[styles.openBtn, styles.addButton]}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.openText}>+ Agregar horarios</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={handleClearSchedules}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.clearButtonText}>🗑️ Borrar todo</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
@@ -221,43 +332,23 @@ export const TimePickerForm = observer(function TimePickerForm() {
 
                 <Text style={styles.title}>Horario</Text>
 
-                <View style={{ flexDirection: "row", gap: 10, marginVertical: 10 }}>
-                  <TouchableOpacity
-                    onPress={() => setStartPickerVisible(true)}
-                    style={[styles.input, { flex: 1 }]}
-                  >
-                    <Text>{start || "Inicio"}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => setEndPickerVisible(true)}
-                    style={[styles.input, { flex: 1 }]}
-                  >
-                    <Text>{end || "Fin"}</Text>
-                  </TouchableOpacity>
+                <View style={{ marginVertical: 10 }}>
+                  <CustomTimePicker
+                    value={start}
+                    onTimeChange={handleStartTimeChange}
+                    label="Hora de inicio"
+                    minTime="00:00"
+                    maxTime="23:00"
+                  />
+                  
+                  <CustomTimePicker
+                    value={end}
+                    onTimeChange={handleEndTimeChange}
+                    label="Hora de fin"
+                    minTime="00:30"
+                    maxTime="23:30"
+                  />
                 </View>
-
-                <DateTimePickerModal
-                  isVisible={isStartPickerVisible}
-                  mode="time"
-                  onConfirm={(date) => {
-                    setStart(formatTime(date))
-                    setStartPickerVisible(false)
-                  }}
-                  onCancel={() => setStartPickerVisible(false)}
-                  is24Hour
-                />
-
-                <DateTimePickerModal
-                  isVisible={isEndPickerVisible}
-                  mode="time"
-                  onConfirm={(date) => {
-                    setEnd(formatTime(date))
-                    setEndPickerVisible(false)
-                  }}
-                  onCancel={() => setEndPickerVisible(false)}
-                  is24Hour
-                />
 
                 <TouchableOpacity style={styles.applyBtn} onPress={applySelection}>
                   <Text style={styles.applyText}>Aplicar</Text>
@@ -270,27 +361,30 @@ export const TimePickerForm = observer(function TimePickerForm() {
     </View>
   )
 })
-const styles = StyleSheet.create({
+
+// Create theme-aware styles
+const createThemedStyles = (theme: any) => StyleSheet.create({
   applyBtn: {
-    backgroundColor: "#2196f3",
+    backgroundColor: theme.colors.tint,
     borderRadius: 8,
     padding: 10,
   },
   applyText: {
-    color: "#fff",
+    color: theme.colors.tintInverse,
     fontWeight: "bold",
     textAlign: "center",
   },
   bar: {
-    width: 30, // antes 40
+    width: 36,
     height: 240,
-    backgroundColor: "#eee",
+    backgroundColor: theme.colors.backgroundMuted,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: theme.colors.border,
     position: "relative",
+    borderRadius: 4,
   },
   dayBtn: {
-    borderColor: "#ccc",
+    borderColor: theme.colors.border,
     borderRadius: 8,
     borderWidth: 1,
     margin: 4,
@@ -298,8 +392,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   dayBtnSelected: {
-    backgroundColor: "#4caf50",
-    borderColor: "#4caf50",
+    backgroundColor: theme.colors.tint,
+    borderColor: theme.colors.tint,
   },
   dayButtons: {
     flexDirection: "row",
@@ -308,14 +402,14 @@ const styles = StyleSheet.create({
   },
   dayColumn: {
     alignItems: "center",
-    marginHorizontal: 4, // antes 8
+    marginHorizontal: 3,
   },
   dayText: {
-    color: "#000",
+    color: theme.colors.text,
   },
   input: {
     borderBottomWidth: 1,
-    borderColor: "#ccc",
+    borderColor: theme.colors.border,
     padding: 6,
     width: "45%",
   },
@@ -327,55 +421,103 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: "bold",
     marginTop: 6,
+    color: theme.colors.text,
   },
   modalContent: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.background,
     borderRadius: 12,
     padding: 20,
     width: "85%",
   },
   modalOverlay: {
     alignItems: "center",
-    backgroundColor: "#00000088",
+    backgroundColor: "rgba(0,0,0,0.5)",
     flex: 1,
     justifyContent: "center",
   },
   openBtn: {
     alignSelf: "center",
-    backgroundColor: "#4caf50",
+    backgroundColor: theme.colors.tint,
     borderRadius: 8,
-    padding: 10,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    elevation: 2,
+    shadowColor: theme.colors.tint,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   openText: {
-    color: "#fff",
+    color: theme.colors.tintInverse,
     fontWeight: "bold",
   },
   scroll: {
     flex: 1,
   },
   segment: {
-    backgroundColor: "#4caf50",
+    backgroundColor: theme.colors.tint,
     left: 0,
-    opacity: 0.8,
+    opacity: 0.9,
     position: "absolute",
     width: "100%",
+    borderRadius: 2,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  segmentContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  segmentText: {
+    color: theme.colors.tintInverse,
+    fontSize: 8,
+    fontWeight: "bold",
   },
   timeLabel: {
-    color: "#555",
+    color: theme.colors.text,
     fontSize: 12,
+    fontWeight: "bold",
   },
   timeLabels: {
-    width: 35, // antes 50
+    width: 30,
     height: 240,
     justifyContent: "space-between",
-    marginRight: 4, // antes 10
+    marginRight: 8,
   },
   title: {
     fontWeight: "bold",
     marginBottom: 10,
+    color: theme.colors.text,
   },
   wrapper: {
     flexDirection: "row",
-    padding: 20,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.spacing.sm,
   },
+  clearButton: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    backgroundColor: theme.colors.error,
+    borderRadius: 8,
+    marginLeft: theme.spacing.sm,
+    minWidth: 100,
+    alignItems: "center",
+  },
+  clearButtonText: {
+    color: theme.colors.tintInverse,
+    fontWeight: "bold",
+  },
+  buttonsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 15,
+  },
+  addButton: {
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  }
 })
