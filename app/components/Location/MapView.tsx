@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Text, View, StyleSheet } from "react-native"
+import { Text, View, StyleSheet, Alert, Platform, PermissionsAndroid } from "react-native"
 import MapLibreGL from "@maplibre/maplibre-react-native"
 import { useEffect } from "react"
 import Radar from "react-native-radar"
@@ -71,17 +71,63 @@ export const MapViewComponent = ({
 
   const [selectedMarker, setSelectedMarker] = useState<MapGroup | null>(null)
   const [isSettingFromSearch, setIsSettingFromSearch] = useState(false)
-  
-  // Set initial camera position for uncontrolled mode
+
+  // Simple location setup on mount
   useEffect(() => {
-    if (enableDynamicFetch && cameraRef.current) {
-      console.log("Setting initial camera position for dynamic fetch mode")
-      cameraRef.current.setCamera({
-        centerCoordinate: BSASCOORDS,
-        zoomLevel: 13,
-        animationDuration: 0,
-      })
+    const setupLocation = async () => {
+      try {
+        let granted = false
+        
+        if (Platform.OS === 'android') {
+          const result = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+              title: 'Location Permission',
+              message: 'This app needs access to your location to show nearby groups',
+              buttonPositive: 'OK',
+            }
+          )
+          granted = result === PermissionsAndroid.RESULTS.GRANTED
+        } else {
+          granted = true // iOS handles permission through geolocation call
+        }
+
+        if (granted) {
+          try {
+            const result = await Radar.getLocation()
+            if (result.location) {
+              const coords: [number, number] = [result.location.longitude, result.location.latitude]
+              console.log("Got user location:", coords)
+              
+              if (enableDynamicFetch && cameraRef.current) {
+                // Uncontrolled mode: set camera directly
+                cameraRef.current.setCamera({
+                  centerCoordinate: coords,
+                  zoomLevel: 13,
+                  animationDuration: 0,
+                })
+              } else {
+                // Controlled mode: update state
+                setCameraCenter(coords)
+              }
+            } else {
+              console.warn("No location returned from Radar, using fallback")
+            }
+          } catch (error) {
+            console.warn("Location error, using fallback:", error)
+            // Fallback is already set in initial state
+          }
+        } else {
+          console.log("Location permission denied, using fallback")
+          // Fallback is already set in initial state
+        }
+      } catch (error) {
+        console.warn("Location setup error, using fallback:", error)
+        // Fallback is already set in initial state
+      }
     }
+
+    setupLocation()
   }, [enableDynamicFetch])
 
   // Convert zoom level to approximate radius in km

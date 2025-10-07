@@ -53,11 +53,8 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
     }, 500) // 500ms debounce delay (reduced from 800ms)
   }, [fetchNearbyGroups])
 
-  // Initial fetch for Buenos Aires center
+  // Cleanup timeout on unmount
   useEffect(() => {
-    fetchNearbyGroups([-58.4173, -34.6118], 5) // Default Buenos Aires coordinates with 5km radius
-
-    // Cleanup timeout on unmount
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
