@@ -53,7 +53,7 @@ export interface OpenGroup {
 	member_count:	number
 	photo:	string
   avatar_url: string | null
-  week_timeslots?: string[]
+  week_timeslots?: number[]
 }
 
 export interface MapGroup {
