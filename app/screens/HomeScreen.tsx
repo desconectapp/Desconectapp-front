@@ -45,6 +45,7 @@ export const HomeScreen = observer(function HomeScreen() {
   } = useGroupsRecs(0, { enabled: isFocused })
   const [refreshingRecs, setRefreshingRecs] = useState(false)
 
+  
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     setRefreshingRecs(true)

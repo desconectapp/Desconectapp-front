@@ -63,7 +63,7 @@ export const useAddPreferencesBatch = () => {
   const queryClient = useQueryClient()
 
   return useMutation<any, Error, any>({
-    mutationFn: (data) => userService.addPreferencesBatch(data),
+    mutationFn: (activity_ids) => userService.addPreferencesBatch(activity_ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] })
       queryClient.invalidateQueries({ queryKey: ["user-preferences"] })
