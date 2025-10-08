@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Text, View, StyleSheet } from "react-native"
+import { Text, View, StyleSheet, Alert, Platform, PermissionsAndroid, Image } from "react-native"
 import MapLibreGL from "@maplibre/maplibre-react-native"
 import { useEffect } from "react"
 import Radar from "react-native-radar"
@@ -9,6 +9,9 @@ import {
 import { selectedLocation } from "types"
 import { LocationInfo } from "./LocationInfo"
 import { CustomSlider } from "../Custom/CustomSlider"
+import { MapGroup } from "@/services/groups/Groups.types"
+import { GroupMapIcon } from "./GroupMapIcon"
+import { GroupMapInfoCard } from "./GroupMapInfoCard"
 
 
 const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ""
@@ -20,16 +23,6 @@ MapLibreGL.setAccessToken(apiKey) // No token needed for OpenStreetMap
 
 const BSASCOORDS = [-58.4173, -34.6118] // Buenos Aires coords
 
-export interface MapGroup {
-  id: string
-  name: string
-  icon: string
-  coordinates: [number, number] // [longitude, latitude]
-  radius?: number // in km
-  location: string
-  description?: string
-  membersCount?: number
-}
 
 export interface MapViewProps {
   // Para busqueda de grupo
@@ -42,6 +35,8 @@ export interface MapViewProps {
   // Para ver grupos cercanos
   groups?: MapGroup[] 
   onGroupPress?: (group: MapGroup) => void // callback when marker is pressed
+  onRegionChange?: (center: [number, number], radiusKm: number) => void // callback for region changes
+  enableDynamicFetch?: boolean // enable dynamic fetching based on map region
   
   // Otras props
   style?: any
@@ -56,19 +51,129 @@ export const MapViewComponent = ({
   
   groups = [],
   onGroupPress,
+  onRegionChange,
+  enableDynamicFetch = false,
 
   style,
 }: MapViewProps) => {
   const cameraRef = useRef<any>(null)
   const [cameraCenter, setCameraCenter] = useState<[number, number]>([BSASCOORDS[0], BSASCOORDS[1]]) // Default to Buenos Aires
   const [zoom, setZoom] = useState(13)
+  
+  console.log("MapView render - Camera center:", cameraCenter, "Zoom:", zoom)
 
   const [selectedMarker, setSelectedMarker] = useState<MapGroup | null>(null)
   const [isSettingFromSearch, setIsSettingFromSearch] = useState(false)
 
+  // Simple location setup on mount
+  useEffect(() => {
+    const setupLocation = async () => {
+      try {
+        let granted = false
+        
+        if (Platform.OS === 'android') {
+          const result = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+              title: 'Location Permission',
+              message: 'This app needs access to your location to show nearby groups',
+              buttonPositive: 'OK',
+            }
+          )
+          granted = result === PermissionsAndroid.RESULTS.GRANTED
+        } else {
+          granted = true // iOS handles permission through geolocation call
+        }
+
+        if (granted) {
+          try {
+            const result = await Radar.getLocation()
+            if (result.location) {
+              const coords: [number, number] = [result.location.longitude, result.location.latitude]
+              console.log("Got user location:", coords)
+              
+              if (enableDynamicFetch && cameraRef.current) {
+                // Uncontrolled mode: set camera directly
+                cameraRef.current.setCamera({
+                  centerCoordinate: coords,
+                  zoomLevel: 13,
+                  animationDuration: 0,
+                })
+              } else {
+                // Controlled mode: update state
+                setCameraCenter(coords)
+              }
+            } else {
+              console.warn("No location returned from Radar, using fallback")
+            }
+          } catch (error) {
+            console.warn("Location error, using fallback:", error)
+            // Fallback is already set in initial state
+          }
+        } else {
+          console.log("Location permission denied, using fallback")
+          // Fallback is already set in initial state
+        }
+      } catch (error) {
+        console.warn("Location setup error, using fallback:", error)
+        // Fallback is already set in initial state
+      }
+    }
+
+    setupLocation()
+  }, [enableDynamicFetch])
+
+  // Convert zoom level to approximate radius in km
+  const zoomToRadiusKm = (zoomLevel: number): number => {
+    // Approximate formula: higher zoom = smaller radius
+    // Expanded radius - Zoom 10 ≈ 40km, Zoom 12 ≈ 10km, Zoom 14 ≈ 2.5km, Zoom 16 ≈ 0.8km
+    return Math.max(0.8, 80 / Math.pow(2, zoomLevel - 8))
+  }
+
+  // Handle map region changes for dynamic fetching
+  const handleRegionDidChange = (region: any) => {
+    if (!enableDynamicFetch || !onRegionChange) return
+    
+    console.log("Region changed:", region)
+    
+    // Validate region object - it's a GeoJSON Feature
+    if (!region || !region.geometry || !region.properties) {
+      console.warn("Invalid region object structure:", region)
+      return
+    }
+    
+    // Extract coordinates and zoom level from GeoJSON structure
+    const coordinates = region.geometry.coordinates
+    const zoomLevel = region.properties.zoomLevel
+    
+    if (!Array.isArray(coordinates) || coordinates.length < 2 || typeof zoomLevel !== 'number') {
+      console.warn("Invalid coordinates or zoom level:", { coordinates, zoomLevel })
+      return
+    }
+    
+    const minZoomForFetch = 11 // Don't fetch if zoom is too low (too much area)
+    if (zoomLevel < minZoomForFetch) {
+      console.log(`Zoom level ${zoomLevel} too low, skipping fetch`)
+      return
+    }
+
+    const center: [number, number] = [
+      parseFloat(coordinates[0]) || 0, // longitude
+      parseFloat(coordinates[1]) || 0  // latitude
+    ]
+    const radiusKm = zoomToRadiusKm(zoomLevel)
+    
+    console.log(`Region change - Center: [${center[0]}, ${center[1]}], Zoom: ${zoomLevel}, Radius: ${radiusKm}km`)
+    
+    // Trigger callback for fetching groups
+    // Note: We don't update internal camera state here to avoid interfering with user navigation
+    onRegionChange(center, radiusKm)
+  }
+
   // Watch for selectedLocation changes and move camera
   useEffect(() => {
     if (selectedLocation && cameraRef.current) {
+      console.log("Moving camera for selectedLocation:", selectedLocation)
       // Set flag to prevent map onPress from clearing the selection
       setIsSettingFromSearch(true)
 
@@ -85,6 +190,7 @@ export const MapViewComponent = ({
   // Watch for selectedMarker changes and move camera (only when selecting, not deselecting)
   useEffect(() => {
     if (selectedMarker && cameraRef.current) {
+      console.log("Moving camera for selectedMarker:", selectedMarker.name)
       // Set flag to prevent map onPress from clearing the selection
       setIsSettingFromSearch(true)
 
@@ -125,29 +231,6 @@ export const MapViewComponent = ({
     }
   }
 
-  // TODO: mover esto a un utils/el style global
-  // Generate a pastel color based on coordinates
-  const getColorFromCoords = ([lng, lat]: [number, number]) => {
-    // Simple hash function
-    const hash = Math.abs(Math.sin(lng * 1000 + lat * 1000) * 10000)
-    // Generate pastel color
-    const r = Math.floor((hash % 128) + 127)
-    const g = Math.floor(((hash / 2) % 128) + 127)
-    const b = Math.floor(((hash / 3) % 128) + 127)
-    return `rgb(${r},${g},${b})`
-  }
-
-  const getMarkerStyle = (marker: MapGroup) => ({
-    backgroundColor: getColorFromCoords(marker.coordinates),
-    borderRadius: 45,
-    width: 65,
-    height: 65,
-    justifyContent: "center" as const,
-    alignItems: "center" as const,
-    borderWidth: 2,
-    borderColor: "white",
-  })
-
   // Esto tambien podria ir a un utils
   // Helper function to create a circle geometry from center point and radius in km
   const createCircleGeoJSON = (center: [number, number], radiusKm: number) => {
@@ -184,8 +267,8 @@ export const MapViewComponent = ({
       <MapLibreGL.MapView
         style={styles.map}
         onLongPress={handleMapLongPress}
-        // TODO: revisar onRegionDidChange para poder fetchear grupos cercanos
-        // Tambien ver de mover el url a otro lado, y poder integrar con dark mode (radar-dark-v1)
+        onRegionDidChange={enableDynamicFetch ? handleRegionDidChange : undefined}
+        // TODO: ver de mover el url a otro lado, y poder integrar con dark mode (radar-dark-v1)
         mapStyle={`https://api.radar.io/maps/styles/radar-default-v1?publishableKey=${apiKey}`}
         onPress={() => {
           // Don't clear selection if it's being set from search
@@ -197,8 +280,10 @@ export const MapViewComponent = ({
       >
         <MapLibreGL.Camera
           ref={cameraRef}
-          centerCoordinate={[cameraCenter[0], cameraCenter[1]]}
-          zoomLevel={zoom}
+          {...(!enableDynamicFetch && {
+            centerCoordinate: [cameraCenter[0], cameraCenter[1]],
+            zoomLevel: zoom,
+          })}
           animationDuration={1000}
         />
 
@@ -254,31 +339,15 @@ export const MapViewComponent = ({
           </>
         )}
 
-        {/* GRUPOS: Muestra los grupos cercanos */}
+        {/* GRUPOS: Muestra los grupos cercanos con transición suave */}
         {groups?.map((group) => (
           <MapLibreGL.PointAnnotation
-            key={group.id}
-            id={group.id}
+            key={`group-${group.id}`}
+            id={`group-${group.id}`}
             coordinate={group.coordinates}
             onSelected={() => handleGroupPress(group)}
           >
-            <View style={[getMarkerStyle(group), { width: 54, height: 54, borderRadius: 27 }]}>
-              <Text style={styles.markerEmoji}>{group.icon ?? "G"}</Text>
-              <Text
-                style={{
-                  color: "white",
-                  fontWeight: "bold",
-                  fontSize: 10,
-                  textAlign: "center",
-                  marginTop: 2,
-                  maxWidth: 44,
-                }}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {group.name}
-              </Text>
-            </View>
+              <GroupMapIcon group={group} />
             <MapLibreGL.Callout title={group.name} />
           </MapLibreGL.PointAnnotation>
         ))}
@@ -313,35 +382,9 @@ export const MapViewComponent = ({
       {/* GRUPOS: Para cuando selecciono un grupo */}
       {/* Para el grupo, poner boton de entrar al grupo y eso */}
       {selectedMarker && (
-        <LocationInfo height={150}>
-          <Text style={{ color: "white", fontWeight: "bold", fontSize: 20, marginBottom: 6 }}>
-            {selectedMarker.name || "Grupo"}
-          </Text>
-          <Text style={{ color: "white", fontSize: 14 }}>📍 {selectedMarker.location}</Text>
-          {selectedMarker.description && (
-            <Text style={{ color: "white", fontSize: 13, marginTop: 4, textAlign: "center" }}>
-              {selectedMarker.description}
-            </Text>
-          )}
-          {typeof selectedMarker.membersCount === "number" && (
-            <Text style={{ color: "white", fontSize: 13, marginTop: 4 }}>
-              {selectedMarker.membersCount} Miembros 👥
-            </Text>
-          )}
-
-          <TouchableOpacity
-            style={{
-              marginTop: 12,
-              paddingVertical: 8,
-              paddingHorizontal: 20,
-              backgroundColor: "#4a90e2",
-              borderRadius: 20,
-            }}
-            onPress={() => console.log("Ver grupo", selectedMarker.id)}
-          >
-            <Text style={{ color: "white", fontWeight: "bold" }}>Ver grupo</Text>
-          </TouchableOpacity>
-        </LocationInfo>
+        // <LocationInfo height={150}>
+          <GroupMapInfoCard group={selectedMarker} />
+        // </LocationInfo>
       )}
     </View>
   )

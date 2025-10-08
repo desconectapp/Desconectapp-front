@@ -49,17 +49,17 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
     
     console.log("Datos de la búsqueda:", JSON.stringify(requestDataWithUser, null, 2))
 
-    search.mutateAsync(requestDataWithUser)
-      .then(() => {
-        console.log("Búsqueda realizada con éxito")
+    search.mutate(requestDataWithUser, {
+      onSuccess: () => {
+     console.log("Búsqueda realizada con éxito")
         showToast("¡Búsqueda creada! 🎉", "Pronto te notificaremos cuando encontremos coincidencias")
-        requestStore.clearRequest()
+        // requestStore.clearRequest()
         navigation.navigate("Tabs")
-      })
-      .catch(error => {
+      }, onError: (error) => {
         console.error("Error al realizar la búsqueda:", error)
         Alert.alert("Error", "No se pudo realizar la búsqueda. Inténtalo de nuevo más tarde.")
-      })
+      }
+    })     
   }
   
   return (

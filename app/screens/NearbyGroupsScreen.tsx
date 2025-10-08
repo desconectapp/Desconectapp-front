@@ -1,126 +1,67 @@
-import React from "react"
+import React, { useState, useCallback, useRef, useEffect } from "react"
 import { View, ViewStyle, TextStyle } from "react-native"
 import { Screen, Text } from "@/components"
 import { observer } from "mobx-react-lite"
-import { MapGroup, MapViewComponent } from "@/components/Location/MapView"
+import { MapViewComponent } from "@/components/Location/MapView"
+import { MapGroup } from "@/services/groups/Groups.types"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { spacing } from "@/theme"
+import { groupsService } from "@/services/groups"
 
 export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
   const { themed } = useAppTheme()
-  // Mock de GET groupos cercanos hasta tener el endpoint real
-  const groups: MapGroup[] = [
-    {
-      id: "group-1",
-      name: "Recoleta Runners",
-      coordinates: [-58.3936, -34.5889],
-      radius: 2,
-      location: "Recoleta, Buenos Aires",
-      description: "Running group meeting every morning.",
-      membersCount: 15,
-      icon: "🏃‍♂️",
-    },
-    {
-      id: "group-2",
-      name: "Palermo Book Club",
-      coordinates: [-58.4302, -34.5731],
-      radius: 1.5,
-      location: "Palermo, Buenos Aires",
-      description: "Weekly book discussions in the park.",
-      membersCount: 8,
-      icon: "📚",
-    },
-    {
-      id: "group-3",
-      name: "San Telmo Artists",
-      coordinates: [-58.3737, -34.6197],
-      radius: 1,
-      location: "San Telmo, Buenos Aires",
-      description: "Open-air painting sessions.",
-      membersCount: 12,
-      icon: "🎨",
-    },
-    {
-      id: "group-4",
-      name: "Belgrano Cyclists",
-      coordinates: [-58.4561, -34.5622],
-      radius: 3,
-      location: "Belgrano, Buenos Aires",
-      description: "Weekend cycling tours.",
-      membersCount: 20,
-      icon: "🚴‍♀️",
-    },
-    {
-      id: "group-5",
-      name: "Microcentro Chess Club",
-      coordinates: [-58.3816, -34.6037],
-      radius: 0.5,
-      location: "Microcentro, Buenos Aires",
-      description: "Casual chess games after work.",
-      membersCount: 10,
-      icon: "♟️",
-    },
-    {
-      id: "group-6",
-      name: "Caballito Yoga",
-      coordinates: [-58.4438, -34.6187],
-      radius: 1.2,
-      location: "Caballito, Buenos Aires",
-      description: "Outdoor yoga sessions in Parque Centenario.",
-      membersCount: 18,
-      icon: "🧘‍♀️",
-    },
-    {
-      id: "group-7",
-      name: "Villa Crespo Foodies",
-      coordinates: [-58.4371, -34.6012],
-      radius: 1,
-      location: "Villa Crespo, Buenos Aires",
-      description: "Exploring local restaurants and food fairs.",
-      membersCount: 22,
-      icon: "🍔",
-    },
-    {
-      id: "group-8",
-      name: "Puerto Madero Photographers",
-      coordinates: [-58.3625, -34.6083],
-      radius: 1.5,
-      location: "Puerto Madero, Buenos Aires",
-      description: "Photo walks along the docks.",
-      membersCount: 14,
-      icon: "📷",
-    },
-    {
-      id: "group-9",
-      name: "Constitución Board Gamers",
-      coordinates: [-58.3847, -34.6297],
-      radius: 1,
-      location: "Constitución, Buenos Aires",
-      description: "Board game nights every Friday.",
-      membersCount: 11,
-      icon: "🎲",
-    },
-    {
-      id: "group-10",
-      name: "Parque Patricios Techies",
-      coordinates: [-58.4032, -34.6345],
-      radius: 2,
-      location: "Parque Patricios, Buenos Aires",
-      description: "Tech meetups and coding sessions.",
-      membersCount: 25,
-      icon: "💻",
-    },
-    {
-      id: "group-11",
-      name: "Saavedra Dog Walkers",
-      coordinates: [-58.4897, -34.5556],
-      radius: 1.3,
-      location: "Saavedra, Buenos Aires",
-      description: "Group dog walks in Parque Saavedra.",
-      membersCount: 16,
-      icon: "🐕",
-    },
-  ]
+
+  // State for dynamic group fetching
+  const [groups, setGroups] = useState<MapGroup[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  console.log("groups:", groups)
+  // Debounced fetch function
+  const fetchNearbyGroups = useCallback(async (center: [number, number], radiusKm: number) => {
+    try {
+      setIsLoading(true)
+      console.log(`Fetching groups for center: [${center[0]}, ${center[1]}], radius: ${radiusKm}km`)
+      
+      const fetchedGroups = await groupsService.getNearbyGroups(
+        center[0], // latitude
+        center[1], // longitude
+        radiusKm
+      )
+      
+      // Smooth transition: only update if there are meaningful changes
+      if (JSON.stringify(fetchedGroups.map(g => g.id).sort()) !== JSON.stringify(groups.map(g => g.id).sort())) {
+        setGroups(fetchedGroups)
+        console.log("Updated groups:", fetchedGroups.length)
+      }
+    } catch (error) {
+      console.error("Error fetching nearby groups:", error)
+      // Don't clear groups on error, keep existing ones for better UX
+    } finally {
+      setIsLoading(false)
+    }
+  }, [groups])
+
+  // Handle region changes from the map with debouncing
+  const handleRegionChange = useCallback((center: [number, number], radiusKm: number) => {
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Set new timeout for debounced fetch - reduced delay for smoother experience
+    debounceTimeoutRef.current = setTimeout(() => {
+      fetchNearbyGroups(center, radiusKm)
+    }, 500) // 500ms debounce delay (reduced from 800ms)
+  }, [fetchNearbyGroups])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return (
     <Screen
@@ -132,10 +73,14 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
         keyboardVerticalOffset: 0,
       }}
     >
-      <Text style={themed($title)}>Explore groups near your location.</Text>
+      <Text style={themed($title)}>
+        Explore groups near your location.
+      </Text>
       <View style={themed($mapContainer)}>
         <MapViewComponent
           groups={groups}
+          enableDynamicFetch={true}
+          onRegionChange={handleRegionChange}
           // onGroupPress={(group) => { Aca creo que habria que redireccionar al grupo, pero 
           // no se si conviene aca o en el MapViewComponent. Primero necesitamos el endpoint de
           // GET grupos igual}}

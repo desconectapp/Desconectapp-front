@@ -123,6 +123,17 @@ export const useJoinGroup = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] })
     },
+  });
+};
+
+export const useNearbyGroups = (latitude: number, longitude: number, radius: number) => {
+  return useQuery({
+    queryKey: ["nearbyGroups", latitude, longitude, radius],
+    queryFn: async () => {
+      const response = await groupsService.getNearbyGroups(latitude, longitude, radius)
+      if (!response) throw new Error("Error al cargar grupos cercanos")
+      return response
+    },
   })
 }
 

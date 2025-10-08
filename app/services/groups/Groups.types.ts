@@ -52,7 +52,23 @@ export interface OpenGroup {
 	activity_name: string
 	member_count:	number
 	photo:	string
+  avatar_url: string | null
+  week_timeslots?: number[]
 }
+
+export interface MapGroup {
+  id: string
+  name: string
+  icon: string
+  coordinates: [number, number] // [longitude, latitude]
+  radius?: number // in km
+  location: string
+  description?: string
+  membersCount?: number
+  avatarUrl?: string
+  week_timeslots?: number[]
+}
+
 
 export interface PaginatedOpenGroup {
   groups: OpenGroup[]
