@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react" // Added useCallback
 import {
   View,
   TouchableOpacity,
@@ -10,7 +10,8 @@ import {
   TextInput,
   Switch,
   Pressable,
-  ActivityIndicator, // Added for loading state
+  ActivityIndicator, 
+  Dimensions, // Added Dimensions for better layout control
   type ViewStyle,
   type TextStyle,
 } from "react-native"
@@ -29,10 +30,23 @@ import { CreateGroupParams } from "@/services/groups/Groups.types"
 
 import { useCreateGroup } from "@/hooks/Groups"
 import { useActivities } from "@/hooks/Users" 
-import { isLoading } from "expo-font"
-
 
 type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
+
+// Use Dimensions to calculate height for the inline list
+const { height } = Dimensions.get('window');
+
+// Define a separate list of form sections for the FlatList data
+const formSections = [
+    { key: 'icon' },
+    { key: 'name' },
+    { key: 'location' },
+    { key: 'activity_title' },
+    { key: 'activity_list' }, // New section for the inline activity picker
+    { key: 'description' },
+    { key: 'privacy' },
+];
+
 
 export const CreateGroupScreen = observer(function CreateGroupScreen() {
     const { themed, theme } = useAppTheme()
@@ -45,17 +59,20 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
     const [activities, setActivities] = useState<Activity[]>([]);
     const [offset, setOffset] = useState(0);
+    const [hasMoreActivities, setHasMoreActivities] = useState(true); // Track if more activities are available
     const limit = 25;
-    const { data, isLoading: isLoadingActivities, isFetching: isFetchingActivities } = useActivities(limit, offset, "");
+    const [query, setQuery] = useState(""); // Add query state for potential future search/filter
+
+    const { data, isLoading: isLoadingActivities, isFetching: isFetchingActivities } = useActivities(limit, offset, query);
 
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [location, setLocation] = useState("")
+    // 1. CHANGE: State holds a single ID or null
     const [activityId, setActivityId] = useState<number | null>(null)
     const [isPublic, setIsPublic] = useState(false)
-
-    const [isActivityModalVisible, setIsActivityModalVisible] = useState(false);
         
+    // REMOVED: isActivityModalVisible state
 
     const handleCreateGroup = async () => {
         if (!name.trim() || !activityId) {
@@ -75,12 +92,10 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         try {
             const createdGroup = await createGroupAsync(newGroup); 
 
-            // Invalidate queries to refresh the list of groups
             await queryClient.invalidateQueries({ queryKey: ["groups"] }); 
 
             showToast("Success", `Group "${name}" created successfully!`);
 
-            // Navigate to the info screen of the newly created group or back to main
             navigation.replace("Main", {
             screen: "GroupInfoScreen", 
             params: { groupId: createdGroup.id },
@@ -91,36 +106,168 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         }
     }
 
-    const handleSelectActivity = (activity: Activity) => {
-        setActivityId(activity.id);
-        setIsActivityModalVisible(false);
-    }
+    // 2. CHANGE: Select handler just sets the ID
+    const handleSelectActivity = useCallback((activity: Activity) => {
+        // Toggling behavior for selecting a single item
+        setActivityId((prevId) => (prevId === activity.id ? null : activity.id));
+    }, []);
 
     useEffect(() => {
-        if (data?.length) {
+        if (data) {
             setActivities((prev) => {
-            const ids = new Set(prev.map((a) => a.id));
-            const newItems = data.filter((a) => !ids.has(a.id));
-            return [...prev, ...newItems];
+                const ids = new Set(prev.map((a) => a.id));
+                const newItems = data.filter((a) => !ids.has(a.id));
+                const updatedList = [...prev, ...newItems];
+
+                // Remove duplicates in case of query reset or overlap (though should be handled by 'ids' Set)
+                const uniqueList = Array.from(new Map(updatedList.map(item => [item.id, item])).values());
+                
+                return uniqueList;
             });
+            // Update hasMore status
+            setHasMoreActivities(data.length >= limit);
         }
-    }, [data]);
+    }, [data, limit]);
 
+    // Handler to load more activities for the FlatList
+    const handleLoadMoreActivities = () => {
+        if (!isFetchingActivities && hasMoreActivities) {
+            setOffset((prev) => prev + limit);
+        }
+    };
 
-    const renderActivityItem = ({ item }: { item: Activity }) => (
-        <TouchableOpacity 
-            style={[styles.modalActivityItem, themed(themedStyles.modalActivityItem)]} 
-            onPress={() => handleSelectActivity(item)}
-        >
-            <Text style={themed(themedStyles.activityIcon)}>{item.icon}</Text>
-            <Text style={themed(themedStyles.activityName)}>{item.name}</Text>
-            {item.id === activityId && (
-            <FontAwesome name="check" size={20} color={theme.colors.tint} style={{ marginLeft: 'auto' }} />
-            )}
-        </TouchableOpacity>
-    );
+    // 3. CHANGE: Render item for single selection list (similar to the modal's render item)
+    const renderActivityItem = ({ item }: { item: Activity }) => {
+        const isSelected = item.id === activityId;
+        return (
+            <TouchableOpacity 
+                style={[
+                    styles.activityChip, 
+                    themed(themedStyles.activityChip), 
+                    isSelected && themed(themedStyles.activityChipSelected)
+                ]} 
+                onPress={() => handleSelectActivity(item)}
+            >
+                <Text style={themed(themedStyles.activityIcon)}>{item.icon}</Text>
+                <Text 
+                    style={[
+                        themed(themedStyles.activityName), 
+                        isSelected && themed(themedStyles.activityNameSelected)
+                    ]}
+                >
+                    {item.name}
+                </Text>
+            </TouchableOpacity>
+        );
+    };
+
 
     const selectedActivity = activities?.find(a => a.id === activityId);
+
+    // 4. CHANGE: Modify FlatList to render form in sections
+    const renderFormItem = ({ item }: { item: typeof formSections[number] }) => {
+        switch (item.key) {
+            case 'icon':
+                return (
+                    <Text style={[themed(themedStyles.groupIcon), {textAlign: 'center'}]}>
+                        {selectedActivity?.icon || "✨"}
+                    </Text>
+                );
+            case 'name':
+                return (
+                    <View style={styles.inputGroup}>
+                        <Text style={themed(themedStyles.inputLabel)}>Group Name*</Text>
+                        <TextInput
+                            style={themed(themedStyles.textInput)}
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="e.g., Sunday Hiking Club"
+                            placeholderTextColor={theme.colors.textDim}
+                            maxLength={50}
+                        />
+                    </View>
+                );
+            case 'location':
+                return (
+                    <View style={styles.inputGroup}>
+                        <Text style={themed(themedStyles.inputLabel)}>Location</Text>
+                        <TextInput
+                            style={themed(themedStyles.textInput)}
+                            value={location}
+                            onChangeText={setLocation}
+                            placeholder="e.g., Central Park, NYC (Optional)"
+                            placeholderTextColor={theme.colors.textDim}
+                            maxLength={100}
+                        />
+                    </View>
+                );
+            case 'activity_title':
+                return (
+                    <Text style={[themed(themedStyles.inputLabel), styles.activityTitle]}>Select Primary Activity*</Text>
+                );
+            case 'activity_list':
+                return (
+                    <View style={styles.activityListContainer}>
+                        {isLoadingActivities && offset === 0 ? (
+                            <ActivityIndicator size="large" color={theme.colors.tint} style={{ marginVertical: spacing.xxl }} />
+                        ) : (
+                            <FlatList
+                                data={activities}
+                                keyExtractor={(activity) => activity.id.toString()}
+                                renderItem={renderActivityItem}
+                                horizontal={false}
+                                numColumns={3} // Display activities in a 3-column grid
+                                contentContainerStyle={styles.activityListContent}
+                                scrollEnabled={false} // Activities list is now inline, let the parent FlatList scroll
+                                ListFooterComponent={() =>
+                                    isFetchingActivities ? (
+                                        <ActivityIndicator size="small" color={theme.colors.tint} style={{ marginVertical: spacing.md }} />
+                                    ) : null
+                                }
+                                onEndReached={handleLoadMoreActivities}
+                                onEndReachedThreshold={0.5}
+                            />
+                        )}
+                    </View>
+                );
+            case 'description':
+                return (
+                    <View style={styles.inputGroup}>
+                        <Text style={themed(themedStyles.inputLabel)}>Description</Text>
+                        <TextInput
+                            style={[themed(themedStyles.textInput), themed(themedStyles.descriptionInput)]}
+                            value={description}
+                            onChangeText={setDescription}
+                            placeholder="Tell others what your group is about... (Optional)"
+                            placeholderTextColor={theme.colors.textDim}
+                            multiline
+                            textAlignVertical="top"
+                            maxLength={500}
+                        />
+                    </View>
+                );
+            case 'privacy':
+                return (
+                    <View style={[styles.toggleContainer, themed(themedStyles.toggleContainer)]}>
+                        <View>
+                            <Text style={themed(themedStyles.inputLabel)}>Group Privacy</Text>
+                            <Text style={themed(themedStyles.toggleDescription)}>
+                                {isPublic ? "Public (Anyone can find and join)" : "Private (Closed group)"}
+                            </Text>
+                        </View>
+                        <Switch
+                            onValueChange={setIsPublic}
+                            value={isPublic}
+                            trackColor={{ false: theme.colors.border, true: theme.colors.tint }}
+                            thumbColor={theme.colors.background}
+                        />
+                    </View>
+                );
+            default:
+                return null;
+        }
+    };
+
 
     return (
         <SafeAreaView
@@ -148,135 +295,24 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 </Pressable>
             </View>
 
+            {/* 5. CHANGE: Main FlatList rendering the form sections */}
             <FlatList
-            data={[{ key: 'form' }]} 
-            keyExtractor={(item) => item.key}
-            contentContainerStyle={styles.formContent}
-            showsVerticalScrollIndicator={false}
-            renderItem={() => (
-                <View style={styles.formContainer}>
-                <Text style={[themed(themedStyles.groupIcon), {textAlign: 'center'}]}>
-                {selectedActivity?.icon || "✨"}
-                </Text>
-                <Text style={themed(themedStyles.inputLabel)}>Group Name*</Text>
-            <TextInput
-            style={themed(themedStyles.textInput)}
-            value={name}
-            onChangeText={setName}
-            placeholder="e.g., Sunday Hiking Club"
-            placeholderTextColor={theme.colors.textDim}
-            maxLength={50}
+                data={formSections} 
+                keyExtractor={(item) => item.key}
+                contentContainerStyle={styles.formContent}
+                showsVerticalScrollIndicator={false}
+                renderItem={renderFormItem}
             />
-
-            <Text style={themed(themedStyles.inputLabel)}>Location*</Text>
-            <TextInput
-            style={themed(themedStyles.textInput)}
-            value={location}
-            onChangeText={setLocation}
-            placeholder="e.g., Central Park, NYC"
-            placeholderTextColor={theme.colors.textDim}
-            maxLength={100}
-            />
-
-            <Text style={themed(themedStyles.inputLabel)}>Activity*</Text>
-            <TouchableOpacity 
-            style={themed(themedStyles.activitySelectButton)}
-            onPress={() => setIsActivityModalVisible(true)}
-            disabled={isLoadingActivities}
-            >
-            {isLoadingActivities ? (
-            <ActivityIndicator size="small" color={theme.colors.tint} />
-            ) : (
-            <>
-            <Text style={themed(themedStyles.activitySelectText)}>
-                {selectedActivity ? `${selectedActivity.icon} ${selectedActivity.name}` : "Select an Activity..."}
-            </Text>
-            <FontAwesome name="chevron-right" size={14} color={theme.colors.textDim} />
-            </>
-            )}
-            </TouchableOpacity>
-
-
-            {/* Group Description Input */}
-            <Text style={themed(themedStyles.inputLabel)}>Description</Text>
-            <TextInput
-                style={[themed(themedStyles.textInput), themed(themedStyles.descriptionInput)]}
-                value={description}
-                onChangeText={setDescription}
-                placeholder="Tell others what your group is about..."
-                placeholderTextColor={theme.colors.textDim}
-                multiline
-                textAlignVertical="top"
-                maxLength={500}
-            />
-
-            <View style={styles.toggleContainer}>
-                <View>
-                    <Text style={themed(themedStyles.inputLabel)}>Group Privacy</Text>
-                    <Text style={themed(themedStyles.toggleDescription)}>
-                    {isPublic ? "Public (Anyone can find and join)" : "Private (Closed group)"}
-                    </Text>
-                </View>
-                    <Switch
-                    onValueChange={setIsPublic}
-                    value={isPublic}
-                    trackColor={{ false: theme.colors.border, true: theme.colors.tint }}
-                    thumbColor={theme.colors.background}
-                    />
-                </View>
-            </View>
-            )}
-            />
-
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={isActivityModalVisible}
-                onRequestClose={() => setIsActivityModalVisible(false)}
-            >
-                <View style={styles.centeredView}>
-                    <View style={[styles.modalView, themed(themedStyles.modalView)]}>
-                        <Text style={styles.modalTitle}>Select Group Activity</Text>
-
-                        {isLoadingActivities ? (
-                            <ActivityIndicator size="large" color={theme.colors.tint} style={{ marginVertical: spacing.xxl }} />
-                            ) : (
-                            <FlatList
-                            data={activities}
-                            keyExtractor={(item) => item.id.toString()}
-                            renderItem={renderActivityItem}
-                            onEndReached={() => setOffset((prev) => prev + limit)}
-                            onEndReachedThreshold={0.5}
-                            removeClippedSubviews={false} // avoids items being unmounted
-                            initialNumToRender={10}
-                            maxToRenderPerBatch={10}
-                            windowSize={5}
-                            ListFooterComponent={() =>
-                                isFetchingActivities ? (
-                                <ActivityIndicator size="small" color={theme.colors.tint} style={{ marginVertical: spacing.md }} />
-                                ) : null
-                            }
-                            />
-                        )}
-
-                        <TouchableOpacity
-                            style={[styles.modalButton, styles.cancelButton, { marginTop: spacing.md }]}
-                            onPress={() => setIsActivityModalVisible(false)}
-                            >
-                            <Text style={styles.modalButtonText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+            
+            {/* REMOVED: The Modal component is no longer needed */}
 
         </SafeAreaView>
     )
 })
 
-// --- Styles (Combined and Simplified) ---
+// --- Updated and Combined Styles ---
 
 const styles = StyleSheet.create({
-  // Reused styles from GroupInfoScreen
   container: { flex: 1 } as ViewStyle,
   header: {
     flexDirection: "row",
@@ -287,86 +323,67 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   } as ViewStyle,
   backButton: { paddingRight: spacing.md } as ViewStyle,
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  } as ViewStyle,
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: spacing.xl,
-    alignItems: 'center',
-    width: '90%',
-    maxHeight: '80%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  } as ViewStyle,
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  } as TextStyle,
-  modalButton: {
-    borderRadius: 10,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    width: '100%',
-    alignItems: 'center',
-  } as ViewStyle,
-  cancelButton: {
-    backgroundColor: '#ddd',
-  } as ViewStyle,
-  modalButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  } as TextStyle,
   
-  // --- New Styles for Creation Screen ---
   formContent: {
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.md,
       paddingBottom: spacing.xxl * 2,
   } as ViewStyle,
-  formContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  } as ViewStyle,
   
+  // New: style for grouping inputs
+  inputGroup: {
+      marginBottom: spacing.md,
+  } as ViewStyle,
+
+  activityTitle: {
+      marginBottom: spacing.xs,
+      marginTop: spacing.lg, // Extra space before the activity list
+      borderTopWidth: 1,
+      paddingTop: spacing.md,
+      borderColor: '#e0e0e0',
+  } as TextStyle,
+
+  // New: Container for the inline activity FlatList
+  activityListContainer: {
+      minHeight: height * 0.2, // Ensure visibility even with few items
+      paddingHorizontal: spacing.xs / 2, // Compensate for chip margin
+  } as ViewStyle,
+
+  // New: Content style for the activity list FlatList
+  activityListContent: {
+      paddingBottom: spacing.lg,
+  } as ViewStyle,
+
+  // New: Style for the selectable chips
+  activityChip: {
+      flex: 1,
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      margin: spacing.xs / 2,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.xs,
+      borderRadius: spacing.md,
+      borderWidth: 1.5,
+      minWidth: 80, // ensures chips are not too small
+  } as ViewStyle,
+
   toggleContainer: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginTop: spacing.md,
+      marginTop: spacing.lg,
       paddingVertical: spacing.sm,
       paddingHorizontal: spacing.xs,
       borderBottomWidth: 1,
       borderTopWidth: 1,
-      borderColor: '#e0e0e0',
   } as ViewStyle,
   toggleDescription: {
       fontSize: 12,
-      color: '#666',
   } as TextStyle,
   
-  modalActivityItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: spacing.sm,
-      paddingHorizontal: spacing.xs,
-      width: '100%',
-  } as ViewStyle,
-  activityList: {
-      width: '100%',
-  } as ViewStyle,
-
+  // NOTE: All modal-related styles (centeredView, modalView, modalTitle, etc.) were removed 
+  // as the modal is no longer used.
 })
 
 const themedStyles = {    
@@ -374,16 +391,9 @@ const themedStyles = {
         flex: 1,
         backgroundColor: theme.colors.background,
     }),    
-    // Header
     header: (theme: any): ViewStyle => ({
         backgroundColor: theme.colors.background,
         borderBottomColor: theme.colors.border,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.md,
-        borderBottomWidth: 1,
     }),
     headerTitle: (theme: any): TextStyle => ({
         fontSize: 18,
@@ -410,7 +420,6 @@ const themedStyles = {
         marginBottom: spacing.xs,
         color: theme.colors.text,
         alignSelf: "flex-start",
-        marginTop: spacing.md,
     }),
     textInput: (theme: any): TextStyle => ({
         borderWidth: 1,
@@ -428,46 +437,36 @@ const themedStyles = {
     }),
 
     groupIcon: (_theme: any): TextStyle => ({
-        fontSize: 60,         // bigger font size
-        lineHeight: 72,       // slightly larger lineHeight
-        height: 72,           // match lineHeight
+        fontSize: 60,         
+        lineHeight: 72,       
+        height: 72,           
         textAlignVertical: "center",
         textAlign: "center",
-        marginBottom: spacing.sm,
+        marginBottom: spacing.md,
     }),
     
-    // Activity Select
-    activitySelectButton: (theme: any): ViewStyle => ({
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        borderRadius: spacing.sm,
-        padding: spacing.sm,
+    // Activity Chips (New/Modified Styles for inline selection)
+    activityChip: (theme: any): ViewStyle => ({
         backgroundColor: theme.colors.background,
+        borderColor: theme.colors.border,
     }),
-    activitySelectText: (theme: any): TextStyle => ({
-        fontSize: 16,
-        color: theme.colors.text,
-    }),
-    
-    // Activity Modal
-    modalActivityItem: (theme: any): ViewStyle => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: spacing.sm,
-        paddingHorizontal: spacing.xs,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
+    activityChipSelected: (theme: any): ViewStyle => ({
+        backgroundColor: theme.colors.tint,
+        borderColor: theme.colors.tint,
     }),
     activityIcon: (_theme: any): TextStyle => ({
-        fontSize: 24,
-        marginRight: spacing.sm,
+        fontSize: 26,
+        marginBottom: spacing.xs,
     }),
     activityName: (theme: any): TextStyle => ({
-        fontSize: 16,
+        fontSize: 14,
         color: theme.colors.text,
+        fontWeight: '500',
+        textAlign: 'center',
+    }),
+    activityNameSelected: (theme: any): TextStyle => ({
+        color: theme.colors.tintInverse, // assuming tintInverse is a good contrast color (e.g., white)
+        fontWeight: '700',
     }),
 
     toggleDescription: (theme: any): TextStyle => ({
@@ -475,18 +474,8 @@ const themedStyles = {
         color: theme.colors.textDim,
     }),
 
-    modalView: (theme: any): ViewStyle => ({
-    backgroundColor: theme.colors.background,
-    borderRadius: 20,
-    padding: spacing.xl,
-    alignItems: 'center',
-    shadowColor: theme.colors.text,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  }),
+    toggleContainer: (theme: any): ViewStyle => ({
+        borderColor: theme.colors.border,
+        backgroundColor: theme.colors.background,
+    }),
 }
