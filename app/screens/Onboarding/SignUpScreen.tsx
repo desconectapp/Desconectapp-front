@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite"
 import { useEffect, useState } from "react"
-import { View, type ViewStyle, type TextStyle, type ImageStyle, Dimensions } from "react-native"
+import { View, TextInput, TouchableOpacity, type ViewStyle, type TextStyle, type ImageStyle, Dimensions } from "react-native"
 import { Screen, Text, AutoImage } from "@/components"
 import type { AppStackScreenProps } from "../../navigators"
 import { useSafeAreaInsetsStyle } from "../../utils/useSafeAreaInsetsStyle"
@@ -13,6 +13,8 @@ import { spacing } from "@/theme"
 import logoImage from "../../../assets/images/desconectapp_icon.jpeg"
 import { AuthForm } from "@/components/Custom/AuthForm"
 import { useStores } from "@/models"
+import { FontAwesome } from "@expo/vector-icons"
+
 
 const { width } = Dimensions.get("window")
 
@@ -22,12 +24,13 @@ interface SignUpFormData {
 }
 
 export const SignUpScreen = observer(() => {
-  const { themed } = useAppTheme()
+  const { themed, theme } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [loading, setLoading] = useState<boolean>(false)
   const signUp = useSignUp()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
+  const [showPassword, setShowPassword] = useState(false)
 
   const { sessionStore } = useStores()
 
@@ -120,11 +123,30 @@ export const SignUpScreen = observer(() => {
             label: "Password",
             placeholder: "••••••••",
             rules: { required: "Password is required" },
+            render: ({ value, onChange }) => (
+              <View style={$passwordContainer}>
+                <TextInput
+                  placeholder="••••••••"
+                  secureTextEntry={!showPassword}
+                  onChangeText={onChange}
+                  value={value}
+                  style={themed($passwordInput)}
+                  placeholderTextColor={theme.colors.textDim}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={$eyeButton}>
+                  <FontAwesome
+                    name={showPassword ? "eye" : "eye-slash"}
+                    size={20}
+                    color={theme.colors.textDim}
+                  />
+                </TouchableOpacity>
+              </View>
+            ),
           },
         ]}
-        submitText="Create Account"
+        submitText="Login"
         onSubmit={onSubmit}
-        forgotPassword={true}
+        forgotPassword={false}
         isSubmitting={loading}
       />
       <View style={$logoContainer}>
@@ -176,3 +198,24 @@ const $welcomeText = (theme: any): TextStyle => ({
   marginBottom: spacing.xs,
   textAlign: "center",
 })
+
+const $passwordContainer: ViewStyle = {
+  position: "relative",
+}
+
+const $passwordInput = (theme: any): TextStyle => ({
+  borderWidth: 1,
+  borderColor: theme.colors.border ?? "#ccc",
+  borderRadius: 8,
+  padding: 12,
+  paddingRight: 40,
+  color: theme.colors.text,
+})
+
+const $eyeButton: ViewStyle = {
+  position: "absolute",
+  right: 12,
+  top: "50%",
+  transform: [{ translateY: -12 }], 
+  padding: 4,
+}

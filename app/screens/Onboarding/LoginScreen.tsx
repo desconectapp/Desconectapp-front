@@ -10,17 +10,27 @@ import { useLogin } from "@/hooks/Users"
 import { useNavigation } from "@react-navigation/native"
 import { useAppToast } from "@/components/useToast"
 import { AuthForm } from "@/components/Custom/AuthForm"
-import { Dimensions, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
+import {
+  Dimensions,
+  ImageStyle,
+  TextStyle,
+  View,
+  ViewStyle,
+  TextInput,
+  TouchableOpacity,
+} from "react-native"
 import { spacing } from "@/theme"
 import logoImage from "../../../assets/images/desconectapp_icon.jpeg"
 import { useStores } from "@/models"
+import { FontAwesome } from "@expo/vector-icons"
 
 const { width } = Dimensions.get("window")
 
 export const LoginScreen = observer(() => {
-  const { themed } = useAppTheme()
+  const { themed, theme } = useAppTheme()
   const $bottomContainerInsets = useSafeAreaInsetsStyle(["bottom"])
   const [loading, setLoading] = useState<boolean>(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const LoginFunc = useLogin()
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
@@ -51,10 +61,11 @@ export const LoginScreen = observer(() => {
       },
       onError: () => {
         setLoading(false)
-        showToast("Error al iniciar sesion", "Por favor, intenta nuevamente.")
+        showToast("Error al iniciar sesión", "Por favor, intenta nuevamente.")
       },
     })
   }
+
   return (
     <Screen preset="scroll" contentContainerStyle={[$container, $bottomContainerInsets]}>
       <View style={$logoContainer}>
@@ -66,6 +77,8 @@ export const LoginScreen = observer(() => {
           Enter your credentials to continue
         </Text>
       </View>
+
+      {/* 👇 AuthForm with password toggle */}
       <AuthForm
         form={form}
         fields={[
@@ -86,6 +99,25 @@ export const LoginScreen = observer(() => {
             label: "Password",
             placeholder: "••••••••",
             rules: { required: "Password is required" },
+            render: ({ value, onChange }) => (
+              <View style={$passwordContainer}>
+                <TextInput
+                  placeholder="••••••••"
+                  secureTextEntry={!showPassword}
+                  onChangeText={onChange}
+                  value={value}
+                  style={themed($passwordInput)}
+                  placeholderTextColor={theme.colors.textDim}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={$eyeButton}>
+                  <FontAwesome
+                    name={showPassword ? "eye" : "eye-slash"}
+                    size={20}
+                    color={theme.colors.textDim}
+                  />
+                </TouchableOpacity>
+              </View>
+            ),
           },
         ]}
         submitText="Login"
@@ -93,6 +125,7 @@ export const LoginScreen = observer(() => {
         forgotPassword={false}
         isSubmitting={loading}
       />
+
       <View>
         <Text
           preset="subheading"
@@ -124,6 +157,8 @@ export const LoginScreen = observer(() => {
   )
 })
 
+/* ---------- STYLES ---------- */
+
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
   paddingTop: spacing.md,
@@ -135,20 +170,41 @@ const $logoContainer: ViewStyle = {
   paddingTop: spacing.sm,
 }
 
-const $subtitleText = (theme: any): TextStyle => ({
-  color: theme.colors.textDim,
-  textAlign: "center",
-  opacity: 0.8,
-})
-
 const $logo: ImageStyle = {
   width: width * 0.6,
   height: width * 0.6,
   marginBottom: spacing.md,
 }
 
+const $subtitleText = (theme: any): TextStyle => ({
+  color: theme.colors.textDim,
+  textAlign: "center",
+  opacity: 0.8,
+})
+
 const $welcomeText = (theme: any): TextStyle => ({
   color: theme.colors.text,
   marginBottom: spacing.xs,
   textAlign: "center",
 })
+
+const $passwordContainer: ViewStyle = {
+  position: "relative",
+}
+
+const $passwordInput = (theme: any): TextStyle => ({
+  borderWidth: 1,
+  borderColor: theme.colors.border ?? "#ccc",
+  borderRadius: 8,
+  padding: 12,
+  paddingRight: 40,
+  color: theme.colors.text,
+})
+
+const $eyeButton: ViewStyle = {
+  position: "absolute",
+  right: 12,
+  top: "50%",
+  transform: [{ translateY: -12 }], 
+  padding: 4,
+}
