@@ -25,6 +25,7 @@ export interface CreateGroupParams {
   location_name: string | null;
   activity_id: number;
   public: boolean | false;
+  week_timeslots: number[];
   user_ids: number[];
 }
 

@@ -8,7 +8,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "icon": "./assets/images/app-icon-all.png",
+    "icon": "./assets/images/desconectapp_icon.png",
     "updates": {
       "fallbackToCacheTimeout": 0
     },

@@ -27,7 +27,6 @@ import { useQueryClient } from "@tanstack/react-query"
 import { FontAwesome } from '@expo/vector-icons';
 import { Activity } from "@/services/activities/Activities.types"
 import { CreateGroupParams } from "@/services/groups/Groups.types"
-// Import the selectedLocation type you are expecting
 import { selectedLocation } from "types" 
 
 import { useCreateGroup } from "@/hooks/Groups"
@@ -36,6 +35,34 @@ import { useActivities } from "@/hooks/Users"
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
 const { width, height } = Dimensions.get("window")
+
+// Types inferred from RequestConfirmationScreen.tsx
+type ScheduleTimeSlot = { start: string; end: string }
+type DaySchedule = {
+  day: string; // e.g., "Lunes", "Martes"
+  timeSlots: ScheduleTimeSlot[];
+}
+type SelectedScheduleData = DaySchedule[];
+
+// --- Helper Functions ---
+
+/**
+ * NOTE: THIS IS A PLACEHOLDER.
+ * You must implement the logic to convert the complex schedule objects 
+ * (SelectedScheduleData) into the required array of numeric IDs (week_timeslots: number[]) 
+ * for your API.
+ */
+const convertScheduleToApiFormat = (schedules: SelectedScheduleData): number[] => {
+    if (!schedules || schedules.length === 0) return []
+    
+    // Placeholder logic: This must be replaced with your actual mapping logic.
+    // e.g., return schedules.flatMap(s => s.timeSlots.map(t => calculateTimeSlotId(s.day, t)))
+    
+    console.warn("Schedule conversion logic is a placeholder and needs implementation.")
+    // Returning dummy data or an empty array for now.
+    return [] 
+}
+
 
 export const CreateGroupScreen = observer(function CreateGroupScreen() {
     const { themed, theme } = useAppTheme()
@@ -48,13 +75,19 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
-    // This will hold the "longitude,latitude" string for the API
+    
+    // Location States
     const [location, setLocation] = useState("") 
-    // NEW STATE: This will hold the address/name for display
     const [displayAddress, setDisplayAddress] = useState("") 
+
+    // Schedule States
+    const [scheduleData, setScheduleData] = useState<SelectedScheduleData | null>(null)
+    const [displaySchedule, setDisplaySchedule] = useState("")
+    
     const [activityId, setActivityId] = useState<number | null>(null)
     const [isPublic, setIsPublic] = useState(false)
 
+    // ... (rest of the state and useCallbacks for activities remain the same)
     const [showActivityModal, setShowActivityModal] = useState(false)
     const [tempSelectedActivityId, setTempSelectedActivityId] = useState<number | null>(null)
     const [allActivities, setAllActivities] = useState<Activity[]>([])
@@ -105,18 +138,14 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         }
     }, [isFetchingActivities, hasMore, limit])
 
-    // MODIFICATION START: Update handler to receive the object
+    // --- Location Handlers ---
     const handleLocationSelect = useCallback((selectedLoc: selectedLocation) => {
-        // 1. Store the coordinate string for the API
         const coordString = `${selectedLoc.longitude},${selectedLoc.latitude}`
         setLocation(coordString) 
-        
-        // 2. Store the display name/address for the UI
         setDisplayAddress(selectedLoc.name || selectedLoc.address)
         
         showToast("Success", `Location selected: ${selectedLoc.name || selectedLoc.address}`)
     }, [showToast])
-    // MODIFICATION END
 
     const handleOpenLocationPicker = () => {
         navigation.navigate("LocationPickerScreen" as any, { 
@@ -124,9 +153,36 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         })
     }
     
-    // MODIFICATION: Use the displayAddress state for the UI
     const displayLocation = displayAddress.trim() || "Tap to select a location..."
 
+    // --- Schedule Handlers ---
+    const formatScheduleForDisplay = (schedules: SelectedScheduleData): string => {
+        if (!schedules || schedules.length === 0) return ""
+
+        // Formatting schedules to match RequestConfirmationScreen style
+        return schedules.map(schedule => {
+            // Only show HH:MM, as inferred from RequestConfirmationScreen.tsx
+            const timeSlots = schedule.timeSlots.map(slot => `${slot.start.slice(0, 5)} - ${slot.end.slice(0, 5)}`).join(", ")
+            return `${schedule.day}: ${timeSlots}`
+        }).join("\n") 
+    }
+
+    const handleScheduleSelect = useCallback((selectedSchedules: SelectedScheduleData) => {
+        setScheduleData(selectedSchedules)
+        setDisplaySchedule(formatScheduleForDisplay(selectedSchedules))
+        
+        showToast("Success", "Schedule selected.")
+    }, [showToast])
+
+    const handleOpenSchedulePicker = () => {
+        navigation.navigate("SchedulePickerScreen" as any, { 
+            onScheduleSelect: handleScheduleSelect,
+        })
+    }
+
+    const displayScheduleText = displaySchedule.trim() || "Tap to select available times..."
+
+    // --- Activity Handlers ---
     const toggleSingleActivity = useCallback((id: number) => {
         setTempSelectedActivityId((prev) => (prev === id ? null : id))
     }, [])
@@ -136,11 +192,14 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         setShowActivityModal(false);
     }
     
+    // --- Group Creation Handler ---
     const handleCreateGroup = async () => {
         if (!name.trim() || !activityId) {
             showToast("Error", "Group Name and Activity are required.");
             return;
         }
+
+        const apiScheduleData = scheduleData ? convertScheduleToApiFormat(scheduleData) : [];
 
         const newGroup: CreateGroupParams = {
             name: name.trim(),
@@ -149,6 +208,8 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             location_name: displayAddress.trim() || null,
             activity_id: activityId,
             public: isPublic,
+            // UPDATED: Use the new API field 'week_timeslots' with the converted numeric array
+            week_timeslots: apiScheduleData, 
             user_ids: [],
         };
 
@@ -240,12 +301,31 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     <Text 
                         style={[
                             themed(themedStyles.activitySelectText), 
-                            !displayAddress && { color: theme.colors.textDim } // Use displayAddress here
+                            !displayAddress && { color: theme.colors.textDim }
                         ]}
                     >
                         {displayLocation} 
                     </Text>
                     <FontAwesome name="map-marker" size={18} color={theme.colors.tint} /> 
+                </TouchableOpacity>
+                
+                {/* SCHEDULE PICKER BUTTON */}
+                <Text style={themed(themedStyles.inputLabel)}>Schedule</Text>
+                <TouchableOpacity
+                    style={themed(themedStyles.activitySelectButton)} 
+                    onPress={handleOpenSchedulePicker} 
+                >
+                    <Text 
+                        style={[
+                            themed(themedStyles.activitySelectText), 
+                            !displaySchedule && { color: theme.colors.textDim }
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                    >
+                        {displayScheduleText} 
+                    </Text>
+                    <FontAwesome name="clock-o" size={18} color={theme.colors.tint} /> 
                 </TouchableOpacity>
 
 
@@ -298,6 +378,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             )}
             />
 
+            {/* Modal for Activity Selection (unchanged) */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -371,7 +452,8 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
     )
 })
 
-// ... (styles and themedStyles remain unchanged)
+// --- Styles (unchanged) ---
+
 const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
   header: {
@@ -581,6 +663,7 @@ const themedStyles = {
     activitySelectText: (theme: any): TextStyle => ({
         fontSize: 16,
         color: theme.colors.text,
+        flex: 1, 
     }),
 
     modalView: (theme: any): ViewStyle => ({
