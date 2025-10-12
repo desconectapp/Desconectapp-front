@@ -15,7 +15,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from "react-native"
-import { Button, Text, TextField } from "@/components" // Added TextField
+import { Button, Text, TextField } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useAppToast } from "@/components/useToast"
@@ -31,29 +31,27 @@ import { CreateGroupParams } from "@/services/groups/Groups.types"
 import { useCreateGroup } from "@/hooks/Groups"
 import { useActivities } from "@/hooks/Users"
 
-type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
+type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
 const { width, height } = Dimensions.get("window")
 
 export const CreateGroupScreen = observer(function CreateGroupScreen() {
     const { themed, theme } = useAppTheme()
     const $topInsets = useSafeAreaInsetsStyle(["top"])
-    const navigation = useNavigation<NavigationProp>()
+    const navigation = useNavigation<FullNavigationProp>() 
     const { showToast } = useAppToast()
     const queryClient = useQueryClient()
 
     const { mutateAsync: createGroupAsync, isPending: isCreating } = useCreateGroup()
 
-    // --- State for Group Form ---
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
-    const [location, setLocation] = useState("")
-    const [activityId, setActivityId] = useState<number | null>(null) // The ID saved to the form
+    const [location, setLocation] = useState("") 
+    const [activityId, setActivityId] = useState<number | null>(null)
     const [isPublic, setIsPublic] = useState(false)
 
-    // --- State for Activity Modal/Selection ---
     const [showActivityModal, setShowActivityModal] = useState(false)
-    const [tempSelectedActivityId, setTempSelectedActivityId] = useState<number | null>(null) // Temp selection in modal
+    const [tempSelectedActivityId, setTempSelectedActivityId] = useState<number | null>(null)
     const [allActivities, setAllActivities] = useState<Activity[]>([])
     const [offset, setOffset] = useState(0)
     const [hasMore, setHasMore] = useState(true)
@@ -63,16 +61,12 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
     const { data: prefsData, isLoading: isLoadingActivities, isFetching: isFetchingActivities } = useActivities(limit, offset, query)
 
-    // --- Activity Fetching Logic ---
-
-    // Sync temp selection when modal opens
     useEffect(() => {
         if (showActivityModal) {
             setTempSelectedActivityId(activityId);
         }
     }, [showActivityModal, activityId])
     
-    // Handle activity data and pagination
     useEffect(() => {
         if (query !== prevQuery.current) {
             prevQuery.current = query
@@ -89,7 +83,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
         if (prefsData && prefsData.length > 0) {
             setAllActivities((prev) => {
-                 // Simple deduplication for lists that combine results
                 const newItems = prefsData.filter(
                     (p: Activity) => !prev.some((a) => a.id === p.id),
                 )
@@ -107,14 +100,22 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         }
     }, [isFetchingActivities, hasMore, limit])
 
-    // --- Single Selection Logic ---
+    const handleLocationSelect = useCallback((locationString: string) => {
+        setLocation(locationString) 
+        showToast("Success", "Location selected and saved to form.")
+    }, [showToast])
+    
+    const handleOpenLocationPicker = () => {
+        navigation.navigate("LocationPickerScreen" as any, { 
+            onLocationSelect: handleLocationSelect,
+        })
+    }
+    
+    const displayLocation = location.split(",")[0]?.trim() ? location : "Tap to select a location..."
 
-    // Select/Deselect a single activity in the modal
     const toggleSingleActivity = useCallback((id: number) => {
         setTempSelectedActivityId((prev) => (prev === id ? null : id))
     }, [])
-
-    // --- Button Handlers ---
 
     const handleSaveSingleActivity = () => {
         setActivityId(tempSelectedActivityId);
@@ -130,7 +131,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         const newGroup: CreateGroupParams = {
             name: name.trim(),
             description: description.trim() || null,
-            location: location.trim() || null,
+            location: location.trim() || null, 
             activity_id: activityId,
             public: isPublic,
             user_ids: [],
@@ -143,9 +144,9 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
             showToast("Success", `Group "${name}" created successfully!`);
 
-            navigation.replace("Main", {
-            screen: "GroupInfoScreen",
-            params: { groupId: createdGroup.id },
+            navigation.navigate("Main" as any, { 
+                screen: "GroupInfoScreen",
+                params: { groupId: createdGroup.id },
             });
         } catch (error) {
             console.error("Error creating group:", error);
@@ -153,9 +154,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         }
     }
 
-    // --- Render Functions ---
-
-    // Render item for the modal FlatList (single select)
     const renderActivityItem = ({ item }: { item: Activity }) => {
         const isSelected = tempSelectedActivityId === item.id;
         return (
@@ -169,7 +167,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             </TouchableOpacity>
         );
     };
-
 
     const selectedActivity = allActivities?.find(a => a.id === activityId);
 
@@ -199,7 +196,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 </Pressable>
             </View>
 
-            {/* Main Form Content */}
             <FlatList
             data={[{ key: 'form' }]}
             keyExtractor={(item) => item.key}
@@ -222,16 +218,22 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 />
 
                 <Text style={themed(themedStyles.inputLabel)}>Location</Text>
-                <TextInput
-                style={themed(themedStyles.textInput)}
-                value={location}
-                onChangeText={setLocation}
-                placeholder="e.g., Central Park, NYC (Optional)"
-                placeholderTextColor={theme.colors.textDim}
-                maxLength={100}
-                />
+                <TouchableOpacity
+                    style={themed(themedStyles.activitySelectButton)} 
+                    onPress={handleOpenLocationPicker} 
+                >
+                    <Text 
+                        style={[
+                            themed(themedStyles.activitySelectText), 
+                            !location && { color: theme.colors.textDim } 
+                        ]}
+                    >
+                        {displayLocation} 
+                    </Text>
+                    <FontAwesome name="map-marker" size={18} color={theme.colors.tint} /> 
+                </TouchableOpacity>
 
-                {/* --- CHOOSE ACTIVITY BUTTON --- */}
+
                 <Text style={themed(themedStyles.inputLabel)}>Activity*</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)}
@@ -251,7 +253,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 </TouchableOpacity>
 
 
-                {/* Group Description Input */}
                 <Text style={themed(themedStyles.inputLabel)}>Description</Text>
                 <TextInput
                     style={[themed(themedStyles.textInput), themed(themedStyles.descriptionInput)]}
@@ -282,7 +283,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             )}
             />
 
-            {/* --- ACTIVITY SELECTION MODAL (Single Select) --- */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -301,7 +301,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                             </TouchableOpacity>
                         </View>
                         
-                        {/* Search Input */}
                         <TextField
                             value={query}
                             style={themed(themedStyles.modalSearchInput)}
@@ -314,7 +313,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                             autoCapitalize="none"
                         />
                         
-                        {/* Activity List */}
                         {isLoadingActivities && allActivities.length === 0 ? (
                             <ActivityIndicator size="large" color={theme.colors.tint} style={{ marginVertical: spacing.xxl }} />
                             ) : (
@@ -358,8 +356,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
     )
 })
 
-// --- Styles ---
-
 const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
   header: {
@@ -391,7 +387,6 @@ const styles = StyleSheet.create({
       borderTopWidth: 1,
   } as ViewStyle,
   
-  // Modal Styles (Copied from ProfileScreen for consistency)
   centeredView: {
     flex: 1,
     justifyContent: 'center',
@@ -474,7 +469,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   } as TextStyle,
   
-  // Activity Chip (Modal) Styles - for single selection
   activityChipModal: {
     flex: 1,
     borderRadius: 25,
@@ -493,7 +487,6 @@ const styles = StyleSheet.create({
 })
 
 const themedStyles = {
-    // ... Existing themed styles (container, header, backButtonText, etc.)
     container: (theme: any): ViewStyle => ({
         flex: 1,
         backgroundColor: theme.colors.background,
@@ -558,7 +551,6 @@ const themedStyles = {
         color: theme.colors.textDim,
     }),
 
-    // Activity Select Button (Form)
     activitySelectButton: (theme: any): ViewStyle => ({
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -575,7 +567,6 @@ const themedStyles = {
         color: theme.colors.text,
     }),
 
-    // Modal Themed Styles
     modalView: (theme: any): ViewStyle => ({
         backgroundColor: theme.colors.background,
         borderRadius: spacing.lg,
@@ -586,7 +577,6 @@ const themedStyles = {
         color: theme.colors.text,
     }),
 
-    // Activity Chip Themed Styles (Modal)
     activityChipSelected: (theme: any): ViewStyle => ({
       backgroundColor: theme.colors.tint,
       borderColor: theme.colors.tint,

@@ -40,7 +40,7 @@ export type MainStackParamList = {
   PreferencesScreen: undefined
   GroupScreen: { groupId: string }
   SuggestionScreen: { id: string }
-  LocationPickerScreen: { nextScreen?: string }
+  LocationPickerScreen: { nextScreen?: string; onLocationSelect: (location: string) => void } | undefined
   SchedulePickerScreen: { nextScreen?: string }
   ActivityPickerScreen: { nextScreen?: string }
   RequestConfirmationScreen: { nextScreen?: string }
