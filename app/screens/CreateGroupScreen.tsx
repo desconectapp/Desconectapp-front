@@ -309,7 +309,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     <FontAwesome name="map-marker" size={18} color={theme.colors.tint} /> 
                 </TouchableOpacity>
                 
-                {/* SCHEDULE PICKER BUTTON */}
                 <Text style={themed(themedStyles.inputLabel)}>Schedule</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)} 

@@ -85,8 +85,8 @@ export const groupsService = {
     return true;
   },
 
-  updateGroupLocation: async (id: string, location: string): Promise<boolean> => {
-    const response = await api.apisauce.put(`/groups/location/${id}`, { location });
+  updateGroupLocation: async (id: string, location: string, location_name: string): Promise<boolean> => {
+    const response = await api.apisauce.put(`/groups/location/${id}`, { location, location_name });
     if (!response.ok) {
       throw new Error("Error al cambiar la location del grupo");
     }
