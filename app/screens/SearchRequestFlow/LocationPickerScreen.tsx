@@ -43,11 +43,9 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
 
     // 2. CHECK THE MODE: If the callback is present, this screen was opened for selection.
     if (onLocationSelect) {
-      // Return data and go back to the calling screen
-      const locationString = `${selectedLocation.longitude}, ${selectedLocation.latitude}`
       
       // Execute the callback function passed from the previous screen
-      onLocationSelect(locationString)
+      onLocationSelect(selectedLocation)
       
       // Go back to the screen that called this one
       navigation.goBack()

@@ -27,6 +27,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { FontAwesome } from '@expo/vector-icons';
 import { Activity } from "@/services/activities/Activities.types"
 import { CreateGroupParams } from "@/services/groups/Groups.types"
+// Import the selectedLocation type you are expecting
+import { selectedLocation } from "types" 
 
 import { useCreateGroup } from "@/hooks/Groups"
 import { useActivities } from "@/hooks/Users"
@@ -46,7 +48,10 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
+    // This will hold the "longitude,latitude" string for the API
     const [location, setLocation] = useState("") 
+    // NEW STATE: This will hold the address/name for display
+    const [displayAddress, setDisplayAddress] = useState("") 
     const [activityId, setActivityId] = useState<number | null>(null)
     const [isPublic, setIsPublic] = useState(false)
 
@@ -100,18 +105,27 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         }
     }, [isFetchingActivities, hasMore, limit])
 
-    const handleLocationSelect = useCallback((locationString: string) => {
-        setLocation(locationString) 
-        showToast("Success", "Location selected and saved to form.")
+    // MODIFICATION START: Update handler to receive the object
+    const handleLocationSelect = useCallback((selectedLoc: selectedLocation) => {
+        // 1. Store the coordinate string for the API
+        const coordString = `${selectedLoc.longitude},${selectedLoc.latitude}`
+        setLocation(coordString) 
+        
+        // 2. Store the display name/address for the UI
+        setDisplayAddress(selectedLoc.name || selectedLoc.address)
+        
+        showToast("Success", `Location selected: ${selectedLoc.name || selectedLoc.address}`)
     }, [showToast])
-    
+    // MODIFICATION END
+
     const handleOpenLocationPicker = () => {
         navigation.navigate("LocationPickerScreen" as any, { 
             onLocationSelect: handleLocationSelect,
         })
     }
     
-    const displayLocation = location.split(",")[0]?.trim() ? location : "Tap to select a location..."
+    // MODIFICATION: Use the displayAddress state for the UI
+    const displayLocation = displayAddress.trim() || "Tap to select a location..."
 
     const toggleSingleActivity = useCallback((id: number) => {
         setTempSelectedActivityId((prev) => (prev === id ? null : id))
@@ -131,6 +145,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         const newGroup: CreateGroupParams = {
             name: name.trim(),
             description: description.trim() || null,
+            // Use the 'location' state which holds the coordinate string
             location: location.trim() || null, 
             activity_id: activityId,
             public: isPublic,
@@ -225,7 +240,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     <Text 
                         style={[
                             themed(themedStyles.activitySelectText), 
-                            !location && { color: theme.colors.textDim } 
+                            !displayAddress && { color: theme.colors.textDim } // Use displayAddress here
                         ]}
                     >
                         {displayLocation} 
@@ -356,6 +371,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
     )
 })
 
+// ... (styles and themedStyles remain unchanged)
 const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
   header: {
