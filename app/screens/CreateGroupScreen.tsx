@@ -145,8 +145,8 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         const newGroup: CreateGroupParams = {
             name: name.trim(),
             description: description.trim() || null,
-            // Use the 'location' state which holds the coordinate string
-            location: location.trim() || null, 
+            location: location.trim() || null,
+            location_name: displayAddress.trim() || null,
             activity_id: activityId,
             public: isPublic,
             user_ids: [],

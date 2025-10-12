@@ -87,7 +87,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
           source={
             group.image
               ? { uri: group.image }
-              : require("../../assets/images/desconectapp_icon.jpeg")
+              : require("../../assets/images/desconectapp_icon.png")
           }
           style={styles.heroImage}
           sharedTransitionTag="2"

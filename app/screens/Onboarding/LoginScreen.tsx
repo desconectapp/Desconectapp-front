@@ -20,7 +20,7 @@ import {
   TouchableOpacity,
 } from "react-native"
 import { spacing } from "@/theme"
-import logoImage from "../../../assets/images/desconectapp_icon.jpeg"
+import logoImage from "../../../assets/images/desconectapp_icon.png"
 import { useStores } from "@/models"
 import { FontAwesome } from "@expo/vector-icons"
 
