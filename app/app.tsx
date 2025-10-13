@@ -32,6 +32,7 @@ import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
 import { RootStoreProvider, UserSession, useInitialRootStore, useStores } from "./models"
 import { AppNavigator, AppStackScreenProps, useNavigationPersistence } from "./navigators"
+import { resetRoot } from "./navigators/navigationUtilities"
 import * as storage from "./utils/storage"
 import { customFontsToLoad } from "./theme"
 import { KeyboardProvider } from "react-native-keyboard-controller"
@@ -129,7 +130,12 @@ export function App() {
 
     function callbackRefreshToken(s: SessionData | null) {
       if (!s) {
-        api.setToken(null)
+        sessionStore.setSession(null)
+        requestStore.setUserId(0)
+        resetRoot({
+          index: 0,
+          routes: [{ name: "LoginScreen" }],
+        })
         return
       }
 
