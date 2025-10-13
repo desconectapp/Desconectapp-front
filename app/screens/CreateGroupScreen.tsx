@@ -44,14 +44,7 @@ type DaySchedule = {
 }
 type SelectedScheduleData = DaySchedule[];
 
-// --- Helper Functions ---
 
-/**
- * NOTE: THIS IS A PLACEHOLDER.
- * You must implement the logic to convert the complex schedule objects 
- * (SelectedScheduleData) into the required array of numeric IDs (week_timeslots: number[]) 
- * for your API.
- */
 const convertScheduleToApiFormat = (schedules: SelectedScheduleData): number[] => {
     if (!schedules || schedules.length === 0) return []
     
@@ -208,7 +201,6 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             location_name: displayAddress.trim() || null,
             activity_id: activityId,
             public: isPublic,
-            // UPDATED: Use the new API field 'week_timeslots' with the converted numeric array
             week_timeslots: apiScheduleData, 
             user_ids: [],
         };
@@ -220,9 +212,24 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
             showToast("Success", `Group "${name}" created successfully!`);
 
-            navigation.navigate("Main" as any, { 
-                screen: "GroupInfoScreen",
-                params: { groupId: createdGroup.id },
+            // In CreateGroupScreen.tsx after successful group creation:
+            navigation.reset({
+            index: 1,
+            routes: [
+                {
+                name: "Main",
+                params: {
+                    screen: "Tabs",
+                    params: { screen: "HomeScreen" },
+                },
+                },
+                {
+                name: "Main",
+                params: {
+                    screen: "GroupInfoScreen",
+                    params: { groupId: createdGroup.id },
+                },}
+            ],
             });
         } catch (error) {
             console.error("Error creating group:", error);

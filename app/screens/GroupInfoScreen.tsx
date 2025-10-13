@@ -358,7 +358,6 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         </View>
       </Modal>
 
-      {/* Group Info (Conditionally Rendered) */}
       <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
         <View style={{ alignItems: "center", marginBottom: spacing.md }}>
           <View style={{ position: "relative" }}>
@@ -429,8 +428,11 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             </Text>
           </Pressable>
         ) : (
-          // Non-editing view mode
-          <Text style={themed(themedStyles.groupLocation)}>
+          <Text 
+            style={themed(themedStyles.groupLocation)}
+            numberOfLines={1} 
+            ellipsizeMode="tail"
+          >
             {currentLocationDisplay}
           </Text>
         )}
@@ -805,6 +807,8 @@ export const themedStyles = {
     fontSize: 16,
     color: theme.colors.textDim,
     marginTop: spacing.xs,
+    textAlign: "center",
+    padding: spacing.sm,
   }),
 
   groupDescription: (theme: any): TextStyle => ({
