@@ -14,16 +14,19 @@ export const useObtainToken = () => {
       if (!response) throw new Error("Error al cargar el token de supabase")
       return { token: response.supabase_token, expiresAt: new Date(Date.now() + 15 * 60 * 1000) }
     },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
+    staleTime: 12 * 60 * 1000,
+    gcTime: 20 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true, 
     enabled: !!sessionStore.user_uuid,
+    retry: 3,
+    retryDelay: 1000,
   })
 }
 
 export const useGetChatMessages = (groupId: string) => {
-  const { data: tokenData } = useObtainToken()
+  const { data: tokenData, refetch: refetchToken } = useObtainToken()
+  const queryClient = useQueryClient()
 
   return useQuery({
     queryKey: ["chat", "messages", groupId],
@@ -36,7 +39,40 @@ export const useGetChatMessages = (groupId: string) => {
       const { error, data } = await supabase.from("messages").select("*").eq("group_id", groupId)
 
       if (error) {
-        console.error("Supabase error:", error)
+        if (error.code === "PGRST303" || error.message?.includes("JWT expired")) {
+          console.log("JWT expired, refreshing token and retrying...")
+          
+          queryClient.invalidateQueries({ queryKey: ["chats", "token"] })
+          
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          
+          // Refetch the token
+          const newTokenResult = await refetchToken()
+          if (!newTokenResult.data?.token) {
+            throw new Error("Failed to refresh token")
+          }
+          
+          // Retry with the new token
+          const newSupabase = getSupabaseClientWithProvidedToken(newTokenResult.data.token)
+          const { error: retryError, data: retryData } = await newSupabase
+            .from("messages")
+            .select("*")
+            .eq("group_id", groupId)
+          
+          if (retryError) {
+            console.error("Supabase retry error:", retryError)
+            throw new Error(`Error al cargar los mensajes: ${retryError.message}`)
+          }
+          
+          if (!retryData) {
+            throw new Error("No se encontraron mensajes")
+          }
+          
+          return { messages: retryData as Message[] }
+        }else{
+          console.error("Supabase error:", error)
+        }
+        
         throw new Error(`Error al cargar los mensajes: ${error.message}`)
       }
 
@@ -47,6 +83,13 @@ export const useGetChatMessages = (groupId: string) => {
       return { messages: data as Message[] }
     },
     enabled: !!tokenData?.token, // Only run when we have a token
+    retry: (failureCount, error) => {
+      // Don't retry JWT expired errors - we handle them manually
+      if (error.message?.includes("JWT expired")) {
+        return false
+      }
+      return failureCount < 3
+    },
   })
 }
 
@@ -70,7 +113,7 @@ export const useUploadProfileImage = () => {
 
 export const useCreateMessage = () => {
   const queryClient = useQueryClient()
-  const { data: tokenData } = useObtainToken()
+  const { data: tokenData, refetch: refetchToken } = useObtainToken()
 
   return useMutation({
     mutationFn: async ({
@@ -99,7 +142,40 @@ export const useCreateMessage = () => {
         .single()
 
       if (error) {
-        console.error("Supabase error:", error)
+       
+        
+        if (error.code === "PGRST303" || error.message?.includes("JWT expired")) {
+          console.log("JWT expired, refreshing token and retrying...")
+          queryClient.invalidateQueries({ queryKey: ["chats", "token"] })
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          const newTokenResult = await refetchToken()
+          if (!newTokenResult.data?.token) {
+            throw new Error("Failed to refresh token")
+          }
+          
+          const newSupabase = getSupabaseClientWithProvidedToken(newTokenResult.data.token)
+          const { error: retryError, data: retryData } = await newSupabase
+            .from("messages")
+            .insert({
+              group_id: groupId,
+              content: message,
+              image_url: imageUrl,
+              sent_at: new Date().toISOString(),
+            })
+            .select()
+            .single()
+          
+          if (retryError) {
+            console.error("Supabase retry error:", retryError)
+            throw new Error(`Error al crear el mensaje: ${retryError.message}`)
+          }
+          
+          return retryData as Message
+        } else {
+          console.error("Supabase error:", error)
+        }
+        
         throw new Error(`Error al crear el mensaje: ${error.message}`)
       }
 
