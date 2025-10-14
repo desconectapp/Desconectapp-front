@@ -46,13 +46,11 @@ export const useGetChatMessages = (groupId: string) => {
           
           await new Promise((resolve) => setTimeout(resolve, 1000))
           
-          // Refetch the token
           const newTokenResult = await refetchToken()
           if (!newTokenResult.data?.token) {
             throw new Error("Failed to refresh token")
           }
           
-          // Retry with the new token
           const newSupabase = getSupabaseClientWithProvidedToken(newTokenResult.data.token)
           const { error: retryError, data: retryData } = await newSupabase
             .from("messages")
