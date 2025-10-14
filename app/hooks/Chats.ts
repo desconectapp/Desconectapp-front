@@ -2,19 +2,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useCallback } from "react"
 import { chatsService, getSupabaseClientWithProvidedToken } from "../services/chat"
 import { Message } from "../services/chat/Chats.types"
+import { useStores } from "../models"
 
 export const useObtainToken = () => {
+  const { sessionStore } = useStores()
+
   return useQuery({
-    queryKey: ["chats", "token"],
+    queryKey: ["chats", "token", sessionStore.user_uuid],
     queryFn: async () => {
       const response = await chatsService.getToken()
       if (!response) throw new Error("Error al cargar el token de supabase")
       return { token: response.supabase_token, expiresAt: new Date(Date.now() + 15 * 60 * 1000) }
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes (formerly cacheTime)
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: !!sessionStore.user_uuid,
   })
 }
 
