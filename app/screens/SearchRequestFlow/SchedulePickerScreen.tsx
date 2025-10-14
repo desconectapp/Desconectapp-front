@@ -9,31 +9,39 @@ import { containers, buttons, buttonTexts, texts } from "@/theme/commonStyles"
 import { useState, useEffect } from "react"
 
 import { TimePickerForm } from "@/components/Custom/TimePickerForm"
-import { View, ScrollView } from "react-native"
+import { View, ScrollView, Alert, ViewStyle, TextStyle } from "react-native"
 
 type SchedulePickerScreenProps = NativeStackScreenProps<MainStackParamList, "SchedulePickerScreen">
 
 export const SchedulePickerScreen = observer(function SchedulePickerScreen({
   route,
 }: SchedulePickerScreenProps) {
-  const { nextScreen } = route.params || {}
+  const { nextScreen, onScheduleSelect } = route.params || {}
   const { themed, theme } = useAppTheme()
   const { requestStore } = useStores()
   const [updateKey, setUpdateKey] = useState(0)
 
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
 
-  // Force update when schedules change
   useEffect(() => {
     setUpdateKey(prev => prev + 1)
   }, [requestStore.schedules])
 
   const handleNext = () => {
-    // The TimePickerForm already manages the store directly, so we just navigate
-    navigation.navigate("RequestConfirmationScreen" as any)
+    if (!requestStore.isScheduleSelected) {
+        Alert.alert("Selección Requerida", "Por favor, selecciona al menos un día y horario disponible.")
+        return
+    }
+
+    if (onScheduleSelect) {
+        onScheduleSelect(requestStore.schedules)
+        navigation.goBack()
+
+    } else {
+        navigation.navigate("RequestConfirmationScreen" as any)
+    }
   }
 
-  // Format selected schedules for display
   const formatSchedules = () => {
     if (!requestStore.schedules || requestStore.schedules.length === 0) {
       return "Ningún horario seleccionado"
@@ -58,7 +66,6 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={themed($scrollContent)}
       >
-        {/* Header */}
         <View style={themed($header)}>
           <Text preset="heading" style={themed(texts.heading)}>
             Horarios 🕐
@@ -68,14 +75,12 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
           </Text>
         </View>
 
-        {/* Time Picker Form */}
         <TimePickerForm />
       </ScrollView>
 
-      {/* Next Button - Fixed at bottom */}
       <View style={themed($buttonContainer)}>
         <Button
-          text="Siguiente"
+          text={onScheduleSelect ? "Seleccionar" : "Siguiente"}
           style={[
             themed(buttons.primary),
             themed($nextButton),
@@ -93,48 +98,32 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
   )
 })
 
-const $container = (theme: any) => ({ 
+const $container = (theme: any): ViewStyle => ({ 
   flex: 1,
 })
 
-const $scrollContent = (theme: any) => ({
+const $scrollContent = (theme: any): ViewStyle => ({
   paddingBottom: theme.spacing.lg,
 })
 
-const $header = (theme: any) => ({
+const $header = (theme: any): ViewStyle => ({
   marginBottom: theme.spacing.lg,
   alignItems: "center" as const,
   paddingHorizontal: theme.spacing.md,
 })
 
-const $subtitle = (theme: any) => ({
+const $subtitle = (theme: any): TextStyle => ({
   textAlign: "center" as const,
   marginTop: theme.spacing.xs,
 })
 
-const $selectedScheduleCard = (theme: any) => ({
-  marginBottom: theme.spacing.md,
-})
 
-const $selectedLabel = (theme: any) => ({
-  marginBottom: theme.spacing.xs,
-})
-
-const $selectedText = (theme: any) => ({
-  lineHeight: 20,
-})
-
-const $noScheduleText = (theme: any) => ({
-  textAlign: "center" as const,
-  fontStyle: "italic" as const,
-})
-
-const $buttonContainer = (theme: any) => ({
+const $buttonContainer = (theme: any): ViewStyle => ({
   padding: theme.spacing.md,
   paddingBottom: theme.spacing.xl,
   borderTopWidth: 1,
 })
 
-const $nextButton = (theme: any) => ({
+const $nextButton = (theme: any): ViewStyle => ({
   marginTop: 0,
 })

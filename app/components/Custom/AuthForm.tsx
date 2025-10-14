@@ -16,6 +16,10 @@ interface AuthFormProps<T> {
     placeholder: string
     rules?: any
     autoCapitalize?: "none" | "sentences" | "words" | "characters"
+    render?: (props: {
+      value: string
+      onChange: (text: string) => void
+    }) => React.ReactNode
   }>
   onSubmit: (data: T) => void | Promise<void>
   isSubmitting?: boolean
@@ -23,7 +27,6 @@ interface AuthFormProps<T> {
   footer?: React.ReactNode
   forgotPassword?: boolean
 }
-
 export function AuthForm<T>({
   form,
   fields,
@@ -50,14 +53,24 @@ export function AuthForm<T>({
             name={field.name as any}
             rules={field.rules}
             render={({ field: { onChange, value } }) => (
-              <TextField
-                value={value as any}
-                onChangeText={onChange}
-                placeholder={field.placeholder}
-                helper={errors?.[field.name]?.message}
-                status={errors?.[field.name] ? "error" : undefined}
-                autoCapitalize={field.autoCapitalize || "none"}
-              />
+              <>
+                {/* ✅ THE FIX: Check for the custom render prop first. 
+                  If it exists, use it to render the custom component (like the password field).
+                */}
+                {field.render ? (
+                  field.render({ value: value as string, onChange })
+                ) : (
+                  // If no custom render prop, fall back to the default TextField.
+                  <TextField
+                    value={value as any}
+                    onChangeText={onChange}
+                    placeholder={field.placeholder}
+                    helper={errors?.[field.name]?.message}
+                    status={errors?.[field.name] ? "error" : undefined}
+                    autoCapitalize={field.autoCapitalize || "none"}
+                  />
+                )}
+              </>
             )}
           />
         </View>

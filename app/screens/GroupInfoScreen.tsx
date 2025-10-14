@@ -10,6 +10,7 @@ import {
   StyleSheet,
   TextInput,
   Pressable,
+  ActivityIndicator,
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
@@ -33,6 +34,7 @@ import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
 import { GroupData, Member } from "@/services/groups/Groups.types"
+import { selectedLocation } from "types"
 
 import { useQueryClient } from "@tanstack/react-query"
 import { FontAwesome } from "@expo/vector-icons"
@@ -41,7 +43,8 @@ import { AutoImage } from "@/components"
 import useImagePicker from "@/hooks/Image"
 import { useUploadGroupImage } from "@/hooks/Chats"
 
-type NavigationProp = NativeStackNavigationProp<AppStackParamList, "Main">
+type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
+
 
 export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any) {
   const { groupId } = route.params
@@ -49,7 +52,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
   const $bottomInsets = useSafeAreaInsetsStyle(["bottom"])
-  const navigation = useNavigation<NavigationProp>()
+  const navigation = useNavigation<FullNavigationProp>()
   const { showToast } = useAppToast()
 
   const queryClient = useQueryClient()
@@ -68,10 +71,13 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   const { mutate: updateGroupName } = useUpdateGroupName()
   const { mutate: updateGroupLocation } = useUpdateGroupLocation()
   const { mutate: updateGroupPhoto } = useUpdateGroupPhoto()
+
+  // Editing States
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState("")
   const [tempDescription, setTempDescription] = useState("")
   const [tempLocation, setTempLocation] = useState("")
+  const [tempDisplayLocation, setTempDisplayLocation] = useState("")
 
   const { imageUri, handleImagePicker } = useImagePicker()
   const { isPending: isUploadingImage, mutateAsync: uploadGroupImageAsync } = useUploadGroupImage()
@@ -93,10 +99,28 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
     if (groupData) {
       setTempName(groupData.name)
       setTempDescription(groupData.description ?? "")
-      setTempLocation(groupData.location ?? "")
+      setTempDisplayLocation(groupData.location ?? "")
+      setTempLocation("") 
     }
   }, [groupData])
 
+  // --- Location Handlers ---
+  const handleLocationSelect = useCallback((selectedLoc: selectedLocation) => {
+      const coordString = `${selectedLoc.longitude},${selectedLoc.latitude}`
+      setTempLocation(coordString) 
+      setTempDisplayLocation(selectedLoc.name || selectedLoc.address)
+      
+      showToast("Success", `New location selected: ${selectedLoc.name || selectedLoc.address}`)
+  }, [showToast])
+
+  const handleOpenLocationPicker = () => {
+      if (!isEditing) return
+      
+      navigation.navigate("LocationPickerScreen" as any, { 
+          onLocationSelect: handleLocationSelect,
+      })
+  }
+  
   const renderMember = ({ item }: { item: Member }) => {
     return (
       <View style={[styles.memberItem, themed(themedStyles.memberItem)]}>
@@ -148,11 +172,8 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
       })
 
       await exitGroupAsync(groupId)
-
       await queryClient.removeQueries({ queryKey: ["group", groupId] })
-
       await queryClient.invalidateQueries({ queryKey: ["groups"] })
-
       showToast("Success", "You have left the group successfully.")
     } catch (error) {
       console.error("Error leaving group:", error)
@@ -175,15 +196,26 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         updateDescription({ id: groupData.id, description: tempDescription })
       }
 
-      if (tempLocation !== groupData.location) {
-        updateGroupLocation({ id: groupData.id, location: tempLocation })
+      const locationHasChanged = 
+        tempLocation !== "" || tempDisplayLocation !== groupData.location
+
+      if (locationHasChanged) {
+        updateGroupLocation({ 
+          id: groupData.id, 
+          location: tempLocation,
+          location_name: tempDisplayLocation
+        })
       }
 
       setIsEditing(false)
+
       queryClient.setQueryData(["group", groupId], (oldData: GroupData) => ({
         ...oldData,
         name: tempName,
         description: tempDescription,
+        location: tempDisplayLocation, 
+
+        location_name: tempDisplayLocation, 
       }))
     } catch (error) {
       console.error("Failed to save changes:", error)
@@ -191,9 +223,10 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   }
 
   const handleCancelEdit = () => {
-    // Reset temp state to original values
     setTempName(groupData.name)
     setTempDescription(groupData.description ?? "")
+    setTempLocation("") 
+    setTempDisplayLocation(groupData.location ?? "")
     setIsEditing(false)
   }
 
@@ -263,6 +296,15 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
       )
     }
   }
+  
+  const currentLocationDisplay = isEditing 
+    ? (tempDisplayLocation || "Tap to set location...")
+    : (groupData.location || "No Location Set")
+
+  const locationTextStyle = isEditing && !tempDisplayLocation
+    ? themedStyles.locationPlaceholderText
+    : themedStyles.groupLocationInput
+
 
   return (
     <SafeAreaView style={[styles.container, themed(themedStyles.container)]}>
@@ -300,7 +342,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         </TouchableOpacity>
       </View>
 
-      {/* Modal */}
+      {/* Modal for Status Change */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -316,7 +358,6 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         </View>
       </Modal>
 
-      {/* Group Info (Conditionally Rendered) */}
       <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
         <View style={{ alignItems: "center", marginBottom: spacing.md }}>
           <View style={{ position: "relative" }}>
@@ -345,7 +386,11 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
                 onPress={handleImagePicker}
                 activeOpacity={0.8}
               >
-                <Text style={{ color: "#fff", fontSize: 20 }}>✏️</Text>
+                {isUploadingImage ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={{ color: "#fff", fontSize: 20 }}>✏️</Text>
+                )}
               </TouchableOpacity>
             )}
           </View>
@@ -362,15 +407,34 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
           <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
         )}
 
+        {/* Location Section */}
         {isEditing ? (
-          <TextInput
-            style={themed(themedStyles.groupLocationInput)}
-            value={tempLocation}
-            onChangeText={setTempLocation}
-            placeholder="Group Location"
-          />
+          // Use Pressable to navigate to LocationPickerScreen
+          <Pressable 
+            onPress={handleOpenLocationPicker} 
+            style={[
+              styles.locationPressableContainer, 
+              themed(themedStyles.locationPressableContainer),
+              { marginBottom: spacing.md }
+            ]}
+          >
+            <Text 
+              style={[
+                styles.groupLocation, 
+                themed(locationTextStyle)
+              ]}
+            >
+              {currentLocationDisplay}
+            </Text>
+          </Pressable>
         ) : (
-          <Text style={themed(themedStyles.groupLocation)}>{groupData.location}</Text>
+          <Text 
+            style={themed(themedStyles.groupLocation)}
+            numberOfLines={1} 
+            ellipsizeMode="tail"
+          >
+            {currentLocationDisplay}
+          </Text>
         )}
 
         {isEditing ? (
@@ -407,7 +471,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
           onPress={handlePressLeave}
         />
 
-        {/* The Modal Component */}
+        {/* Leave Group Confirmation Modal */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -449,6 +513,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
 export const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
 
+  // ... (rest of existing styles)
   descriptionInput: {
     minHeight: 60,
     maxHeight: 120,
@@ -655,6 +720,11 @@ export const styles = StyleSheet.create({
   acceptLeaveButton: {
     borderColor: "#e53935",
   } as ViewStyle,
+
+  locationPressableContainer: {
+    width: '100%',
+    paddingHorizontal: spacing.lg,
+  } as ViewStyle,
 })
 
 export const themedStyles = {
@@ -708,9 +778,9 @@ export const themedStyles = {
     borderBottomColor: theme.colors.border,
   }),
   groupIcon: (_theme: any): TextStyle => ({
-    fontSize: 60, // bigger font size
-    lineHeight: 72, // slightly larger lineHeight
-    height: 72, // match lineHeight
+    fontSize: 60,
+    lineHeight: 72,
+    height: 72,
     textAlignVertical: "center",
     textAlign: "center",
     marginBottom: spacing.sm,
@@ -737,6 +807,8 @@ export const themedStyles = {
     fontSize: 16,
     color: theme.colors.textDim,
     marginTop: spacing.xs,
+    textAlign: "center",
+    padding: spacing.sm,
   }),
 
   groupDescription: (theme: any): TextStyle => ({
@@ -761,12 +833,29 @@ export const themedStyles = {
     textAlignVertical: "top",
   }),
 
+  locationPressableContainer: (theme: any): ViewStyle => ({
+    width: '80%',
+    alignSelf: "center",
+    paddingHorizontal: 0,
+  }),
+
   groupLocationInput: (theme: any): TextStyle => ({
     fontSize: 16,
     color: theme.colors.text,
     textAlign: "center",
     marginTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.tint,
+    borderRadius: spacing.xs,
+    padding: spacing.sm,
+  }),
+  
+  // Style for placeholder text (when location is not set)
+  locationPlaceholderText: (theme: any): TextStyle => ({
+    fontSize: 16,
+    color: theme.colors.textDim,
+    textAlign: "center",
+    marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.tint,
     borderRadius: spacing.xs,
@@ -888,4 +977,3 @@ export const themedStyles = {
     marginLeft: spacing.sm,
   }),
 }
-

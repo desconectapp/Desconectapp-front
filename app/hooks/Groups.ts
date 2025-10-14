@@ -96,8 +96,8 @@ export const updateGroupName = () => {
 export const updateGroupLocation = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<boolean, Error, { id: string; location: string }>({
-    mutationFn: ({ id, location }) => groupsService.updateGroupLocation(id, location),
+  return useMutation<boolean, Error, { id: string; location: string, location_name: string }>({
+    mutationFn: ({ id, location, location_name }) => groupsService.updateGroupLocation(id, location, location_name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] })
     },
