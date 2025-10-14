@@ -3,13 +3,13 @@ import { useState } from "react"
 import { View, Alert, ViewStyle, Keyboard } from "react-native"
 import { Screen, Text, Button } from "../../components"
 import { useAppTheme } from "@/utils/useAppTheme"
-import { useNavigation } from "@react-navigation/native"
+import { useNavigation } from "@react-navigation/native" 
+import { NativeStackScreenProps } from "@react-navigation/native-stack" 
 import { useStores } from "@/models"
 import { observer } from "mobx-react-lite"
 import { buttons, buttonTexts, texts } from "@/theme/commonStyles"
 
 import { MainStackParamList } from "@/navigators/MainNavigator"
-import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { MapViewComponent } from "@/components/Location/MapView"
 import CustomAutocomplete from "@/components/Location/SearchBar"
 import { selectedLocation } from "types"
@@ -19,23 +19,41 @@ type LocationPickerScreenProps = NativeStackScreenProps<MainStackParamList, "Loc
 export const LocationPickerScreen = observer(function LocationPickerScreen({
   route,
 }: LocationPickerScreenProps) {
-  const { nextScreen } = route.params || {}
+  // Destructure nextScreen AND the optional callback from route.params
+  const { nextScreen, onLocationSelect } = route.params || {}
+    
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const { themed } = useAppTheme()
   const { requestStore } = useStores()
   const [selectedLocation, setSelectedLocation] = useState<selectedLocation | null>(
     requestStore.location ?? null,
   )
-  const [searchRadiusKm, setSearchRadiusKm] = useState(requestStore.radiusKm || 1) // Use store value or default 5km
+  const [searchRadiusKm, setSearchRadiusKm] = useState(requestStore.radiusKm || 1) 
 
-  const handleNext = () => {
-    // Save selected location and radius to the store
-    if (selectedLocation) {
-      requestStore.setLocation(selectedLocation)
-      requestStore.setRadiusKm(searchRadiusKm)
+  // Combined Handler for the single "Siguiente" button
+  const handlePrimaryAction = () => {
+    if (!selectedLocation) {
+        Alert.alert("Selección Requerida", "Por favor, selecciona una ubicación en el mapa o búscalas.")
+        return
     }
 
-    navigation.navigate("SchedulePickerScreen" as any)
+    // 1. Save data to the store regardless of the final navigation action
+    requestStore.setLocation(selectedLocation)
+    requestStore.setRadiusKm(searchRadiusKm)
+
+    // 2. CHECK THE MODE: If the callback is present, this screen was opened for selection.
+    if (onLocationSelect) {
+      
+      // Execute the callback function passed from the previous screen
+      onLocationSelect(selectedLocation)
+      
+      // Go back to the screen that called this one
+      navigation.goBack()
+
+    } else {
+      // Fallback/Original Flow: Navigate to the next screen
+      navigation.navigate("SchedulePickerScreen" as any)
+    }
   }
 
   return (
@@ -79,7 +97,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
           selectedLocation={selectedLocation}
           setSelectedLocation={setSelectedLocation}
           allowSelectLocation={true}
-          searchRadiusKm={searchRadiusKm} // Pass km directly
+          searchRadiusKm={searchRadiusKm} 
           setSearchRadiusKm={setSearchRadiusKm}
         />
       </View>
@@ -90,7 +108,8 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
           Manten presionado en el mapa para seleccionar una ubicación
         </Text>
         <Button
-          text="Siguiente"
+          // Change text dynamically based on the action
+          text={onLocationSelect ? "Seleccionar" : "Siguiente"} 
           style={[
             themed(buttons.primary),
             themed($nextButton),
@@ -101,7 +120,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
             !selectedLocation && themed(buttonTexts.primaryDisabled),
           ]}
           disabled={!selectedLocation}
-          onPress={handleNext}
+          onPress={handlePrimaryAction} // Use the new combined handler
         />
       </View>
     </Screen>
@@ -131,7 +150,7 @@ const $searchInputContainer = (theme: any): ViewStyle => ({
 
 const $mapContainer = (theme: any): ViewStyle => ({
   flex: 1,
-  minHeight: 300, // Ensure minimum height for map
+  minHeight: 300, 
 })
 
 const $buttonContainer = (theme: any): ViewStyle => ({

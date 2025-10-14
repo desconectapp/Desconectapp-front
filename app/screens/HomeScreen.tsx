@@ -207,7 +207,7 @@ export const HomeScreen = observer(function HomeScreen() {
       <SafeAreaView style={[styles.container, themed(themedStylesGroup.container)]}>
         <View style={themed(themedStylesGroup.header)}>
           <Image
-            source={require("../../assets/images/desconectapp_icon.jpeg")}
+            source={require("../../assets/images/desconectapp_icon.png")}
             style={styles.headerImage}
             resizeMode="contain"
           />
