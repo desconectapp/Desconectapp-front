@@ -17,6 +17,7 @@ import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import Animated from "react-native-reanimated"
 import { useJoinGroup } from "@/hooks/Groups"
+import { SchedulePreview } from "@/components/Custom/SchedulePreview"
 
 
 const { height } = Dimensions.get("window")
@@ -90,7 +91,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
               : require("../../assets/images/desconectapp_icon.png")
           }
           style={styles.heroImage}
-          sharedTransitionTag="2"
+          sharedTransitionTag={group.id}
         />
         <View style={themed(themedStyles.heroOverlay)} />
         <View style={styles.heroContent}>
@@ -115,6 +116,11 @@ export const SuggestionScreen = observer(({ route }: any) => {
             </View>
           </View>
         </View>
+        <View style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}>
+          <SchedulePreview weekTimeslots={group.week_timeslots} />
+        
+        </View>
+
       </ScrollView>
 
       <View style={[themed(themedStyles.bottomContainer), $bottomInsets]}>

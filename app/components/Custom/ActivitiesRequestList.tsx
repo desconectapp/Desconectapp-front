@@ -118,49 +118,8 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
       </View>
 
       {/* Weekly Schedule Section */}
-      {/* <View style={themed($scheduleSection)}>
-        <Text style={themed($sectionLabel)}>Horarios Disponibles</Text>
-        <View style={$weekScheduleContainer}>
-          {weekSchedule.map((day) => (
-            <View key={day.dayCode} style={$dayColumn}>
-              <View style={themed($dayBar)}>
-                {day.timeRanges && day.timeRanges.length > 0 && day.timeRanges.map((range, i) => {
-                  const [start, end] = range.split('-');
-                  const startMinutes = timeStringToMinutes(start);
-                  const endMinutes = timeStringToMinutes(end);
-                  const totalMinutes = 24 * 60;
-                  
-                  const topValue = (startMinutes / totalMinutes) * 140; // 140px bar height  
-                  const heightValue = ((endMinutes - startMinutes) / totalMinutes) * 140;
-
-                  console.log(`Rendering segment ${i} for ${day.dayCode}: ${range}, top: ${topValue}, height: ${heightValue}`);
-
-                  return (
-                    <View
-                      key={`${day.dayCode}-segment-${i}-${range}`}
-                      style={[
-                        themed($timeSegment),
-                        {
-                          top: Math.max(0, topValue),
-                          height: Math.max(16, heightValue), // Altura mínima más grande
-                        },
-                      ]}
-                    >
-                      <View style={themed($segmentContent)}>
-                        <Text style={themed($segmentTimeText)}>
-                          {start.slice(0,2)}h-{end.slice(0,2)}h
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-              <Text style={themed($dayLabel)}>{day.dayCode}</Text>
-            </View>
-          ))}
-        </View>
-      </View> */}
-      {/* <SchedulePreview weekTimeslots={item.week_timeslots} /> */}
+     
+      <SchedulePreview weekTimeslots={item.week_timeslots} />
 
       {/* Details Grid */}
       <View style={themed($detailsGrid)}>
