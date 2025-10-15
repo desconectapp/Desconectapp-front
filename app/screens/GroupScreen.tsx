@@ -4,7 +4,6 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -12,6 +11,8 @@ import {
   type TextStyle,
   type ImageStyle,
   Dimensions,
+  // eslint-disable-next-line no-restricted-imports
+  TextInput,
 } from "react-native"
 import { AutoImage, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
@@ -24,7 +25,7 @@ import { useGroupById } from "@/hooks/Groups"
 import { useStores } from "@/models"
 import {
   useCreateMessage,
-  useGetChatMessages,
+  useInfiniteChatMessages,
   useMessageSubscription,
   useUploadGroupImage,
 } from "@/hooks/Chats"
@@ -33,7 +34,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { MainStackParamList } from "@/navigators/MainNavigator"
 import useImagePicker from "@/hooks/Image"
 
-import ClipIcon from "../../assets/images/clip.png"
+const ClipIcon = require("../../assets/images/clip.png")
 
 const { height: screenHeight } = Dimensions.get("window")
 
@@ -54,7 +55,13 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
   const { imageUri, setImage, handleImagePicker } = useImagePicker()
 
-  const { data: messagesData } = useGetChatMessages(groupId)
+  const {
+    data: infiniteData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingMessages,
+  } = useInfiniteChatMessages(groupId, { pageSize: 30 })
 
   const { isPending: isSendingMessage, mutateAsync: createMessageAsync } = useCreateMessage()
   const { isPending: isUploadingImage, mutateAsync: uploadMutateAsync } = useUploadGroupImage()
@@ -90,12 +97,13 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     [sessionStore.user_uuid, membersMap],
   )
 
-  const { isSubscribed } = useMessageSubscription(groupId, handleNewMessage, { enabled: isFocused })
+  useMessageSubscription(groupId, handleNewMessage, { enabled: isFocused })
 
-  // Memoize the formatted messages to prevent unnecessary re-renders
   const formattedMessages = useMemo(() => {
-    if (!messagesData?.messages) return []
-    return messagesData.messages.map((message) => {
+    if (!infiniteData?.pages) return []
+    const flat = infiniteData.pages.flatMap((p) => p.items)
+    const sorted = [...flat].sort((a, b) => a.id - b.id)
+    return sorted.map((message) => {
       const member = membersMap.get(message.user_id)
       return {
         id: message.id.toString(),
@@ -110,7 +118,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         imageUrl: message.image_url || undefined,
       }
     })
-  }, [messagesData?.messages, membersMap, sessionStore.user_uuid])
+  }, [infiniteData?.pages, membersMap, sessionStore.user_uuid])
 
   useEffect(() => {
     if (formattedMessages.length > 0) {
@@ -134,7 +142,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     setImage(null)
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingMessages) {
     return <Text>Loading...</Text>
   }
 
@@ -179,7 +187,6 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Messages list */}
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -189,6 +196,11 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          onScroll={(e) => {
+            if (e.nativeEvent.contentOffset.y <= 0 && hasNextPage && !isFetchingNextPage) {
+              fetchNextPage()
+            }
+          }}
         />
 
         {imageUri && (
@@ -328,7 +340,6 @@ export const styles = StyleSheet.create({
   messagesList: { flex: 1 } as ViewStyle,
 
   removeImageButtonLarge: {
-    backgroundColor: "rgba(0,0,0,0.6)",
     borderRadius: 15,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -338,11 +349,6 @@ export const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  removeImageText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
-  },
 })
 
 export const themedStyles = {
@@ -373,6 +379,9 @@ export const themedStyles = {
   inputContainerBackground: (theme: any): ViewStyle => ({
     backgroundColor: theme.colors.background,
     borderTopColor: theme.colors.border,
+  }),
+  imagePreviewBarBackground: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.overlay20,
   }),
   textInput: (theme: any): TextStyle => ({
     flex: 1,

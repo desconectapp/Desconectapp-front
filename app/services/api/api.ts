@@ -33,6 +33,7 @@ export class Api {
 
   callbackToken: ((data: SessionData | null) => void) | null = null
   isRefreshing: boolean = false
+  refreshFailed: boolean = false
   failedQueue: Array<{
     resolve: (value?: any) => void
     reject: (error?: any) => void
@@ -48,6 +49,7 @@ export class Api {
       this.refreshToken = null
       this.tokenExpiration = null
       this.refreshTokenExpiration = null
+      this.refreshFailed = false
       chatsService.clearSupabaseCache()
       return
     }
@@ -57,6 +59,7 @@ export class Api {
 
     this.refreshToken = data.refresh_token || null
     this.refreshTokenExpiration = data.refresh_expires_at ? new Date(data.refresh_expires_at) : null
+    this.refreshFailed = false
   }
 
   setCallbackRefreshSession(callback: (data: SessionData | null) => void) {
@@ -102,6 +105,8 @@ export class Api {
     if (this.callbackToken) {
       this.callbackToken(null)
     }
+    this.isRefreshing = false
+    this.refreshFailed = true
   }
 
   private processQueue(error: Error | null, token: SessionData | null) {
@@ -137,8 +142,18 @@ export class Api {
     })
 
     this.apisauce.addResponseTransform((response) => {
-      if (response.status === 401) {
-        if (this.isRefreshing || response.config?.url?.includes("/auth/refresh")) {
+      // Treat 401/403 as unauthorized; some backends may return 403 for expired/invalid access tokens
+      if (response.status === 401 || response.status === 403) {
+        // If we've already determined refresh cannot succeed, logout immediately
+        const now = new Date()
+        const refreshMissing = !this.refreshToken || !this.refreshTokenExpiration
+        const refreshExpired = this.refreshTokenExpiration
+          ? now >= this.refreshTokenExpiration
+          : true
+        const isRefreshEndpoint = response.config?.url?.includes("/auth/refresh")
+
+        if (this.refreshFailed || refreshMissing || refreshExpired || isRefreshEndpoint) {
+          this.handleRefreshFailure()
           return
         }
         if (!this.isRefreshing) {
