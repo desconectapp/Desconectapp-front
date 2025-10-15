@@ -102,7 +102,8 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   const formattedMessages = useMemo(() => {
     if (!infiniteData?.pages) return []
     const flat = infiniteData.pages.flatMap((p) => p.items)
-    const sorted = [...flat].sort((a, b) => a.id - b.id)
+    // Sort descending so newest comes first in data; with FlatList inverted, newest stays at bottom visually
+    const sorted = [...flat].sort((a, b) => b.id - a.id)
     return sorted.map((message) => {
       const member = membersMap.get(message.user_id)
       return {
@@ -132,7 +133,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
       url = await uploadMutateAsync({ groupId, uri: imageUri })
     }
 
-    createMessageAsync({
+    await createMessageAsync({
       groupId: parseInt(groupId),
       message: inputText.trim(),
       imageUrl: url,
@@ -140,6 +141,9 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
     setInputText("")
     setImage(null)
+    requestAnimationFrame(() => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
+    })
   }
 
   if (isLoading || isLoadingMessages) {
@@ -195,11 +199,11 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           style={styles.messagesList}
           contentContainerStyle={styles.messagesContent}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          onScroll={(e) => {
-            if (e.nativeEvent.contentOffset.y <= 0 && hasNextPage && !isFetchingNextPage) {
-              fetchNextPage()
-            }
+          inverted
+          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
+          onEndReachedThreshold={0.2}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage()
           }}
         />
 
