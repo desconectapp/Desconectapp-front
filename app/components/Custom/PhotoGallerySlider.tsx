@@ -68,7 +68,7 @@ export const PhotoGallerySlider = observer(function PhotoGallerySlider({
           <Animated.Image
             source={{ uri: item.image }}
             style={[themed($photoImage), { width: itemWidth }]}
-            sharedTransitionTag={item.id}
+            // sharedTransitionTag={item.id} // Comentado temporalmente para evitar crashes
           />
           <View style={themed($photoOverlay)}>
             <View style={themed($gradientOverlay)} />

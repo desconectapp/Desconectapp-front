@@ -1,5 +1,3 @@
-"use client"
-
 import { observer } from "mobx-react-lite"
 import { useState } from "react"
 import {
@@ -9,7 +7,6 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  RefreshControl,
   Dimensions,
 } from "react-native"
 import { Text } from "@/components"
@@ -19,7 +16,7 @@ import { useNavigation } from "@react-navigation/native"
 import type { AppStackScreenProps } from "@/navigators"
 import { ActivityRequest } from "@/services/activities/Activities.types"
 import { useActivityRequests } from "@/hooks/Search"
-import { formatWeekTimeslots } from "@/utils/utils"
+import { SchedulePreview } from "./SchedulePreview"
 
 const { width } = Dimensions.get("window")
 
@@ -89,59 +86,74 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
   }
 
   const renderActivityRequest = ({ item }: { item: ActivityRequest }) => {
-    const daysLeft = calculateDaysLeft(item.expires_at)
-    const isExpired = daysLeft === "Expired"
+  const daysLeft = calculateDaysLeft(item.expires_at);
+  const isExpired = daysLeft === "Expired";
+  
+  // Parse numeric week_timeslots into structured schedule
 
-    return (
-      <TouchableOpacity
-        style={[themed($requestCard), isExpired && themed($expiredCard)]}
-        onPress={() => handleItemPress(item)}
-        activeOpacity={0.8}
-        disabled={isExpired}
-      >
-        <View style={$cardHeader}>
+  return (
+    <TouchableOpacity
+      style={[
+        themed($requestCard),
+        isExpired && themed($expiredCard)
+      ]}
+      onPress={() => handleItemPress(item)}
+      activeOpacity={0.8}
+      disabled={isExpired}
+    >
+      {/* Header Section */}
+      <View style={$cardHeader}>
+        <View style={$headerTop}>
           <Text style={themed($descriptionText)} numberOfLines={2}>
             {item.description}
           </Text>
-        </View>
-
-        <View style={$participantsContainer}>
-          <Text style={themed($participantsLabel)}>participants</Text>
-          <Text style={themed($participantsText)}>
-            Min: {item.participants_needed} - Max: {item.maximum_participants}
-          </Text>
-        </View>
-
-        <View style={$detailsContainer}>
-          <View style={$detailItem}>
-            <Text style={themed($detailLabel)}>Available on</Text>
-            <Text style={themed($detailValue)}>
-              {formatWeekTimeslots(item.week_timeslots) || "Flexible"}
-            </Text>
-          </View>
-
-          <View style={$detailItem}>
-            <Text style={themed($detailLabel)}>Location</Text>
-            <Text style={themed($detailValue)}>Within {item.search_radius}km</Text>
+          <View style={[
+            themed($statusBadge),
+            isExpired && themed($expiredBadge),
+            daysLeft === "Expires today" && themed($urgentBadge)
+          ]}>
+            <Text style={themed($statusText)}>{daysLeft}</Text>
           </View>
         </View>
+      </View>
 
-        <View style={themed($footer)}>
-          <Text style={themed($dateText)}>Created: {formatDate(item.created_at)}</Text>
+      {/* Weekly Schedule Section */}
+     
+      <SchedulePreview weekTimeslots={item.week_timeslots} />
 
-          <Text
-            style={[
-              themed($expiryText),
-              isExpired && themed($expiredText),
-              daysLeft === "Expires today" && themed($urgentText),
-            ]}
-          >
-            {daysLeft}
+      {/* Details Grid */}
+      <View style={themed($detailsGrid)}>
+        <View style={themed($detailBox)}>
+          <Text style={themed($detailLabel)}>Participantes</Text>
+          <Text style={themed($detailValue)}>
+            {item.participants_needed}–{item.maximum_participants} personas
+          </Text>
+          <Text style={themed($detailSubtext)}>
+            Mínimo–Máximo
           </Text>
         </View>
-      </TouchableOpacity>
-    )
-  }
+        
+        <View style={themed($detailBox)}>
+          <Text style={themed($detailLabel)}>Ubicación</Text>
+          <Text style={themed($detailValue)} numberOfLines={1}>
+            📍 Radio de {item.search_radius}km
+          </Text>
+          <Text style={themed($detailSubtext)}>
+            Lat: {item.latitude.toFixed(4)}, Lng: {item.longitude.toFixed(4)}
+          </Text>
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View style={themed($footer)}>
+        <Text style={themed($footerText)}>
+          {formatDate(item.created_at)}
+        </Text>
+      </View>
+    </TouchableOpacity>
+    );};
+
+
 
   const renderContent = () => {
     if (isLoading) {
@@ -208,7 +220,99 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
     </View>
   )
 })
+const $requestCard = {
+  backgroundColor: '$background',
+  borderRadius: 12,
+  padding: 18,
+  borderWidth: 1,
+  borderColor: '$border',
+  shadowColor: '#000000ff',
+  elevation: 4,
+} as const;
 
+const $expiredCard = {
+  opacity: 0.6,
+  borderColor: '$muted',
+} as const;
+
+const $cardHeader = {
+  marginBottom: 16,
+} as const;
+
+const $headerTop = {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: 12,
+} as const;
+
+const $descriptionText = {
+  fontSize: 16,
+  fontWeight: '600',
+  color: '$foreground',
+  flex: 1,
+  lineHeight: 22,
+} as const;
+
+const $statusBadge = {
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 12,
+  backgroundColor: '$muted',
+} as const;
+
+const $expiredBadge = {
+  backgroundColor: '$destructive',
+} as const;
+
+const $urgentBadge = {
+  backgroundColor: '$warning',
+} as const;
+
+const $statusText = {
+  fontSize: 11,
+  fontWeight: '600',
+  color: '$foreground',
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+} as const;
+
+const $detailsGrid = {
+  flexDirection: 'row',
+  gap: 12,
+  marginBottom: 16,
+} as const;
+
+const $detailBox = {
+  flex: 1,
+  padding: 12,
+  backgroundColor: '$muted',
+  borderRadius: 12,
+} as const;
+
+const $detailLabel = {
+  fontSize: 11,
+  color: '$mutedForeground',
+  marginBottom: 4,
+  fontWeight: '500',
+} as const;
+
+const $detailValue = {
+  fontSize: 14,
+  color: '$foreground',
+  fontWeight: '600',
+} as const;
+
+const $footer = {
+  paddingTop: 12,
+  borderTopWidth: 1,
+  borderTopColor: '$border',
+} as const;
+
+const $footerText = {
+  fontSize: 11,
+  color: '$mutedForeground',
+} as const;
 const $container: ViewStyle = {
   flex: 1,
 }
@@ -217,7 +321,7 @@ const $headerContainer: ViewStyle = {
   flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "center",
-  paddingHorizontal: spacing.lg,
+  paddingHorizontal: spacing.md,
   marginBottom: spacing.md,
 }
 
@@ -228,117 +332,19 @@ const $sectionTitle = (theme: any): TextStyle => ({
 })
 
 const $listContainer: ViewStyle = {
-  paddingHorizontal: spacing.lg,
+  paddingHorizontal: spacing.md,
   paddingBottom: spacing.xl,
   gap: spacing.lg,
 }
 
-const $requestCard = (theme: any): ViewStyle => ({
-  backgroundColor: theme.colors.palette.neutral100,
-  borderRadius: spacing.lg,
-  padding: spacing.lg,
-  shadowColor: theme.colors.palette.neutral900,
-  shadowOffset: {
-    width: 0,
-    height: 2,
-  },
-  shadowOpacity: 0.1,
-  shadowRadius: 6,
-  elevation: 3,
-  borderWidth: 1,
-  borderColor: theme.colors.border,
-})
+const $detailSubtext = {
+  fontSize: 10,
+  color: '$mutedForeground',
+  marginTop: 2,
+} as const;
 
-const $expiredCard = (theme: any): ViewStyle => ({
-  opacity: 0.7,
-  borderColor: theme.colors.palette.neutral400,
-})
 
-const $cardHeader: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  marginBottom: spacing.sm,
-}
 
-const $participantsContainer: ViewStyle = {
-  flexDirection: "column",
-  alignItems: "flex-start",
-  marginBottom: spacing.sm,
-}
-
-const $participantsText = (theme: any): TextStyle => ({
-  fontWeight: "600",
-  fontSize: 14,
-})
-
-const $participantsLabel = (theme: any): TextStyle => ({
-  color: theme.colors.textDim,
-  fontSize: 12,
-})
-
-const $expiryContainer: ViewStyle = {
-  alignItems: "flex-end",
-}
-
-const $expiryText = (theme: any): TextStyle => ({
-  color: theme.colors.textDim,
-  fontSize: 14,
-  fontWeight: "500",
-})
-
-const $expiredText = (theme: any): TextStyle => ({
-  color: theme.colors.error,
-})
-
-const $urgentText = (theme: any): TextStyle => ({
-  color: theme.colors.error,
-  fontWeight: "600",
-})
-
-const $descriptionText = (theme: any): TextStyle => ({
-  fontSize: 16,
-  color: theme.colors.text,
-  // marginBottom: spacing.md,
-  lineHeight: 22,
-})
-
-const $detailsContainer: ViewStyle = {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  marginBottom: spacing.md,
-}
-
-const $detailItem: ViewStyle = {
-  flex: 1,
-}
-
-const $detailLabel = (theme: any): TextStyle => ({
-  fontSize: 12,
-  color: theme.colors.textDim,
-  marginBottom: spacing.xs,
-})
-
-const $detailValue = (theme: any): TextStyle => ({
-  fontSize: 14,
-  color: theme.colors.text,
-  fontWeight: "500",
-})
-
-const $footer = (theme: any): ViewStyle => ({
-  borderTopWidth: 1,
-  borderTopColor: theme.colors.border,
-  paddingTop: spacing.sm,
-  flex: 1,
-  flexDirection: "row",
-  justifyContent: "space-between",
-})
-
-const $dateText = (theme: any): TextStyle => ({
-  fontSize: 12,
-  color: theme.colors.textDim,
-  textAlign: "right",
-})
 
 const $loadingContainer: ViewStyle = {
   flex: 1,
@@ -361,10 +367,6 @@ const $errorContainer: ViewStyle = {
   paddingHorizontal: spacing.xl,
 }
 
-const $errorIcon: TextStyle = {
-  fontSize: 48,
-  marginBottom: spacing.md,
-}
 
 const $errorTitle = (theme: any): TextStyle => ({
   fontSize: 20,
