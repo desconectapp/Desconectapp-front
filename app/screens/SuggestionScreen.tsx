@@ -66,8 +66,8 @@ export const SuggestionScreen = observer(({ route }: any) => {
   const radarApiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY
   const groupCoordsMock = "-34.84805455099598,-58.379922809809486"
   console.log("coords:", group.coords)
-  const lat = group.coords.split(",")[1]
-  const long = group.coords.split(",")[0]
+  const lat = group.coords?.split(",")[1]
+  const long = group.coords?.split(",")[0]
   const locationImage = `https://api.radar.io/maps/static?center=${lat},${long}&zoom=13&width=400&height=400&publishableKey=${radarApiKey}`
   console.log("locationImage:", locationImage)
   return (
