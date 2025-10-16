@@ -84,7 +84,6 @@ export const SchedulePreview = observer(function SchedulePreview({ weekTimeslots
   
   return (
     <View style={themed($scheduleSection)}>
-      <Text style={themed($sectionLabel)}>Horarios Disponibles</Text>
       <View style={$weekScheduleContainer}>
         {weekSchedule.map((day) => (
           <View key={day.dayCode} style={$dayColumn}>

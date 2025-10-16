@@ -51,6 +51,7 @@ export interface OpenGroup {
 	name:         string
 	description:  string
 	location:     string
+  coords:        string // "latitude,longitude"
 	activity_name: string
 	member_count:	number
 	photo:	string

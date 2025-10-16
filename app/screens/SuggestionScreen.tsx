@@ -19,7 +19,6 @@ import Animated from "react-native-reanimated"
 import { useJoinGroup } from "@/hooks/Groups"
 import { SchedulePreview } from "@/components/Custom/SchedulePreview"
 
-
 const { height } = Dimensions.get("window")
 
 export const SuggestionScreen = observer(({ route }: any) => {
@@ -47,26 +46,30 @@ export const SuggestionScreen = observer(({ route }: any) => {
     )
   }
 
-
   const formatDate = (dateString: string) => {
-    let cleanString = dateString;
-    cleanString = cleanString.replace(' ', 'T');
-    cleanString = cleanString.replace(/ \+0000 UTC$/, 'Z');
-    
-    const dateObject = new Date(cleanString);
+    let cleanString = dateString
+    cleanString = cleanString.replace(" ", "T")
+    cleanString = cleanString.replace(/ \+0000 UTC$/, "Z")
+
+    const dateObject = new Date(cleanString)
 
     if (isNaN(dateObject.getTime())) {
-      return "N/A";
+      return "N/A"
     }
-    
-    return dateObject.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
 
-  
+    return dateObject.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  }
+  const radarApiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY
+  const groupCoordsMock = "-34.84805455099598,-58.379922809809486"
+  console.log("coords:", group.coords)
+  const lat = group.coords.split(",")[1]
+  const long = group.coords.split(",")[0]
+  const locationImage = `https://api.radar.io/maps/static?center=${lat},${long}&zoom=13&width=400&height=400&publishableKey=${radarApiKey}`
+  console.log("locationImage:", locationImage)
   return (
     <View style={styles.container}>
       <View style={[styles.header, themed(themedStyles.header), $topInsets]}>
@@ -78,49 +81,74 @@ export const SuggestionScreen = observer(({ route }: any) => {
         >
           <Text style={themed(themedStyles.backButtonText)}>←</Text>
         </TouchableOpacity>
-        
-        <Text style={themed(themedStyles.headerTitle)}>{group.name}</Text>
 
+        <Text style={themed(themedStyles.headerTitle)}>Informacion del grupo</Text>
       </View>
 
       <View style={styles.heroImageContainer}>
         <Animated.Image
           source={
-            group.image
-              ? { uri: group.image }
+            group.avatar_url || group.image
+              ? { uri: group.avatar_url || group.image }
               : require("../../assets/images/desconectapp_icon.png")
           }
           style={styles.heroImage}
-          sharedTransitionTag={group.id}
+          // sharedTransitionTag={group.id.toString()}
         />
         <View style={themed(themedStyles.heroOverlay)} />
         <View style={styles.heroContent}>
-          <Text style={themed(themedStyles.heroIcon)}>{group.icon}</Text>
-          <Text style={themed(themedStyles.heroTitle)}>{group.name}</Text>
-          <Text style={themed(themedStyles.heroLocation)}>{group.location}</Text>
+          <View style={styles.heroTopRow}></View>
+          <View style={styles.heroBottomRow}>
+            <View style={styles.heroMainInfo}>
+              <Text style={themed(themedStyles.heroIcon)}>{group.icon}</Text>
+              <Text style={themed(themedStyles.heroTitle)}>{group.name}</Text>
+              <View style={{ flexDirection: "row" }}>
+                <View style={styles.heroLocationRow}>
+                  <Text style={themed(themedStyles.heroLocationIcon)}>{group.photo}</Text>
+                  <Text style={themed(themedStyles.heroLocationText)}>{group.activity_name}</Text>
+                </View>
+                <View style={styles.heroLocationRow}>
+                  <Text style={themed(themedStyles.heroLocationText)}> |</Text>
+                </View>
+                <View style={styles.heroLocationRow}>
+                  <Text style={themed(themedStyles.heroLocationIcon)}>📍</Text>
+                  <Text style={themed(themedStyles.heroLocationText)}>
+                    {group.location_name || group.location}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
         </View>
       </View>
 
       <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.infoSection}>
-          <View style={themed(themedStyles.activityBadge)}>
-            <Text style={themed(themedStyles.activityBadgeText)}>{group.activity_name}</Text>
-          </View>
-
-          <Text style={themed(themedStyles.descriptionText)}>{group.description}</Text>
-
-          <View style={themed(themedStyles.statsContainer)}>
-            <View style={styles.statItem}>
-              <Text style={themed(themedStyles.statLabel)}>Since</Text>
-              <Text style={themed(themedStyles.statNumber)}>{formatDate(group.created_at)}</Text>
-            </View>
-          </View>
+          {/* Description */}
+            <Text style={themed(themedStyles.sectionTitle)}>Descripcion</Text>
+            <Text style={themed(themedStyles.descriptionText)}>{group.description}</Text>
         </View>
-        <View style={{ marginHorizontal: spacing.lg, marginBottom: spacing.lg }}>
+          <View style={styles.infoSection}>
+          <Text style={themed(themedStyles.sectionTitle)}>Ubicacion</Text>
+          <Animated.Image
+            source={{ uri: locationImage }}
+            style={{ width: "100%", height: 200, marginBottom: spacing.lg }}
+            // sharedTransitionTag={group.id.toString()}
+          />
+        </View>
+
+        <View style={styles.scheduleSection}>
+          <Text style={themed(themedStyles.sectionTitle)}>Horarios</Text>
           <SchedulePreview weekTimeslots={group.week_timeslots} />
-        
         </View>
 
+        {/* Stats Row */}
+        <View style={themed(themedStyles.statsContainer)}>
+          <View style={styles.statItem}>
+            <Text style={themed(themedStyles.statLabel)}>Nos juntamos desde</Text>
+            <Text style={themed(themedStyles.statNumber)}>{formatDate(group.created_at)}</Text>
+          </View>
+        </View>
       </ScrollView>
 
       <View style={[themed(themedStyles.bottomContainer), $bottomInsets]}>
@@ -130,13 +158,14 @@ export const SuggestionScreen = observer(({ route }: any) => {
           disabled={isJoining}
           activeOpacity={0.8}
         >
-          <Text style={themed(themedStyles.joinButtonText)}>{isJoining ? "Joining..." : "Join Group"}</Text>
+          <Text style={themed(themedStyles.joinButtonText)}>
+            {isJoining ? "Joining..." : "Join Group"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
   )
 })
-
 
 export const styles = StyleSheet.create({
   // SuggestionScreen Styles
@@ -172,7 +201,7 @@ export const styles = StyleSheet.create({
 
   // Hero Section
   heroImageContainer: {
-    height: height * 0.48,
+    height: height * 0.28,
     position: "relative",
   } as ViewStyle,
 
@@ -184,16 +213,39 @@ export const styles = StyleSheet.create({
 
   heroContent: {
     position: "absolute",
-    bottom: spacing.xl,
+    top: spacing.md,
+    bottom: spacing.md,
     left: spacing.lg,
     right: spacing.lg,
+    justifyContent: "space-between",
+  } as ViewStyle,
+
+  heroTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  } as ViewStyle,
+
+  heroBottomRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+  } as ViewStyle,
+
+  heroMainInfo: {
+    flex: 1,
+  } as ViewStyle,
+
+  heroLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xs,
   } as ViewStyle,
 
   // Content Section
   contentContainer: { flex: 1 } as ViewStyle,
 
-  infoSection: { 
-    padding: spacing.lg 
+  infoSection: {
+    padding: spacing.lg,
   } as ViewStyle,
 
   activityBadge: {
@@ -205,14 +257,14 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
 
   statsContainer: {
-    flexDirection: "row",
+    backgroundColor: "#f0f0f0", // Placeholder color
     borderRadius: spacing.md,
     padding: spacing.lg,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
+    alignItems: "center",
   } as ViewStyle,
 
   statItem: {
-    flex: 1,
     alignItems: "center",
   } as ViewStyle,
 
@@ -225,6 +277,11 @@ export const styles = StyleSheet.create({
 
   joinButton: {} as ViewStyle,
   joinButtonText: {} as TextStyle,
+
+  scheduleSection: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+  } as ViewStyle,
 })
 
 export const themedStyles = {
@@ -234,7 +291,7 @@ export const themedStyles = {
     left: 0,
     right: 0,
     height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
   }),
 
   header: (theme: any): ViewStyle => ({
@@ -247,7 +304,7 @@ export const themedStyles = {
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
   }),
-  
+
   backButtonText: (theme: any): TextStyle => ({
     fontSize: 24,
     color: theme.colors.tint,
@@ -260,8 +317,8 @@ export const themedStyles = {
     fontWeight: "600",
     color: theme.colors.text,
     textAlign: "center",
-    flex: 1, 
-    marginRight: spacing.md
+    flex: 1,
+    marginRight: spacing.md,
   }),
   headerButton: (theme: any): TextStyle => ({
     fontSize: 16,
@@ -275,70 +332,93 @@ export const themedStyles = {
   }),
 
   heroIcon: (theme: any): TextStyle => ({
-    fontSize: 60,
-    lineHeight: 72,
-    height: 72,
+    fontSize: 40,
+    lineHeight: 48,
+    height: 48,
     textAlignVertical: "center",
-    marginBottom: spacing.sm,
-    color: theme.colors.palette.neutral100, 
+    marginBottom: spacing.xxs,
+    color: theme.colors.palette.neutral100,
   }),
 
   heroTitle: (theme: any): TextStyle => ({
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    color: theme.colors.palette.neutral100, 
-    marginBottom: spacing.xs,
+    color: theme.colors.palette.neutral100,
+    marginBottom: spacing.xxs,
   }),
 
-  heroLocation: (theme: any): TextStyle => ({
-    fontSize: 16, 
-    color: theme.colors.palette.neutral200, 
-    opacity: 1, 
-    marginTop: spacing.xs, 
-  }),
-
-  // Info Section
-  // UPDATED: Muted background color, primary tint text color for a better badge look
-  activityBadge: (theme: any): ViewStyle => ({
+  // Moved activity badge to hero for better prominence
+  heroActivityBadge: (theme: any): ViewStyle => ({
     alignSelf: "flex-start",
-    backgroundColor: theme.colors.palette.neutral300, // Muted background (lighter gray)
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: spacing.lg,
-    marginBottom: spacing.lg,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: spacing.md,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   }),
 
-  // UPDATED: Use tint color for the badge text
-  activityBadgeText: (theme: any): TextStyle => ({
-    color: theme.colors.tint, // Primary color for text
-    fontSize: 14,
+  heroActivityBadgeText: (theme: any): TextStyle => ({
+    color: theme.colors.palette.neutral100,
+    fontSize: 12,
     fontWeight: "600",
+  }),
+
+  heroVisibilityBadge: (theme: any): ViewStyle => ({
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+    borderRadius: spacing.md,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  }),
+
+  heroVisibilityBadgeText: (theme: any): TextStyle => ({
+    color: theme.colors.palette.neutral100,
+    fontSize: 12,
+    fontWeight: "600",
+  }),
+
+  // Reorganized info section - location first, then stats, then description
+  statsContainer: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.surface ?? theme.colors.palette.neutral100,
+    borderRadius: spacing.md,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    alignItems: "center",
+  }),
+
+  statDivider: (theme: any): ViewStyle => ({
+    width: 1,
+    backgroundColor: theme.colors.border,
+    marginHorizontal: spacing.md,
+  }),
+
+  statNumber: (theme: any): TextStyle => ({
+    fontSize: 18,
+    fontWeight: "bold",
+    color: theme.colors.text,
+    marginBottom: spacing.xxs,
+  }),
+
+  statLabel: (theme: any): TextStyle => ({
+    fontSize: 12,
+    color: theme.colors.textDim,
+    textTransform: "uppercase",
+    fontWeight: "600",
+  }),
+
+  sectionTitle: (theme: any): TextStyle => ({
+    fontSize: 18,
+    fontWeight: "bold",
+    color: theme.colors.text,
+    marginBottom: spacing.md,
   }),
 
   descriptionText: (theme: any): TextStyle => ({
     fontSize: 16,
     lineHeight: 24,
     color: theme.colors.text,
-    marginBottom: spacing.xl,
-  }),
-
-  statsContainer: (theme: any): ViewStyle => ({
-    flexDirection: "row",
-    backgroundColor: theme.colors.surface ?? theme.colors.palette.neutral100, 
-    borderRadius: spacing.md,
-    padding: spacing.lg,
-    marginBottom: spacing.xl,
-  }),
-
-  statNumber: (theme: any): TextStyle => ({
-    fontSize: 20,
-    fontWeight: "bold",
-    color: theme.colors.text,
-  }),
-
-  statLabel: (theme: any): TextStyle => ({
-    fontSize: 14,
-    color: theme.colors.textDim,
   }),
 
   // Bottom Container (Join Button)
@@ -366,5 +446,16 @@ export const themedStyles = {
     color: theme.colors.tint,
     fontSize: 18,
     fontWeight: "600",
+  }),
+
+  heroLocationIcon: (theme: any): TextStyle => ({
+    fontSize: 14,
+    marginRight: spacing.xxs,
+  }),
+
+  heroLocationText: (theme: any): TextStyle => ({
+    fontSize: 14,
+    color: theme.colors.palette.neutral100,
+    fontWeight: "500",
   }),
 }
