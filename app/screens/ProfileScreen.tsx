@@ -18,9 +18,11 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useForm, Controller } from "react-hook-form"
 import { useAppToast } from "@/components/useToast"
 import { chatsService } from "@/services/chat"
+import { userService } from "@/services/users/UserApi"
 import { spacing } from "@/theme"
 import useImagePicker from "@/hooks/Image"
 import { useNavigation } from "@react-navigation/native"
+import { useQueryClient } from "@tanstack/react-query"
 
 import type { AppStackScreenProps } from "@/navigators"
 
@@ -53,6 +55,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
 
   const navigation = useNavigation<AppStackScreenProps<"Welcome">["navigation"]>()
   const { showToast } = useAppToast()
+  const queryClient = useQueryClient()
 
   const { data: profile } = useProfile()
   const { imageUri, handleImagePicker } = useImagePicker()
@@ -195,11 +198,15 @@ export const ProfileScreen = observer(function ProfileScreen() {
     }
   }
 
-  const logOut = () => {
-    // Clear Supabase token cache
-    chatsService.clearSupabaseCache()
-    sessionStore.setSession(null)
-    navigation.navigate("LoginScreen")
+  const logOut = async () => {
+    try {
+      await userService.logout()
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      sessionStore.setSession(null)
+      navigation.navigate("LoginScreen")
+    }
   }
 
   const onCancel = () => {

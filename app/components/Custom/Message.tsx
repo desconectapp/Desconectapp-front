@@ -21,15 +21,56 @@ export interface MessageBubbleType {
 export const MessageBubble = ({ item }: { item: MessageBubbleType }) => {
   const { themed } = useAppTheme()
 
+  const getUserColor = (userId: string) => {
+    const colors = [
+      "#84994F", 
+      "#FCB53B", 
+      "#B45253", 
+      "#6B7A3F", 
+      "#E3A235", 
+      "#A24849",
+      "#D1DDB8", 
+      "#E5CCCC", 
+    ]
+    
+    let hash = 0
+    for (let i = 0; i < userId.length; i++) {
+      hash += userId.charCodeAt(i)
+    }
+    const colorIndex = hash % colors.length
+    const selectedColor = colors[colorIndex]
+    
+    return selectedColor
+  }
+
   const formatTime = (timestamp: Date) => {
-    return timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    const now = new Date()
+    const messageDate = new Date(timestamp)
+    
+    const isToday = 
+      messageDate.getDate() === now.getDate() &&
+      messageDate.getMonth() === now.getMonth() &&
+      messageDate.getFullYear() === now.getFullYear()
+    
+    if (isToday) {
+      return messageDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    } else {
+      return messageDate.toLocaleDateString([], { 
+        month: "short", 
+        day: "numeric",
+        hour: "2-digit", 
+        minute: "2-digit" 
+      })
+    }
   }
 
   return (
     <View style={item.isOwn ? $ownMessageContainer : $otherMessageContainer}>
       {!item.isOwn && (
         <View style={$senderInfo}>
-          <Text style={themed($senderName)}>{item.sender.name}</Text>
+          <Text style={[themed($senderName), { color: getUserColor(item.sender.id) }]}>
+            {item.sender.name}
+          </Text>
         </View>
       )}
       <View
@@ -75,10 +116,9 @@ const $senderInfo: ViewStyle = {
   marginLeft: spacing.sm,
 }
 
-const $senderName = (theme: any): TextStyle => ({
+const $senderName = (_theme: any): TextStyle => ({
   fontSize: 12,
-  color: theme.colors.textDim,
-  fontWeight: "500",
+  fontWeight: "600", // Made it slightly bolder to make the colors pop
 })
 
 const $messageBubble: ViewStyle = {

@@ -44,12 +44,7 @@ export const userService = {
   },
 
   logout: async (): Promise<void> => {
-    const response = await api.apisauce.post<void>("/auth/logout")
-    if (!response.ok) {
-      throw new Error("Error al cerrar sesión")
-    }
     api.setToken(null)
-    return response.data
   },
 
   createProfile: async (data: CreateProfileData): Promise<void> => {

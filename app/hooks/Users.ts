@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { userService } from "../services/users"
 import { activitiesService } from "../services/activities"
+import { chatsService } from "../services/chat"
 
 export const useUsers = () => {
   return useQuery({
@@ -19,7 +20,7 @@ export const useSignUp = () => {
   return useMutation<any, Error, any>({
     mutationFn: (data) => userService.signUp(data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      chatsService.clearSupabaseCache()
       return data
     },
   })
@@ -31,7 +32,7 @@ export const useLogin = () => {
   return useMutation<any, Error, any>({
     mutationFn: (data) => userService.login(data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["current-user"] })
+      chatsService.clearSupabaseCache()
       return data
     },
   })
