@@ -42,9 +42,11 @@ export const HomeScreen = observer(function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
 
-  const { data: messages, isFetching: isLoadingMessages } = useGetLastChatMessages(
-    sessionStore.user_uuid || "",
-  )
+  const {
+    data: messages,
+    isFetching: isLoadingMessages,
+    refetch: refetchLastMessages,
+  } = useGetLastChatMessages(sessionStore.user_uuid || "")
 
   const {
     data: recommendedGroups,
@@ -57,7 +59,7 @@ export const HomeScreen = observer(function HomeScreen() {
     setRefreshing(true)
     setRefreshingRecs(true)
     try {
-      await Promise.all([refetch(), refetchRecs()])
+      await Promise.all([refetch(), refetchRecs(), refetchLastMessages()])
     } finally {
       setRefreshing(false)
       setRefreshingRecs(false)
@@ -118,10 +120,9 @@ export const HomeScreen = observer(function HomeScreen() {
             </View>
 
             <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
-              {/* !isLoading ? item.description || "No description yet" : "" */}
               {!isLoadingMessages
-                ? messages?.find((m) => m.group_id === item.id)?.content
-                : "No messages yet"}
+                ? messages?.find((m) => m.group_id === item.id)?.content || "No messages yet"
+                : ""}
             </Text>
 
             {item.memberCount && (
