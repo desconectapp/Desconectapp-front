@@ -24,6 +24,52 @@ export const useObtainToken = () => {
   })
 }
 
+export const useGetLastChatMessages = (user_uuid: string) => {
+  const { data: tokenData, refetch: refetchToken } = useObtainToken()
+  const queryClient = useQueryClient()
+
+  return useQuery({
+    queryKey: ["chat", "last_messages", user_uuid],
+    queryFn: async () => {
+      if (user_uuid === "") {
+        return []
+      }
+
+      if (!tokenData?.token) {
+        throw new Error("No token available")
+      }
+
+      const supabase = getSupabaseClientWithProvidedToken(tokenData.token)
+      const { error, data } = await supabase.rpc("get_last_message_per_group", {
+        p_user_id: user_uuid,
+      })
+
+      console.log("RPC get_last_message_per_group data:", data)
+
+      if (error) {
+        if (error.code === "PGRST303" || error.message?.includes("JWT expired")) {
+        } else {
+          console.error("Supabase error:", error)
+        }
+        throw new Error(`Error al cargar los mensajes: ${error.message}`)
+      }
+
+      if (!data) {
+        throw new Error("No se encontraron mensajes")
+      }
+
+      return data
+    },
+    enabled: !!tokenData?.token,
+    retry: (failureCount, error) => {
+      if (error.message?.includes("JWT expired")) {
+        return false
+      }
+      return failureCount < 3
+    },
+  })
+}
+
 export const useGetChatMessages = (groupId: string) => {
   const { data: tokenData, refetch: refetchToken } = useObtainToken()
   const queryClient = useQueryClient()

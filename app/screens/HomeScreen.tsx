@@ -25,6 +25,8 @@ import { GroupFront } from "./GroupsFront.types"
 import { Group, OpenGroup } from "@/services/groups/Groups.types"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useGetLastChatMessages } from "@/hooks/Chats"
+import { useStores } from "@/models"
 
 const { width } = Dimensions.get("window")
 
@@ -35,8 +37,14 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const isFocused = useIsFocused()
   const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
+
+  const { sessionStore } = useStores()
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
+
+  const { data: messages, isFetching: isLoadingMessages } = useGetLastChatMessages(
+    sessionStore.user_uuid || "",
+  )
 
   const {
     data: recommendedGroups,
@@ -45,7 +53,6 @@ export const HomeScreen = observer(function HomeScreen() {
   } = useGroupsRecs(0, { enabled: isFocused })
   const [refreshingRecs, setRefreshingRecs] = useState(false)
 
-  
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     setRefreshingRecs(true)
@@ -111,7 +118,10 @@ export const HomeScreen = observer(function HomeScreen() {
             </View>
 
             <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
-              {!isLoading ? item.description || "No description yet" : ""}
+              {/* !isLoading ? item.description || "No description yet" : "" */}
+              {!isLoadingMessages
+                ? messages?.find((m) => m.group_id === item.id)?.content
+                : "No messages yet"}
             </Text>
 
             {item.memberCount && (
