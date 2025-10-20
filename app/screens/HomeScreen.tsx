@@ -27,8 +27,17 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useGetLastChatMessages } from "@/hooks/Chats"
 import { useStores } from "@/models"
+import { formatDate } from "@/utils/formatDate"
+import { formatDateGroupCard } from "@/utils/formatTime"
 
 const { width } = Dimensions.get("window")
+
+function addThreeDotsToText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text
+  }
+  return text.slice(0, maxLength - 3) + "..."
+}
 
 export const HomeScreen = observer(function HomeScreen() {
   const { themed, theme } = useAppTheme()
@@ -83,9 +92,13 @@ export const HomeScreen = observer(function HomeScreen() {
   }
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => {
+    console.log(item)
     return (
       <TouchableOpacity
-        style={themed(themedStylesGroup.groupCardContainer)}
+        style={[
+          themed(themedStylesGroup.groupCardContainer),
+          item.notSeen ? themed(themedStylesGroup.groupCardContainerSeen) : {},
+        ]}
         onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
         disabled={isLoading}
         activeOpacity={0.8}
@@ -94,7 +107,10 @@ export const HomeScreen = observer(function HomeScreen() {
           {item.avatar_url ? (
             <AutoImage
               source={{ uri: item.avatar_url }}
-              style={themed(themedStylesGroup.groupAvatarImage)}
+              style={[
+                themed(themedStylesGroup.groupAvatarImage),
+                item.notSeen ? themed(themedStylesGroup.groupAvatarImageSeen) : {},
+              ]}
             />
           ) : (
             <View style={themed(themedStylesGroup.groupAvatar)}>
@@ -109,15 +125,22 @@ export const HomeScreen = observer(function HomeScreen() {
               <Text style={themed(themedStylesGroup.groupName)} numberOfLines={1}>
                 {item.name}
               </Text>
+              <Text
+                style={[
+                  themed(themedStylesGroup.groupSentAt),
+                  item.notSeen ? themed(themedStylesGroup.groupSentAtSeen) : {},
+                ]}
+              >
+                {formatDateGroupCard(item.lastMessage?.sent_at)}
+              </Text>
             </View>
 
-            <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
-              {item.lastMessage?.content || "No messages yet"}
+            <Text style={themed(themedStylesGroup.lastMessage)} numberOfLines={1}>
+              Martu:{" "}
+              {item.lastMessage
+                ? addThreeDotsToText(item.lastMessage.content, 20)
+                : "No messages yet"}
             </Text>
-          </View>
-
-          <View style={themed(themedStylesGroup.groupArrow)}>
-            <Text style={themed(themedStylesGroup.arrowText)}>›</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -283,11 +306,16 @@ export const themedStylesGroup = {
   }),
 
   groupAvatarImage: (_theme: any): ImageStyle => ({
-    width: 50,
-    height: 50,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 100,
     resizeMode: "cover",
     marginRight: spacing.md,
+  }),
+
+  groupAvatarImageSeen: (theme: any): ImageStyle => ({
+    borderWidth: 3,
+    borderColor: theme.colors.palette.primary500,
   }),
 
   header: (theme: any): ViewStyle => ({
@@ -370,6 +398,12 @@ export const themedStylesGroup = {
     borderColor: theme.colors.border,
   }),
 
+  groupCardContainerSeen: (theme: any): ViewStyle => ({
+    borderColor: theme.colors.tint,
+    borderWidth: 1,
+    backgroundColor: theme.colors.palette.primary200,
+  }),
+
   groupCardInner: (_theme: any): ViewStyle => ({
     flexDirection: "row",
     alignItems: "center",
@@ -377,9 +411,9 @@ export const themedStylesGroup = {
   }),
 
   groupAvatar: (theme: any): ViewStyle => ({
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 100,
     backgroundColor: theme.colors.tintSoft || theme.colors.border,
     justifyContent: "center",
     alignItems: "center",
@@ -387,7 +421,8 @@ export const themedStylesGroup = {
   }),
 
   groupAvatarText: (theme: any): TextStyle => ({
-    fontSize: 20,
+    fontSize: 28,
+    lineHeight: 32,
     fontWeight: "700",
     color: theme.colors.tintInverse,
   }),
@@ -403,9 +438,17 @@ export const themedStylesGroup = {
   }),
 
   groupName: (theme: any): TextStyle => ({
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
     color: theme.colors.text,
+  }),
+
+  notSeenCircle: (theme: any): TextStyle => ({
+    width: 12,
+    height: 12,
+    borderRadius: 100,
+    backgroundColor: theme.colors.palette.primary500,
+    marginLeft: 4,
   }),
 
   unreadBadge: (_theme: any): ViewStyle => ({
@@ -421,7 +464,7 @@ export const themedStylesGroup = {
     fontWeight: "700",
   }),
 
-  description: (theme: any): TextStyle => ({
+  lastMessage: (theme: any): TextStyle => ({
     fontSize: 14,
     color: theme.colors.textDim,
     marginTop: spacing.xxs,
@@ -433,12 +476,18 @@ export const themedStylesGroup = {
     marginTop: spacing.xxs,
   }),
 
-  groupArrow: (_theme: any): ViewStyle => ({
+  groupSideInfo: (_theme: any): ViewStyle => ({
     marginLeft: spacing.sm,
+    alignItems: "flex-end",
   }),
 
-  arrowText: (theme: any): TextStyle => ({
-    fontSize: 24,
+  groupSentAt: (theme: any): TextStyle => ({
+    fontSize: 14,
     color: theme.colors.textDim,
+  }),
+
+  groupSentAtSeen: (theme: any): TextStyle => ({
+    color: theme.colors.tint,
+    fontWeight: "800",
   }),
 }

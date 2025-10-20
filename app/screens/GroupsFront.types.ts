@@ -9,6 +9,7 @@ export interface GroupFront {
   location?: string
   avatar_url?: string | null
   lastMessage: LastMessageFront | undefined
+  notSeen: boolean | undefined
 }
 
 type LastMessageFront = {
