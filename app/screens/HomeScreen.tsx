@@ -13,7 +13,7 @@ import {
   Image,
   ImageStyle,
 } from "react-native"
-import { AutoImage, Screen, Text } from "@/components"
+import { AutoImage, Icon, Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -92,7 +92,8 @@ export const HomeScreen = observer(function HomeScreen() {
   }
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => {
-    console.log(item)
+    const sender = item?.members?.find((m) => m.uuid === item.lastMessage?.user_id)
+
     return (
       <TouchableOpacity
         style={[
@@ -131,15 +132,25 @@ export const HomeScreen = observer(function HomeScreen() {
                   item.notSeen ? themed(themedStylesGroup.groupSentAtSeen) : {},
                 ]}
               >
-                {formatDateGroupCard(item.lastMessage?.sent_at)}
+                {item.lastMessage ? formatDateGroupCard(item.lastMessage?.sent_at) : ""}
               </Text>
             </View>
 
             <Text style={themed(themedStylesGroup.lastMessage)} numberOfLines={1}>
-              Martu:{" "}
-              {item.lastMessage
-                ? addThreeDotsToText(item.lastMessage.content, 20)
-                : "No messages yet"}
+              {sender && sender.name
+                ? `${sender.name.charAt(0).toUpperCase()}${sender.name.slice(1)}: `
+                : ""}
+              {item.lastMessage ? (
+                item.lastMessage.image_url ? (
+                  <Text style={themed(themedStylesGroup.lastMessage)}>
+                    <FontAwesome5 name="image" size={14} /> Photo
+                  </Text>
+                ) : (
+                  addThreeDotsToText(item.lastMessage.content, 20)
+                )
+              ) : (
+                "No messages yet"
+              )}
             </Text>
           </View>
         </View>
