@@ -65,8 +65,8 @@ export const HomeScreen = observer(function HomeScreen() {
     recommendedGroups?.groups?.map((group: OpenGroup) => ({
       id: String(group.id),
       title: group.name,
-      subtitle: group.activity_name,
-      image: group.photo,
+      subtitle: `${group.activity_name} | ${group.location}`,
+      image: group.avatar_url,
     })) || []
 
   const handleAddGroup = () => {
@@ -187,7 +187,7 @@ export const HomeScreen = observer(function HomeScreen() {
         ) : recommendedPhotoItems.length === 0 ? (
           <View style={themed(themedStylesGroup.emptyContainer)}>
             <Text style={themed(themedStylesGroup.emptySubtitle)}>
-              No new groups to recommend right now 👀
+              No hay recomendaciones por ahora. Actualiza tus preferencias o crea un nuevo grupo.
             </Text>
           </View>
         ) : (
