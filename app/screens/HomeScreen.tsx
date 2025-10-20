@@ -64,7 +64,7 @@ export const HomeScreen = observer(function HomeScreen() {
       setRefreshing(false)
       setRefreshingRecs(false)
     }
-  }, [refetch, refetchRecs])
+  }, [refetch, refetchRecs, refetchLastMessages])
 
   useEffect(() => {
     if (paginatedGroups?.groups) setAllGroups(paginatedGroups.groups)
@@ -109,25 +109,11 @@ export const HomeScreen = observer(function HomeScreen() {
               <Text style={themed(themedStylesGroup.groupName)} numberOfLines={1}>
                 {item.name}
               </Text>
-
-              {item.unreadCount && item.unreadCount > 0 && (
-                <View style={themed(themedStylesGroup.unreadBadge)}>
-                  <Text style={themed(themedStylesGroup.unreadText)}>
-                    {item.unreadCount > 99 ? "99+" : item.unreadCount}
-                  </Text>
-                </View>
-              )}
             </View>
 
             <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
-              {!isLoadingMessages
-                ? messages?.find((m) => m.group_id === item.id)?.content || "No messages yet"
-                : ""}
+              {item.lastMessage?.content || "No messages yet"}
             </Text>
-
-            {item.memberCount && (
-              <Text style={themed(themedStylesGroup.memberCount)}>{item.memberCount} members</Text>
-            )}
           </View>
 
           <View style={themed(themedStylesGroup.groupArrow)}>
@@ -140,10 +126,10 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const ListHeaderComponent = () => {
     const myGroupsSection = () => {
-      if (isLoading && allGroups.length === 0)
+      if (isLoading || isLoadingMessages)
         return <ActivityIndicator style={{ marginVertical: 30 }} size="large" />
 
-      if (!isLoading && allGroups.length === 0)
+      if (allGroups.length === 0)
         return (
           <View style={themed(themedStylesGroup.emptyContainer)}>
             <Text style={themed(themedStylesGroup.emptyIcon)}>👥</Text>
@@ -152,7 +138,18 @@ export const HomeScreen = observer(function HomeScreen() {
           </View>
         )
 
-      const limitedGroups = allGroups.slice(0, 3)
+      const zipped = allGroups.map((g) => {
+        const match = messages.find((o) => o.group_id === g.id)
+        return { ...g, lastMessage: match }
+      })
+
+      zipped.sort((a, b) => {
+        const dateA = a.lastMessage.sent_at ? new Date(a.lastMessage.sent_at).getTime() : 0
+        const dateB = b.lastMessage.sent_at ? new Date(b.lastMessage.sent_at).getTime() : 0
+        return dateB - dateA
+      })
+
+      const limitedGroups = zipped.slice(0, 3)
       return (
         <View style={themed(themedStylesGroup.sectionContainer)}>
           <View style={themed(themedStylesGroup.sectionHeader)}>
