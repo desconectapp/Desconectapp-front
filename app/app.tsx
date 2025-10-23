@@ -166,8 +166,19 @@ export function App() {
 
   // Send test notification on app start
   useEffect(() => {
+    console.log("expoPushToken", expoPushToken)
     const sendTestNotification = async () => {
       try {
+        // Check if we have notification permissions first
+        const { status } = await Notifications.getPermissionsAsync()
+        console.log("Notification permission status:", status)
+        
+        if (status !== 'granted') {
+          console.log("Requesting notification permissions...")
+          const { status: newStatus } = await Notifications.requestPermissionsAsync()
+          console.log("New permission status:", newStatus)
+        }
+
         await Notifications.scheduleNotificationAsync({
           content: {
             title: "Test Notification",
@@ -182,11 +193,12 @@ export function App() {
       }
     }
 
-    // Only send test notification if app is fully loaded and we have a push token
-    if (rehydrated && isNavigationStateRestored && isI18nInitialized && areFontsLoaded && expoPushToken) {
+    // Send test notification if app is fully loaded (don't require push token for local notifications)
+    if (rehydrated && isNavigationStateRestored && isI18nInitialized && areFontsLoaded) {
+      console.log("App is ready, scheduling test notification...")
       sendTestNotification()
     }
-  }, [rehydrated, isNavigationStateRestored, isI18nInitialized, areFontsLoaded, expoPushToken])
+  }, [rehydrated, isNavigationStateRestored, isI18nInitialized, areFontsLoaded])
 
   // Before we show the app, we have to wait for our state to be ready.
   // In the meantime, don't render anything. This will be the background
