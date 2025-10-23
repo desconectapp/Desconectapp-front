@@ -50,6 +50,8 @@ import { ToastProvider, ToastViewport } from "@tamagui/toast"
 import { api } from "./services/api"
 import { SessionData } from "./services/users"
 import { useNavigation } from "@react-navigation/native"
+import { usePushNotifications } from "./hooks/Notifications"
+import * as Notifications from "expo-notifications"
 if (__DEV__) {
   // Load Reactotron in development only.
   // Note that you must be using metro's `inlineRequires` for this to work.
@@ -99,6 +101,9 @@ export function App() {
 
   const [areFontsLoaded, fontLoadError] = useFonts(customFontsToLoad)
   const [isI18nInitialized, setIsI18nInitialized] = useState(false)
+  
+  // Initialize push notifications
+  const { expoPushToken } = usePushNotifications()
 
   useEffect(() => {
     initI18n()
@@ -158,6 +163,30 @@ export function App() {
     // Slightly delaying splash screen hiding for better UX; can be customized or removed as needed,
     setTimeout(SplashScreen.hideAsync, 500)
   })
+
+  // Send test notification on app start
+  useEffect(() => {
+    const sendTestNotification = async () => {
+      try {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "Test Notification",
+            body: "This is a test notification sent on app start!",
+            data: { test: true },
+          },
+          trigger: { seconds: 2 }, // Send after 2 seconds
+        })
+        console.log("Test notification scheduled successfully")
+      } catch (error) {
+        console.error("Failed to schedule test notification:", error)
+      }
+    }
+
+    // Only send test notification if app is fully loaded and we have a push token
+    if (rehydrated && isNavigationStateRestored && isI18nInitialized && areFontsLoaded && expoPushToken) {
+      sendTestNotification()
+    }
+  }, [rehydrated, isNavigationStateRestored, isI18nInitialized, areFontsLoaded, expoPushToken])
 
   // Before we show the app, we have to wait for our state to be ready.
   // In the meantime, don't render anything. This will be the background
