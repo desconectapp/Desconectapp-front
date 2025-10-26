@@ -169,7 +169,7 @@ export const RequestStoreModel = types
 
     getRequestData(): ActivitySearchRequest {
       
-      const timeslots = convertScheduleToTimeSlot()
+      const timeslots = convertScheduleToTimeSlot(store.schedules)
 
       return {
         user_id: store.user_id,

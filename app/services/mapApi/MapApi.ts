@@ -1,65 +1,117 @@
-const LOCATION_IQ_API_KEY = process.env.EXPO_PUBLIC_LOCATION_IQ_API_KEY || ""
+import { extractLocationName } from '@/utils/mapApiUtils'
+import locationIqClient from './locationIqClient'
+
+export interface LocationIQAddress {
+  town?: string
+  neighbourhood?: string
+  suburb?: string
+  state_district?: string
+  state?: string
+  country?: string
+  [key: string]: string | undefined
+}
+
+interface LocationIQResponse {
+  address: LocationIQAddress
+  display_name: string
+  lat: string
+  lon: string
+}
+
+interface SearchResult {
+  location: string
+  address: string
+  lat: string
+  lon: string
+}
 
 export const MapApiService = {
   /**
-   * Get location name from coordinates using Radar reverse geocoding API
+   * Get location name from coordinates using LocationIQ reverse geocoding API
    * @param latitude - Latitude coordinate
    * @param longitude - Longitude coordinate
-   * @returns Formatted location name (e.g., "Palermo")
+   * @returns Formatted location name (e.g., "Palermo, Buenos Aires, Argentina")
    */
   getLocationName: async (latitude: number, longitude: number): Promise<string | undefined> => {
     try {
-      if (!LOCATION_IQ_API_KEY) {
-        console.warn("EXPO_PUBLIC_LOCATION_IQ_API_KEY is not set. Cannot fetch location name.")
-        return undefined
-      }
-
-      const url = `https://us1.locationiq.com/v1/reverse?key=${LOCATION_IQ_API_KEY}&lat=${latitude}&lon=${longitude}&format=json`
-      
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Authorization": LOCATION_IQ_API_KEY,
-          "Content-Type": "application/json",
-        },
+      const response = await locationIqClient.get<LocationIQResponse>('/reverse', {
+        lat: latitude,
+        lon: longitude,
+        format: 'json'
       })
 
       if (!response.ok) {
-        console.error(`Radar API error: ${response.status} ${response.statusText}`)
+        console.error(`LocationIQ API error: ${response.status} ${response.problem}`)
         return undefined
       }
 
-      const data = await response.json()
-      
-      // Extract location name from response
-      // Priority: town > neighbourhood > suburb > state_district > state > country
-      const address = data.address
-      if (!address) {
-        console.warn("No address found in LocationIQ response")
+      const data = response.data
+      if (!data) {
+        console.warn("No data received from LocationIQ response")
         return undefined
       }
-
-      const fieldsPriority = [
-        "town",
-        "neighbourhood",
-        "suburb",
-        "state_district",
-        "state",
-        "country",
-      ]
-
-      for (const key of fieldsPriority) {
-        if (address[key] && typeof address[key] === "string" && address[key] !== "") {
-          return address[key]
-        }
-      }
-
-      // Fallback to display_name if no priority field found
-      return data.display_name || undefined
-	
+      return extractLocationName(data.address)
     } catch (error) {
       console.error("Error fetching location name:", error)
       return undefined
     }
   },
+
+  searchLocation: async (
+    query: string, 
+    userLatitude?: number, 
+    userLongitude?: number
+  ): Promise<SearchResult[] | undefined> => {
+    try {
+      console.log(`[LocationIQ] Searching for: "${query}" with limit: 3`)
+      
+      const searchParams: any = {
+        q: query,
+        format: 'json',
+        limit: 3,
+        countrycodes: 'ar',
+        addressdetails: 1,
+      }
+
+      // If user location is provided, create a viewbox within 100km radius
+      if (userLatitude && userLongitude) {
+        // 100km in degrees (approximately)
+        const radiusInDegrees = 100 / 111 // 1 degree ≈ 111km
+        const latRadius = radiusInDegrees
+        const lonRadius = radiusInDegrees / Math.cos((userLatitude * Math.PI) / 180) // Account for latitude distortion
+
+        const minLat = userLatitude - latRadius
+        const maxLat = userLatitude + latRadius
+        const minLon = userLongitude - lonRadius
+        const maxLon = userLongitude + lonRadius
+
+        // viewbox format: min_lon,min_lat,max_lon,max_lat
+        searchParams.viewbox = `${minLon},${minLat},${maxLon},${maxLat}`
+        searchParams.bounded = 1 // Restrict results to viewbox
+
+        console.log(`[LocationIQ] Using viewbox: ${searchParams.viewbox}`)
+      }
+
+      const response = await locationIqClient.get<LocationIQResponse[]>('/search', searchParams)
+      
+      if (!response.ok) {
+        console.error(`LocationIQ API error: ${response.status} ${response.problem}`)
+        return undefined
+      }
+
+
+      const result = []
+      result.push(...response.data!.map(item => ({
+        location: extractLocationName(item.address),
+        address: item.display_name,
+        lat: item.lat,
+        lon: item.lon,
+      })))
+      return result
+
+    } catch (error) {
+      console.error("Error searching location:", error)
+      return undefined
+    }
+  }
 }
