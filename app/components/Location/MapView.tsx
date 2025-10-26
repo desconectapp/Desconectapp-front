@@ -209,17 +209,21 @@ export const MapViewComponent = ({
   const handleMapLongPress = async (event: any) => {
     if (!allowSelectLocation) return
     const coordinates = event.geometry.coordinates as [number, number]
+    // event.geometry.coordinates is [lng, lat]
+    const lng = coordinates[0]
+    const lat = coordinates[1]
     const address = await Radar.reverseGeocode({
-      location: { latitude: coordinates[1], longitude: coordinates[0] },
+      location: { latitude: lat, longitude: lng },
     })
     setSelectedLocation?.({
       id: "selected-location",
       name: "Selected Location",
       address: address.addresses?.[0]?.formattedAddress || "Selected Location",
-      latitude: coordinates[1],
-      longitude: coordinates[0],
+      latitude: lat,
+      longitude: lng,
     })
-    setCameraCenter?.(coordinates)
+    // camera expects [lng, lat]
+    setCameraCenter?.([lng, lat])
     setZoom(zoom < 13 ? 13 : zoom) // Zoom in if too far out
   }
 
@@ -293,10 +297,11 @@ export const MapViewComponent = ({
             {/* Search radius circle */}
             <MapLibreGL.ShapeSource
               id="search-radius-source"
-              shape={createCircleGeoJSON(
-                [selectedLocation.longitude, selectedLocation.latitude],
-                searchRadiusKm,
-              )}
+              // createCircleGeoJSON expects center as [lng, lat]
+              shape={createCircleGeoJSON([
+                selectedLocation.longitude,
+                selectedLocation.latitude,
+              ], searchRadiusKm)}
             >
               <MapLibreGL.FillLayer
                 id="search-radius-fill"

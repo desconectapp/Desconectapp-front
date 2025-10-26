@@ -42,19 +42,6 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
     }
   }
 
-  const formatSchedules = () => {
-    if (!requestStore.schedules || requestStore.schedules.length === 0) {
-      return "Ningún horario seleccionado"
-    }
-
-    const formatted = requestStore.schedules.map(schedule => {
-      const timeSlots = schedule.timeSlots.map(slot => `${slot.start}-${slot.end}`).join(", ")
-      return `📅 ${schedule.day}: ${timeSlots}`
-    }).join("\n")
-    
-    return formatted
-  }
-
   return (
     <Screen
       preset="fixed"

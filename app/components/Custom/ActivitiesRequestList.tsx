@@ -139,6 +139,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
             📍 Radio de {item.search_radius}km
           </Text>
           <Text style={themed($detailSubtext)}>
+            {item.location_name}
             Lat: {item.latitude.toFixed(4)}, Lng: {item.longitude.toFixed(4)}
           </Text>
         </View>

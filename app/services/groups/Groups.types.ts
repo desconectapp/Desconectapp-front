@@ -66,6 +66,7 @@ export interface MapGroup {
   coordinates: [number, number] // [longitude, latitude]
   radius?: number // in km
   location: string
+  location_name?: string
   description?: string
   membersCount?: number
   avatarUrl?: string

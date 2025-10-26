@@ -20,6 +20,7 @@ export const groupsService = {
   },
 
   createGroup: async (params: CreateGroupParams): Promise<GroupData | undefined> => {
+    console.log("Creating group with params:", params);
     const response = await api.apisauce.post<GroupData>(`/groups`, params);
     
     if (!response.ok) {

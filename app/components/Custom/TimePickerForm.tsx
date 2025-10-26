@@ -110,29 +110,27 @@ export const TimePickerForm = observer(function TimePickerForm() {
 
   const handleStartTimeChange = useCallback((newStart: string) => {
     setStart(newStart)
-    // If end time is not later than start time, adjust it
+    // Auto-set end time if it's empty or not later than start time
     const startMinutes = toMinutes(newStart)
-    const endMinutes = toMinutes(end)
-    if (endMinutes <= startMinutes) {
-      // Set end time to 30 minutes after start time
-      const newEndMinutes = startMinutes + 30
-      if (newEndMinutes <= 23 * 60 + 30) { // Max time is 23:30
-        setEnd(fromMinutes(newEndMinutes))
-      }
+    const endMinutes = end ? toMinutes(end) : 0
+    
+    if (!end || endMinutes <= startMinutes) {
+      // Set end time to 1 hour after start time (or 30 minutes if close to midnight)
+      const newEndMinutes = Math.min(startMinutes + 60, 23 * 60 + 30) // Max time is 23:30
+      setEnd(fromMinutes(newEndMinutes))
     }
   }, [end])
 
   const handleEndTimeChange = useCallback((newEnd: string) => {
     setEnd(newEnd)
-    // If start time is not earlier than end time, adjust it
-    const startMinutes = toMinutes(start)
+    // Auto-set start time if it's empty or not earlier than end time
+    const startMinutes = start ? toMinutes(start) : 0
     const endMinutes = toMinutes(newEnd)
-    if (startMinutes >= endMinutes) {
-      // Set start time to 30 minutes before end time
-      const newStartMinutes = endMinutes - 30
-      if (newStartMinutes >= 0) { // Min time is 00:00
-        setStart(fromMinutes(newStartMinutes))
-      }
+    
+    if (!start || startMinutes >= endMinutes) {
+      // Set start time to 1 hour before end time (or 30 minutes if close to midnight)
+      const newStartMinutes = Math.max(endMinutes - 60, 0) // Min time is 00:00
+      setStart(fromMinutes(newStartMinutes))
     }
   }, [start])
 
@@ -142,14 +140,23 @@ export const TimePickerForm = observer(function TimePickerForm() {
 
   const applySelection = useCallback(() => {
     try {
-      if (!start || !end || selectedDays.length === 0) {
-        alert("Seleccioná días y horarios válidos")
+      if (selectedDays.length === 0) {
+        alert("Seleccioná al menos un día")
+        return
+      }
+      
+      // Auto-complete times if needed
+      let finalStart = start
+      let finalEnd = end
+      
+      if (!finalStart || !finalEnd) {
+        alert("Seleccioná horarios válidos")
         return
       }
 
       // Validate time format
-      const startMinutes = toMinutes(start)
-      const endMinutes = toMinutes(end)
+      const startMinutes = toMinutes(finalStart)
+      const endMinutes = toMinutes(finalEnd)
       
       if (isNaN(startMinutes) || isNaN(endMinutes) || startMinutes >= endMinutes) {
         alert("Horarios inválidos. El horario de fin debe ser posterior al de inicio.")
@@ -160,7 +167,7 @@ export const TimePickerForm = observer(function TimePickerForm() {
       selectedDays.forEach((dayCode) => {
         const dayName = dayMapping[dayCode]
         const existingTimeSlots = getTimeSlotsByDay(dayCode)
-        const newTimeSlot: TimeRange = { start, end }
+        const newTimeSlot: TimeRange = { start: finalStart, end: finalEnd }
 
         // Add the new time slot to existing ones and merge overlapping slots
         const allTimeSlots = [...existingTimeSlots, newTimeSlot]
@@ -176,8 +183,8 @@ export const TimePickerForm = observer(function TimePickerForm() {
       console.log("Horarios guardados en el store:", requestStore.schedules.slice())
       setModalVisible(false)
       setSelectedDays([])
-      setStart("")
-      setEnd("")
+      setStart("09:00")
+      setEnd("10:00")
     } catch (error) {
       console.error("Error applying selection:", error)
       alert("Error al guardar los horarios")
