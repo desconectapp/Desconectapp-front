@@ -12,6 +12,7 @@ import { CustomSlider } from "../Custom/CustomSlider"
 import { MapGroup } from "@/services/groups/Groups.types"
 import { GroupMapIcon } from "./GroupMapIcon"
 import { GroupMapInfoCard } from "./GroupMapInfoCard"
+import { useGetLocationName } from "@/hooks/Map"
 
 
 const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ""
@@ -64,6 +65,31 @@ export const MapViewComponent = ({
 
   const [selectedMarker, setSelectedMarker] = useState<MapGroup | null>(null)
   const [isSettingFromSearch, setIsSettingFromSearch] = useState(false)
+  const [pendingLocationCoords, setPendingLocationCoords] = useState<{lat: number, lng: number} | null>(null)
+  
+  // Use LocationIQ hook to get location name when coordinates are set
+  const { data: locationName, isLoading: isLoadingLocationName } = useGetLocationName(
+    pendingLocationCoords?.lat || 0,
+    pendingLocationCoords?.lng || 0,
+    !!pendingLocationCoords
+  )
+
+  // Effect to handle location name response
+  useEffect(() => {
+    if (locationName && pendingLocationCoords) {
+      setSelectedLocation?.({
+        id: "selected-location",
+        name: locationName,
+        address: locationName,
+        latitude: pendingLocationCoords.lat,
+        longitude: pendingLocationCoords.lng,
+      })
+      // Clear pending coords and move camera
+      setCameraCenter([pendingLocationCoords.lng, pendingLocationCoords.lat])
+      setZoom(zoom < 13 ? 13 : zoom)
+      setPendingLocationCoords(null)
+    }
+  }, [locationName, pendingLocationCoords, setSelectedLocation, setCameraCenter, zoom])
 
   // Simple location setup on mount
   useEffect(() => {
@@ -206,21 +232,15 @@ export const MapViewComponent = ({
   }, [selectedMarker?.id]) // Only watch the ID, so it doesn't trigger when setting to null
 
   // LongPress selecciona una ubicacion
-  const handleMapLongPress = async (event: any) => {
+  const handleMapLongPress = (event: any) => {
     if (!allowSelectLocation) return
     const coordinates = event.geometry.coordinates as [number, number]
-    const address = await Radar.reverseGeocode({
-      location: { latitude: coordinates[1], longitude: coordinates[0] },
-    })
-    setSelectedLocation?.({
-      id: "selected-location",
-      name: "Selected Location",
-      address: address.addresses?.[0]?.formattedAddress || "Selected Location",
-      latitude: coordinates[1],
-      longitude: coordinates[0],
-    })
-    setCameraCenter?.(coordinates)
-    setZoom(zoom < 13 ? 13 : zoom) // Zoom in if too far out
+    // event.geometry.coordinates is [lng, lat]
+    const lng = coordinates[0]
+    const lat = coordinates[1]
+    
+    // Set pending coordinates to trigger the LocationIQ hook
+    setPendingLocationCoords({ lat, lng })
   }
 
   // Mostrar info de un marcador (grupo) al tocarlo
@@ -293,10 +313,11 @@ export const MapViewComponent = ({
             {/* Search radius circle */}
             <MapLibreGL.ShapeSource
               id="search-radius-source"
-              shape={createCircleGeoJSON(
-                [selectedLocation.longitude, selectedLocation.latitude],
-                searchRadiusKm,
-              )}
+              // createCircleGeoJSON expects center as [lng, lat]
+              shape={createCircleGeoJSON([
+                selectedLocation.longitude,
+                selectedLocation.latitude,
+              ], searchRadiusKm)}
             >
               <MapLibreGL.FillLayer
                 id="search-radius-fill"
@@ -356,8 +377,8 @@ export const MapViewComponent = ({
       {/* BUSQUEDA: Para cuando selecciono ubicacion en la search */}
       {selectedLocation && (
         <LocationInfo height={180}>
-          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16, paddingBottom: 15 }}>
-            {selectedLocation.address || "Selected Location"}
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 20, paddingBottom: 15 }}>
+            {selectedLocation.name}
           </Text>
           <View
             style={{

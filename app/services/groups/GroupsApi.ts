@@ -20,6 +20,7 @@ export const groupsService = {
   },
 
   createGroup: async (params: CreateGroupParams): Promise<GroupData | undefined> => {
+    console.log("Creating group with params:", params);
     const response = await api.apisauce.post<GroupData>(`/groups`, params);
     
     if (!response.ok) {
@@ -124,6 +125,7 @@ export const groupsService = {
         icon: group.photo || "👥",
         coordinates: [longitude, latitude] as [number, number], // MapLibre expects [lng, lat]
         location: group.location,
+        location_name: group.location_name,
         description: group.description,
         membersCount: group.member_count,
         radius: 1, // Default radius, adjust as needed

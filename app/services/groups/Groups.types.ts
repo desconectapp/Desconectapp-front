@@ -51,6 +51,7 @@ export interface OpenGroup {
 	name:         string
 	description:  string
 	location:     string
+  location_name: string
   coords:        string // "latitude,longitude"
 	activity_name: string
 	member_count:	number
@@ -66,6 +67,7 @@ export interface MapGroup {
   coordinates: [number, number] // [longitude, latitude]
   radius?: number // in km
   location: string
+  location_name?: string
   description?: string
   membersCount?: number
   avatarUrl?: string

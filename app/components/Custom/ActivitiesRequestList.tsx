@@ -126,20 +126,17 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
         <View style={themed($detailBox)}>
           <Text style={themed($detailLabel)}>Participantes</Text>
           <Text style={themed($detailValue)}>
-            {item.participants_needed}–{item.maximum_participants} personas
-          </Text>
-          <Text style={themed($detailSubtext)}>
-            Mínimo–Máximo
+            De {item.participants_needed} a {item.maximum_participants} personas
           </Text>
         </View>
         
         <View style={themed($detailBox)}>
           <Text style={themed($detailLabel)}>Ubicación</Text>
-          <Text style={themed($detailValue)} numberOfLines={1}>
-            📍 Radio de {item.search_radius}km
+          <Text style={themed($detailValue)} numberOfLines={2}>
+            📍 {item.location_name} 
           </Text>
           <Text style={themed($detailSubtext)}>
-            Lat: {item.latitude.toFixed(4)}, Lng: {item.longitude.toFixed(4)}
+            Radio de {item.search_radius}km
           </Text>
         </View>
       </View>

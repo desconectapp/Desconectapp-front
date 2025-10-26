@@ -37,6 +37,8 @@ export const activitiesService = {
       limit,
       offset,
     })
+    console.log("req reponse:", response.data);
+
     if (!response.ok) {
       throw new Error("Error al cargar solicitudes de actividades")
     }

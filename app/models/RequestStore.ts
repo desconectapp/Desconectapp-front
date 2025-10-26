@@ -164,41 +164,12 @@ export const RequestStoreModel = types
       store.location = null
       store.schedules.clear()
     },
+
+ 
+
     getRequestData(): ActivitySearchRequest {
-      // Convert schedules to half-hour timeslots
-      const timeslots: number[] = []
       
-      store.schedules.forEach((daySchedule) => {
-        // Translate Spanish day name to English lowercase
-        const englishDay = dayTranslation[daySchedule.day] || daySchedule.day.toLowerCase()
-        
-        // Get day offset (Monday = 0, Tuesday = 48, Wednesday = 96, etc.)
-        const dayOffsets: { [key: string]: number } = {
-          'monday': 0,
-          'tuesday': 48,
-          'wednesday': 96,
-          'thursday': 144,
-          'friday': 192,
-          'saturday': 240,
-          'sunday': 288
-        }
-        
-        const dayOffset = dayOffsets[englishDay] || 0
-        
-        daySchedule.timeSlots.forEach(timeSlot => {
-          const startMinutes = timeStringToMinutes(timeSlot.start)
-          const endMinutes = timeStringToMinutes(timeSlot.end)
-          
-          // Convert to half-hour timeslots
-          // Each hour has 2 timeslots (0-30min and 30-60min)
-          const startTimeslot = Math.floor(startMinutes / 30) + 1
-          const endTimeslot = Math.floor(endMinutes / 30)
-          
-          for (let i = startTimeslot; i <= endTimeslot; i++) {
-            timeslots.push(dayOffset + i)
-          }
-        })
-      })
+      const timeslots = convertScheduleToTimeSlot(store.schedules)
 
       return {
         user_id: store.user_id,
@@ -228,3 +199,43 @@ export const RequestStoreModel = types
       return this.isActivitySelected && this.isLocationSelected && this.isScheduleSelected
     },
   }))
+
+
+export function convertScheduleToTimeSlot(schedules?: DaySchedule[]): number[] {
+      // Convert schedules to half-hour timeslots
+      const timeslots : number[] = [];
+
+      (schedules || []).forEach((daySchedule: DaySchedule) => {
+        // Translate Spanish day name to English lowercase
+        const englishDay = dayTranslation[daySchedule.day] || daySchedule.day.toLowerCase()
+        
+        // Get day offset (Monday = 0, Tuesday = 48, Wednesday = 96, etc.)
+        const dayOffsets: { [key: string]: number } = {
+          'monday': 0,
+          'tuesday': 48,
+          'wednesday': 96,
+          'thursday': 144,
+          'friday': 192,
+          'saturday': 240,
+          'sunday': 288
+        }
+        
+        const dayOffset = dayOffsets[englishDay] || 0
+
+        daySchedule.timeSlots.forEach((timeSlot: TimeRange) => {
+          const startMinutes = timeStringToMinutes(timeSlot.start)
+          const endMinutes = timeStringToMinutes(timeSlot.end)
+          
+          // Convert to half-hour timeslots
+          // Each hour has 2 timeslots (0-30min and 30-60min)
+          const startTimeslot = Math.floor(startMinutes / 30) + 1
+          const endTimeslot = Math.floor(endMinutes / 30)
+          
+          for (let i = startTimeslot; i <= endTimeslot; i++) {
+            timeslots.push(dayOffset + i)
+          }
+        })
+      })
+      return timeslots    
+}
+

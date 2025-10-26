@@ -122,7 +122,7 @@ export const GroupMapInfoCard = ({ group }: { group: MapGroup }) => {
             }}
             numberOfLines={1}
         >
-            📍 {placeName}
+            📍 {group.location_name}
         </Text>            
         {typeof group.membersCount === "number" && (
             <Text 
@@ -168,7 +168,7 @@ export const GroupMapInfoCard = ({ group }: { group: MapGroup }) => {
             shadowColor: "#000000ff",
             elevation: 5,
         }}
-          onPress={() => navigation.navigate("GroupScreen", { groupId: group.id })}
+          onPress={() => navigation.navigate("SuggestionScreen", { group: group })}
         >
           <Text style={{ color: "white", fontWeight: "600", fontSize: 13 }}>
             Ver grupo
