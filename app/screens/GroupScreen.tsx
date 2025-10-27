@@ -26,6 +26,7 @@ import { useStores } from "@/models"
 import {
   useCreateMessage,
   useInfiniteChatMessages,
+  useMarkAsSeen,
   useMessageSubscription,
   useUploadGroupImage,
 } from "@/hooks/Chats"
@@ -63,6 +64,8 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     isLoading: isLoadingMessages,
   } = useInfiniteChatMessages(groupId, { pageSize: 30 })
 
+  const { mutateAsync: markAsSeenAsync } = useMarkAsSeen(sessionStore.user_uuid)
+
   const { isPending: isSendingMessage, mutateAsync: createMessageAsync } = useCreateMessage()
   const { isPending: isUploadingImage, mutateAsync: uploadMutateAsync } = useUploadGroupImage()
 
@@ -71,6 +74,10 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     if (!groupData?.members) return new Map()
     return new Map(groupData.members.map((member) => [member.uuid, member]))
   }, [groupData?.members])
+
+  useEffect(() => {
+    markAsSeenAsync(groupId)
+  }, [infiniteData, groupId, markAsSeenAsync])
 
   const handleNewMessage = useCallback(
     (newMessage: any) => {
@@ -87,6 +94,8 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         isOwn: newMessage.user_id === sessionStore.user_uuid,
         imageUrl: newMessage.image_url || undefined,
       }
+
+      markAsSeenAsync(groupId)
 
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === formattedMessage.id)
@@ -352,7 +361,6 @@ export const styles = StyleSheet.create({
     top: 8,
     zIndex: 10,
   },
-
 })
 
 export const themedStyles = {

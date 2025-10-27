@@ -29,6 +29,7 @@ import { useGetLastChatMessages } from "@/hooks/Chats"
 import { useStores } from "@/models"
 import { formatDate } from "@/utils/formatDate"
 import { formatDateGroupCard } from "@/utils/formatTime"
+import { userService } from "@/services/users"
 
 const { width } = Dimensions.get("window")
 
@@ -51,11 +52,7 @@ export const HomeScreen = observer(function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
 
-  const {
-    data: messages,
-    isFetching: isLoadingMessages,
-    refetch: refetchLastMessages,
-  } = useGetLastChatMessages(sessionStore.user_uuid || "")
+  const { data: messages } = useGetLastChatMessages(sessionStore.user_uuid || "")
 
   const {
     data: recommendedGroups,
@@ -68,12 +65,12 @@ export const HomeScreen = observer(function HomeScreen() {
     setRefreshing(true)
     setRefreshingRecs(true)
     try {
-      await Promise.all([refetch(), refetchRecs(), refetchLastMessages()])
+      await Promise.all([refetch(), refetchRecs()])
     } finally {
       setRefreshing(false)
       setRefreshingRecs(false)
     }
-  }, [refetch, refetchRecs, refetchLastMessages])
+  }, [refetch, refetchRecs])
 
   useEffect(() => {
     if (paginatedGroups?.groups) setAllGroups(paginatedGroups.groups)
@@ -94,11 +91,13 @@ export const HomeScreen = observer(function HomeScreen() {
   const renderGroupCard = ({ item }: { item: GroupFront }) => {
     const sender = item?.members?.find((m) => m.uuid === item.lastMessage?.user_id)
 
+    console.log("not seen", item.not_seen)
+
     return (
       <TouchableOpacity
         style={[
           themed(themedStylesGroup.groupCardContainer),
-          item.notSeen ? themed(themedStylesGroup.groupCardContainerSeen) : {},
+          item.lastMessage?.not_seen ? themed(themedStylesGroup.groupCardContainerSeen) : {},
         ]}
         onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
         disabled={isLoading}
@@ -110,7 +109,7 @@ export const HomeScreen = observer(function HomeScreen() {
               source={{ uri: item.avatar_url }}
               style={[
                 themed(themedStylesGroup.groupAvatarImage),
-                item.notSeen ? themed(themedStylesGroup.groupAvatarImageSeen) : {},
+                item.lastMessage?.not_seen ? themed(themedStylesGroup.groupAvatarImageSeen) : {},
               ]}
             />
           ) : (
@@ -129,7 +128,7 @@ export const HomeScreen = observer(function HomeScreen() {
               <Text
                 style={[
                   themed(themedStylesGroup.groupSentAt),
-                  item.notSeen ? themed(themedStylesGroup.groupSentAtSeen) : {},
+                  item.lastMessage?.not_seen ? themed(themedStylesGroup.groupSentAtSeen) : {},
                 ]}
               >
                 {item.lastMessage ? formatDateGroupCard(item.lastMessage?.sent_at) : ""}
@@ -149,7 +148,7 @@ export const HomeScreen = observer(function HomeScreen() {
                   addThreeDotsToText(item.lastMessage.content, 20)
                 )
               ) : (
-                "No messages yet"
+                ""
               )}
             </Text>
           </View>
@@ -160,8 +159,7 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const ListHeaderComponent = () => {
     const myGroupsSection = () => {
-      if (isLoading || isLoadingMessages)
-        return <ActivityIndicator style={{ marginVertical: 30 }} size="large" />
+      if (isLoading) return <ActivityIndicator style={{ marginVertical: 30 }} size="large" />
 
       if (allGroups.length === 0)
         return (
@@ -172,18 +170,21 @@ export const HomeScreen = observer(function HomeScreen() {
           </View>
         )
 
+      console.log(messages)
       const zipped = allGroups.map((g) => {
-        const match = messages.find((o) => o.group_id === g.id)
+        const match = messages?.find((o) => o.group_id === g.id)
         return { ...g, lastMessage: match }
       })
 
       zipped.sort((a, b) => {
-        const dateA = a.lastMessage.sent_at ? new Date(a.lastMessage.sent_at).getTime() : 0
-        const dateB = b.lastMessage.sent_at ? new Date(b.lastMessage.sent_at).getTime() : 0
+        const dateA = a.lastMessage?.sent_at ? new Date(a.lastMessage.sent_at).getTime() : 0
+        const dateB = b.lastMessage?.sent_at ? new Date(b.lastMessage.sent_at).getTime() : 0
         return dateB - dateA
       })
 
       const limitedGroups = zipped.slice(0, 3)
+
+      console.log("LIMITED GROPUS", limitedGroups)
       return (
         <View style={themed(themedStylesGroup.sectionContainer)}>
           <View style={themed(themedStylesGroup.sectionHeader)}>
