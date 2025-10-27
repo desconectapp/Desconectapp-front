@@ -29,6 +29,7 @@ import { useGetLastChatMessages } from "@/hooks/Chats"
 import { useStores } from "@/models"
 import { formatDate } from "@/utils/formatDate"
 import { formatDateGroupCard } from "@/utils/formatTime"
+import { useGroupMatchNotifications } from "@/hooks/GroupMatchNotifications"
 
 const { width } = Dimensions.get("window")
 
@@ -50,6 +51,9 @@ export const HomeScreen = observer(function HomeScreen() {
   const { sessionStore } = useStores()
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
+
+  // Monitor for new group matches and show notifications
+  useGroupMatchNotifications()
 
   const {
     data: messages,
@@ -173,7 +177,7 @@ export const HomeScreen = observer(function HomeScreen() {
         )
 
       const zipped = allGroups.map((g) => {
-        const match = messages.find((o) => o.group_id === g.id)
+        const match = messages?.find((o) => o.group_id === g.id)
         return { ...g, lastMessage: match }
       })
 

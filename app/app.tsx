@@ -164,10 +164,9 @@ export function App() {
     setTimeout(SplashScreen.hideAsync, 500)
   })
 
-  // Send test notification on app start
+  // Initialize notification permissions on app start
   useEffect(() => {
-    console.log("expoPushToken", expoPushToken)
-    const sendTestNotification = async () => {
+    const initializeNotifications = async () => {
       try {
         // Check if we have notification permissions first
         const { status } = await Notifications.getPermissionsAsync()
@@ -178,25 +177,15 @@ export function App() {
           const { status: newStatus } = await Notifications.requestPermissionsAsync()
           console.log("New permission status:", newStatus)
         }
-
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: "Test Notification",
-            body: "This is a test notification sent on app start!",
-            data: { test: true },
-          },
-          trigger: { seconds: 2 }, // Send after 2 seconds
-        })
-        console.log("Test notification scheduled successfully")
       } catch (error) {
-        console.error("Failed to schedule test notification:", error)
+        console.error("Failed to initialize notifications:", error)
       }
     }
 
-    // Send test notification if app is fully loaded (don't require push token for local notifications)
+    // Initialize notifications if app is fully loaded
     if (rehydrated && isNavigationStateRestored && isI18nInitialized && areFontsLoaded) {
-      console.log("App is ready, scheduling test notification...")
-      sendTestNotification()
+      console.log("App is ready, initializing notifications...")
+      initializeNotifications()
     }
   }, [rehydrated, isNavigationStateRestored, isI18nInitialized, areFontsLoaded])
 
