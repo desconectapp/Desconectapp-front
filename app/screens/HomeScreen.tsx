@@ -270,6 +270,7 @@ export const HomeScreen = observer(function HomeScreen() {
   return (
     <FlatList
       data={[{ key: "content" }]}
+      style={[styles.container, themed(themedStylesGroup.container)]}
       renderItem={() => null}
       keyExtractor={(item) => item.key}
       refreshControl={
