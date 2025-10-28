@@ -93,6 +93,13 @@ const config = {
 
 const queryClient = new QueryClient()
 
+// Component that uses React Query hooks - must be inside QueryClientProvider
+function AppWithNotifications() {
+  // Monitor for new group matches and show notifications
+  useGroupMatchNotifications()
+  return null
+}
+
 export function App() {
   const {
     initialNavigationState,
@@ -105,9 +112,6 @@ export function App() {
   
   // Initialize push notifications
   const { expoPushToken } = usePushNotifications()
-
-  // Monitor for new group matches and show notifications (app-level)
-  useGroupMatchNotifications()
 
   useEffect(() => {
     initI18n()
@@ -220,6 +224,7 @@ export function App() {
         <ToastProvider>
           <YStack flex={1}>
             <QueryClientProvider client={queryClient}>
+              <AppWithNotifications />
               <SafeAreaProvider initialMetrics={initialWindowMetrics}>
                 <KeyboardProvider>
                   <RootStoreProvider value={rootStore}>
