@@ -52,6 +52,7 @@ import { SessionData } from "./services/users"
 import { useNavigation } from "@react-navigation/native"
 import { usePushNotifications } from "./hooks/Notifications"
 import * as Notifications from "expo-notifications"
+import { useGroupMatchNotifications } from "./hooks/GroupMatchNotifications"
 if (__DEV__) {
   // Load Reactotron in development only.
   // Note that you must be using metro's `inlineRequires` for this to work.
@@ -104,6 +105,9 @@ export function App() {
   
   // Initialize push notifications
   const { expoPushToken } = usePushNotifications()
+
+  // Monitor for new group matches and show notifications (app-level)
+  useGroupMatchNotifications()
 
   useEffect(() => {
     initI18n()

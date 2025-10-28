@@ -68,17 +68,8 @@ export const usePushNotifications = (): PushNotificationState => {
     registerForPushNotificationsAsync().then(async (token) => {
       if (token) {
         setExpoPushToken(token)
-        
-        // Register token with backend
-        try {
-          await PushTokenService.registerToken({
-            token: token.data,
-            platform: Platform.OS as "ios" | "android"
-          })
-          console.log("Push token registered successfully")
-        } catch (error) {
-          console.error("Failed to register push token:", error)
-        }
+        console.log("Push token obtained:", token.data)
+        // Note: Not registering with backend since we're using frontend-only notifications
       }
     })
 

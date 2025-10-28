@@ -22,7 +22,6 @@ import { PhotoGallerySlider, type PhotoItem } from "@/components/Custom/PhotoGal
 import { useGroups } from "@/hooks/Groups"
 import { spacing } from "@/theme"
 import { GroupFront } from "./GroupsFront.types"
-import { useGroupMatchNotifications } from "@/hooks/GroupMatchNotifications"
 
 
 type NavigationProp = AppStackScreenProps<"MyGroupsScreen">["navigation"]
@@ -33,10 +32,6 @@ export const MyGroupsScreen = observer(function MyGroupsScreen() {
   const isFocused = useIsFocused()
   const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
-
-  // Monitor for new group matches and show notifications
-  useGroupMatchNotifications()
-
 
   const onRefresh = async () => {
     setRefreshing(true)
