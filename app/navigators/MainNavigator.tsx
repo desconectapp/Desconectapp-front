@@ -12,7 +12,6 @@ import {
   SchedulePickerScreen,
   ActivityPickerScreen,
   RequestConfirmationScreen,
-  CommunitiesScreen,
   CreateGroupScreen,
 } from "@/screens"
 import AntDesign from "@expo/vector-icons/AntDesign"
@@ -26,6 +25,11 @@ import { MyGroupsScreen } from "@/screens/MyGroupsScreen"
 import { SuggestionScreen } from "@/screens/SuggestionScreen"
 import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
 import { NearbyGroupsScreen } from "@/screens/NearbyGroupsScreen"
+import { FeatureNotReady } from "@/screens/FeatureNotReady"
+import { CommunitiesScreen } from "@/screens/CommunitiesScreen"
+import { CommunityScreen } from "@/screens/CommunityScreen"
+import { CommunityInfoScreen } from "@/screens/CommunityInfoScreen"
+
 
 export type MainTabParamList = {
   HomeScreen: undefined
@@ -48,6 +52,9 @@ export type MainStackParamList = {
   GroupInfoScreen: { groupId: string }
   NearbyGroupsScreen: undefined
   CreateGroupScreen: undefined
+  FeatureNotReady: undefined
+  CommunityScreen: { communityId: string }
+  CommunityInfoScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -188,6 +195,7 @@ export function MainNavigator() {
       <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="PreferencesScreen" component={PreferencesScreen} />
       <Stack.Screen name="GroupScreen" component={GroupScreen} options={{ headerShown: false }} />
+
       <Stack.Screen
         name="LocationPickerScreen"
         component={LocationPickerScreen}
@@ -223,9 +231,22 @@ export function MainNavigator() {
         component={CreateGroupScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="CommunityScreen"
+        component={CommunityScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CommunityInfoScreen"
+        component={CommunityInfoScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Nearby Groups" }} />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
-    </Stack.Navigator>
+      </Stack.Navigator>
+      
+    
+        
   )
 }
 
