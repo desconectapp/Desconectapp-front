@@ -44,6 +44,14 @@
           "resizeMode": "contain",
           "backgroundColor": "#BBCF97"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/desconectapp_icon.png",
+          "color": "#BBCF97",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "experiments": {
