@@ -13,7 +13,7 @@ import {
   Image,
   ImageStyle,
 } from "react-native"
-import { AutoImage, Screen, Text } from "@/components"
+import { AutoImage, Icon, Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -25,8 +25,20 @@ import { GroupFront } from "./GroupsFront.types"
 import { Group, OpenGroup } from "@/services/groups/Groups.types"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useGetLastChatMessages } from "@/hooks/Chats"
+import { useStores } from "@/models"
+import { formatDate } from "@/utils/formatDate"
+import { formatDateGroupCard } from "@/utils/formatTime"
+import { userService } from "@/services/users"
 
 const { width } = Dimensions.get("window")
+
+function addThreeDotsToText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text
+  }
+  return text.slice(0, maxLength - 3) + "..."
+}
 
 export const HomeScreen = observer(function HomeScreen() {
   const { themed, theme } = useAppTheme()
@@ -35,8 +47,12 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const isFocused = useIsFocused()
   const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
+
+  const { sessionStore } = useStores()
   const [refreshing, setRefreshing] = useState(false)
   const [allGroups, setAllGroups] = useState<Group[]>([])
+
+  const { data: messages } = useGetLastChatMessages(sessionStore.user_uuid || "")
 
   const {
     data: recommendedGroups,
@@ -45,7 +61,6 @@ export const HomeScreen = observer(function HomeScreen() {
   } = useGroupsRecs(0, { enabled: isFocused })
   const [refreshingRecs, setRefreshingRecs] = useState(false)
 
-  
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
     setRefreshingRecs(true)
@@ -74,9 +89,16 @@ export const HomeScreen = observer(function HomeScreen() {
   }
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => {
+    const sender = item?.members?.find((m) => m.uuid === item.lastMessage?.user_id)
+
+    console.log("not seen", item.not_seen)
+
     return (
       <TouchableOpacity
-        style={themed(themedStylesGroup.groupCardContainer)}
+        style={[
+          themed(themedStylesGroup.groupCardContainer),
+          item.lastMessage?.not_seen ? themed(themedStylesGroup.groupCardContainerSeen) : {},
+        ]}
         onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
         disabled={isLoading}
         activeOpacity={0.8}
@@ -85,7 +107,10 @@ export const HomeScreen = observer(function HomeScreen() {
           {item.avatar_url ? (
             <AutoImage
               source={{ uri: item.avatar_url }}
-              style={themed(themedStylesGroup.groupAvatarImage)}
+              style={[
+                themed(themedStylesGroup.groupAvatarImage),
+                item.lastMessage?.not_seen ? themed(themedStylesGroup.groupAvatarImageSeen) : {},
+              ]}
             />
           ) : (
             <View style={themed(themedStylesGroup.groupAvatar)}>
@@ -100,27 +125,32 @@ export const HomeScreen = observer(function HomeScreen() {
               <Text style={themed(themedStylesGroup.groupName)} numberOfLines={1}>
                 {item.name}
               </Text>
-
-              {item.unreadCount && item.unreadCount > 0 && (
-                <View style={themed(themedStylesGroup.unreadBadge)}>
-                  <Text style={themed(themedStylesGroup.unreadText)}>
-                    {item.unreadCount > 99 ? "99+" : item.unreadCount}
-                  </Text>
-                </View>
-              )}
+              <Text
+                style={[
+                  themed(themedStylesGroup.groupSentAt),
+                  item.lastMessage?.not_seen ? themed(themedStylesGroup.groupSentAtSeen) : {},
+                ]}
+              >
+                {item.lastMessage ? formatDateGroupCard(item.lastMessage?.sent_at) : ""}
+              </Text>
             </View>
 
-            <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
-              {!isLoading ? item.description || "No description yet" : ""}
+            <Text style={themed(themedStylesGroup.lastMessage)} numberOfLines={1}>
+              {sender && sender.name
+                ? `${sender.name.charAt(0).toUpperCase()}${sender.name.slice(1)}: `
+                : ""}
+              {item.lastMessage ? (
+                item.lastMessage.image_url ? (
+                  <Text style={themed(themedStylesGroup.lastMessage)}>
+                    <FontAwesome5 name="image" size={14} /> Photo
+                  </Text>
+                ) : (
+                  addThreeDotsToText(item.lastMessage.content, 20)
+                )
+              ) : (
+                ""
+              )}
             </Text>
-
-            {item.memberCount && (
-              <Text style={themed(themedStylesGroup.memberCount)}>{item.memberCount} members</Text>
-            )}
-          </View>
-
-          <View style={themed(themedStylesGroup.groupArrow)}>
-            <Text style={themed(themedStylesGroup.arrowText)}>›</Text>
           </View>
         </View>
       </TouchableOpacity>
@@ -129,10 +159,9 @@ export const HomeScreen = observer(function HomeScreen() {
 
   const ListHeaderComponent = () => {
     const myGroupsSection = () => {
-      if (isLoading && allGroups.length === 0)
-        return <ActivityIndicator style={{ marginVertical: 30 }} size="large" />
+      if (isLoading) return <ActivityIndicator style={{ marginVertical: 30 }} size="large" />
 
-      if (!isLoading && allGroups.length === 0)
+      if (allGroups.length === 0)
         return (
           <View style={themed(themedStylesGroup.emptyContainer)}>
             <Text style={themed(themedStylesGroup.emptyIcon)}>👥</Text>
@@ -141,7 +170,21 @@ export const HomeScreen = observer(function HomeScreen() {
           </View>
         )
 
-      const limitedGroups = allGroups.slice(0, 3)
+      console.log(messages)
+      const zipped = allGroups.map((g) => {
+        const match = messages?.find((o) => o.group_id === g.id)
+        return { ...g, lastMessage: match }
+      })
+
+      zipped.sort((a, b) => {
+        const dateA = a.lastMessage?.sent_at ? new Date(a.lastMessage.sent_at).getTime() : 0
+        const dateB = b.lastMessage?.sent_at ? new Date(b.lastMessage.sent_at).getTime() : 0
+        return dateB - dateA
+      })
+
+      const limitedGroups = zipped.slice(0, 3)
+
+      console.log("LIMITED GROPUS", limitedGroups)
       return (
         <View style={themed(themedStylesGroup.sectionContainer)}>
           <View style={themed(themedStylesGroup.sectionHeader)}>
@@ -227,6 +270,7 @@ export const HomeScreen = observer(function HomeScreen() {
   return (
     <FlatList
       data={[{ key: "content" }]}
+      style={[styles.container, themed(themedStylesGroup.container)]}
       renderItem={() => null}
       keyExtractor={(item) => item.key}
       refreshControl={
@@ -275,11 +319,16 @@ export const themedStylesGroup = {
   }),
 
   groupAvatarImage: (_theme: any): ImageStyle => ({
-    width: 50,
-    height: 50,
-    borderRadius: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 100,
     resizeMode: "cover",
     marginRight: spacing.md,
+  }),
+
+  groupAvatarImageSeen: (theme: any): ImageStyle => ({
+    borderWidth: 3,
+    borderColor: theme.colors.palette.primary500,
   }),
 
   header: (theme: any): ViewStyle => ({
@@ -362,6 +411,12 @@ export const themedStylesGroup = {
     borderColor: theme.colors.border,
   }),
 
+  groupCardContainerSeen: (theme: any): ViewStyle => ({
+    borderColor: theme.colors.tint,
+    borderWidth: 1,
+    backgroundColor: theme.colors.palette.primary200,
+  }),
+
   groupCardInner: (_theme: any): ViewStyle => ({
     flexDirection: "row",
     alignItems: "center",
@@ -369,9 +424,9 @@ export const themedStylesGroup = {
   }),
 
   groupAvatar: (theme: any): ViewStyle => ({
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 100,
     backgroundColor: theme.colors.tintSoft || theme.colors.border,
     justifyContent: "center",
     alignItems: "center",
@@ -379,7 +434,8 @@ export const themedStylesGroup = {
   }),
 
   groupAvatarText: (theme: any): TextStyle => ({
-    fontSize: 20,
+    fontSize: 28,
+    lineHeight: 32,
     fontWeight: "700",
     color: theme.colors.tintInverse,
   }),
@@ -395,9 +451,17 @@ export const themedStylesGroup = {
   }),
 
   groupName: (theme: any): TextStyle => ({
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
     color: theme.colors.text,
+  }),
+
+  notSeenCircle: (theme: any): TextStyle => ({
+    width: 12,
+    height: 12,
+    borderRadius: 100,
+    backgroundColor: theme.colors.palette.primary500,
+    marginLeft: 4,
   }),
 
   unreadBadge: (_theme: any): ViewStyle => ({
@@ -413,7 +477,7 @@ export const themedStylesGroup = {
     fontWeight: "700",
   }),
 
-  description: (theme: any): TextStyle => ({
+  lastMessage: (theme: any): TextStyle => ({
     fontSize: 14,
     color: theme.colors.textDim,
     marginTop: spacing.xxs,
@@ -425,12 +489,18 @@ export const themedStylesGroup = {
     marginTop: spacing.xxs,
   }),
 
-  groupArrow: (_theme: any): ViewStyle => ({
+  groupSideInfo: (_theme: any): ViewStyle => ({
     marginLeft: spacing.sm,
+    alignItems: "flex-end",
   }),
 
-  arrowText: (theme: any): TextStyle => ({
-    fontSize: 24,
+  groupSentAt: (theme: any): TextStyle => ({
+    fontSize: 14,
     color: theme.colors.textDim,
+  }),
+
+  groupSentAtSeen: (theme: any): TextStyle => ({
+    color: theme.colors.tint,
+    fontWeight: "800",
   }),
 }

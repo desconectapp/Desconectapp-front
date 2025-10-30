@@ -24,6 +24,55 @@ export const useObtainToken = () => {
   })
 }
 
+export const useGetLastChatMessages = (user_uuid: string) => {
+  const { data: tokenData, refetch: refetchToken } = useObtainToken()
+  const queryClient = useQueryClient()
+
+  return useQuery({
+    queryKey: ["chat", "last_messages", user_uuid],
+    queryFn: async () => {
+      if (user_uuid === "") {
+        return []
+      }
+
+      if (!tokenData?.token) {
+        throw new Error("No token available")
+      }
+
+      const supabase = getSupabaseClientWithProvidedToken(tokenData.token)
+      const { error, data } = await supabase.rpc("get_last_message_per_group_with_seen", {
+        p_user_id: user_uuid,
+        p_limit: 200,
+      })
+
+      console.log("RPC get_last_message_per_group data:", data)
+
+      if (error) {
+        if (error.code === "PGRST303" || error.message?.includes("JWT expired")) {
+        } else {
+          console.error("Supabase error:", error)
+        }
+        throw new Error(`Error al cargar los mensajes: ${error.message}`)
+      }
+
+      if (!data) {
+        throw new Error("No se encontraron mensajes")
+      }
+
+      return data
+    },
+    enabled: !!tokenData?.token,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
+    retry: (failureCount, error) => {
+      if (error.message?.includes("JWT expired")) {
+        return false
+      }
+      return failureCount < 3
+    },
+  })
+}
+
 export const useGetChatMessages = (groupId: string) => {
   const { data: tokenData, refetch: refetchToken } = useObtainToken()
   const queryClient = useQueryClient()
@@ -79,6 +128,45 @@ export const useGetChatMessages = (groupId: string) => {
       }
       return failureCount < 3
     },
+  })
+}
+
+export const useMarkAsSeen = (user_uuid: string) => {
+  const { data: tokenData, refetch: refetchToken } = useObtainToken()
+
+  return useMutation({
+    mutationFn: async (groupId: number) => {
+      if (!tokenData?.token) {
+        throw new Error("No token available")
+      }
+      const supabase = getSupabaseClientWithProvidedToken(tokenData.token)
+
+      const { error: error2, data: data2 } = await supabase.rpc("seen", {
+        p_user_id: user_uuid,
+        p_group_id: groupId,
+      })
+      console.log("RPC seen result:", { error2, data2 })
+
+      if (error2) {
+        if (error2.code === "PGRST303" || error2.message?.includes("JWT expired")) {
+          console.log("JWT expired, refreshing token and retrying...")
+          await refetchToken()
+          const newSupabase = getSupabaseClientWithProvidedToken(tokenData.token)
+          const { error: retryError, data: retryData } = await newSupabase.rpc("seen", {
+            p_user_id: user_uuid,
+            p_group_id: groupId,
+          })
+          if (retryError) {
+            throw new Error(`Error al marcar como visto: ${retryError.message}`)
+          }
+          return retryData
+        }
+        throw new Error(`Error al marcar como visto: ${error2.message}`)
+      }
+
+      return data2
+    },
+    retry: 2,
   })
 }
 

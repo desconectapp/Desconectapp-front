@@ -33,7 +33,6 @@ export const MyGroupsScreen = observer(function MyGroupsScreen() {
   const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
 
-
   const onRefresh = async () => {
     setRefreshing(true)
     try {
