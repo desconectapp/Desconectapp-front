@@ -11,7 +11,6 @@ import {
   type TextStyle,
   type ImageStyle,
   Dimensions,
-  // eslint-disable-next-line no-restricted-imports
   TextInput,
 } from "react-native"
 import { AutoImage, Text } from "@/components"
@@ -41,7 +40,7 @@ const { height: screenHeight } = Dimensions.get("window")
 
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>
 
-export const CommunityScreen = observer(function CommunityScreen({ route }: any) {
+export const CommunityChatScreen = observer(function CommunityChatScreen({ route }: any) {
   const { communityId } = route.params
   const { data: communityData, isLoading } = useCommunityById(communityId)
   

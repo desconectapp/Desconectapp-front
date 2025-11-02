@@ -27,7 +27,7 @@ import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
 import { NearbyGroupsScreen } from "@/screens/NearbyGroupsScreen"
 import { FeatureNotReady } from "@/screens/FeatureNotReady"
 import { CommunitiesScreen } from "@/screens/CommunitiesScreen"
-import { CommunityScreen } from "@/screens/CommunityScreen"
+import { CommunityChatScreen } from "@/screens/CommunityChatScreen"
 import { CommunityInfoScreen } from "@/screens/CommunityInfoScreen"
 
 
@@ -53,7 +53,7 @@ export type MainStackParamList = {
   NearbyGroupsScreen: undefined
   CreateGroupScreen: undefined
   FeatureNotReady: undefined
-  CommunityScreen: { communityId: string }
+  CommunityChatScreen: { communityId: string }
   CommunityInfoScreen: undefined
 }
 
@@ -232,8 +232,8 @@ export function MainNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="CommunityScreen"
-        component={CommunityScreen}
+        name="CommunityChatScreen"
+        component={CommunityChatScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

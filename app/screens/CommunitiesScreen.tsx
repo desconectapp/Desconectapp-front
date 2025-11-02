@@ -19,12 +19,14 @@ import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
 import { PhotoGallerySlider, type PhotoItem } from "@/components/Custom/PhotoGallerySlider"
-import { useGroups, useGroupsRecs } from "@/hooks/Groups"
+import { useGroupsRecs } from "@/hooks/Groups"
+import { useCommunity } from "@/hooks/Communities"
 import { spacing } from "@/theme"
 import { GroupFront } from "./GroupsFront.types"
-import { Group, OpenGroup } from "@/services/groups/Groups.types"
+import { OpenGroup } from "@/services/groups/Groups.types"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { Community } from "@/services/communities"
 
 const { width } = Dimensions.get("window")
 
@@ -34,9 +36,9 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
   const navigation = useNavigation<AppStackScreenProps<"CommunitiesScreen">["navigation"]>() 
 
   const isFocused = useIsFocused()
-  const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
+  const { data: paginatedGroups, isLoading, refetch } = useCommunity({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
-  const [allCommunities, setAllCommunities] = useState<Group[]>([]) 
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]) 
 
   const {
     data: recommendedGroups,
@@ -58,7 +60,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
   }, [refetch, refetchRecs])
 
   useEffect(() => {
-    if (paginatedGroups?.groups) setAllCommunities(paginatedGroups.groups) 
+    if (paginatedGroups?.community) setAllCommunities(paginatedGroups.community) 
   }, [paginatedGroups])
 
   const recommendedPhotoItems: PhotoItem[] =
@@ -77,7 +79,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
     return (
       <TouchableOpacity
         style={themed(themedStylesGroup.groupCardContainer)}
-        onPress={() => navigation.navigate("CommunityScreen", { communityId: item.id })} 
+        onPress={() => navigation.navigate("CommunityChatScreen", { communityId: item.id })} 
         disabled={isLoading}
         activeOpacity={0.8}
       >
