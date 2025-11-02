@@ -26,11 +26,10 @@ import { AppStackParamList } from "@/navigators/AppNavigator"
 import { useQueryClient } from "@tanstack/react-query"
 import { FontAwesome } from '@expo/vector-icons';
 import { Activity } from "@/services/activities/Activities.types"
-import { CreateGroupParams } from "@/services/groups/Groups.types"
+import { useCreateCommunity } from "@/hooks/Communities"
 import { selectedLocation } from "types" 
-
-import { useCreateGroup } from "@/hooks/Groups"
 import { useActivities } from "@/hooks/Users"
+import { CreateCommunityParams } from "@/services/communities"
 
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
@@ -44,7 +43,6 @@ type DaySchedule = {
 }
 type SelectedScheduleData = DaySchedule[];
 
-
 const convertScheduleToApiFormat = (schedules: SelectedScheduleData): number[] => {
     if (!schedules || schedules.length === 0) return []
     
@@ -56,20 +54,18 @@ const convertScheduleToApiFormat = (schedules: SelectedScheduleData): number[] =
     return [] 
 }
 
-
-export const CreateGroupScreen = observer(function CreateGroupScreen() {
+export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
     const { themed, theme } = useAppTheme()
     const $topInsets = useSafeAreaInsetsStyle(["top"])
     const navigation = useNavigation<FullNavigationProp>() 
     const { showToast } = useAppToast()
     const queryClient = useQueryClient()
 
-    const { mutateAsync: createGroupAsync, isPending: isCreating } = useCreateGroup()
+    const { mutateAsync: createCommunityAsync, isPending: isCreating } = useCreateCommunity()
 
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     
-    // Location States
     const [location, setLocation] = useState("") 
     const [displayAddress, setDisplayAddress] = useState("") 
 
@@ -184,33 +180,32 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         setActivityId(tempSelectedActivityId);
         setShowActivityModal(false);
     }
-    
-    // --- Group Creation Handler ---
-    const handleCreateGroup = async () => {
+
+    // --- Community Creation Handler ---
+    const handleCreateCommunity = async () => {
         if (!name.trim() || !activityId) {
-            showToast("Error", "Group Name and Activity are required.");
+            showToast("Error", "Community Name and Activity are required.");
             return;
         }
 
         const apiScheduleData = scheduleData ? convertScheduleToApiFormat(scheduleData) : [];
 
-        const newGroup: CreateGroupParams = {
+        const newCommunity: CreateCommunityParams = {
             name: name.trim(),
             description: description.trim() || null,
             location: location.trim() || null,
             location_name: displayAddress.trim() || null,
             activity_id: activityId,
-            public: isPublic,
             week_timeslots: apiScheduleData, 
             user_ids: [],
         };
 
         try {
-            const createdGroup = await createGroupAsync(newGroup);
+            const createdCommunity = await createCommunityAsync(newCommunity);
 
-            await queryClient.invalidateQueries({ queryKey: ["groups"] });
+            await queryClient.invalidateQueries({ queryKey: ["community"] });
 
-            showToast("Success", `Group "${name}" created successfully!`);
+            showToast("Success", `Community "${name}" created successfully!`);
 
             // In CreateGroupScreen.tsx after successful group creation:
             navigation.reset({
@@ -220,20 +215,20 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 name: "Main",
                 params: {
                     screen: "Tabs",
-                    params: { screen: "HomeScreen" },
+                    params: { screen: "CommunitiesScreen" },
                 },
                 },
                 {
                 name: "Main",
                 params: {
-                    screen: "GroupInfoScreen",
-                    params: { groupId: createdGroup.id },
+                    screen: "CommunityInfoScreen",
+                    params: { communityId: createdCommunity.id },
                 },}
             ],
-            });å
+            });
         } catch (error) {
-            console.error("Error creating group:", error);
-            showToast("Error", "Failed to create the group. Please try again.");
+            console.error("Error creating community:", error);
+            showToast("Error", "Failed to create the community. Please try again.");
         }
     }
 
@@ -267,10 +262,10 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     <Text style={themed(themedStyles.backButtonText)}>←</Text>
                 </TouchableOpacity>
 
-                <Text style={themed(themedStyles.headerTitle)}>Create New Group</Text>
+                <Text style={themed(themedStyles.headerTitle)}>Create New Community</Text>
 
                 <Pressable
-                    onPress={handleCreateGroup}
+                    onPress={handleCreateCommunity}
                     disabled={isCreating || !name.trim() || !activityId}
                     >
                     <Text style={[themed(themedStyles.headerButton), (isCreating || !name.trim() || !activityId) && { opacity: 0.5 }]}>
@@ -286,11 +281,11 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             showsVerticalScrollIndicator={false}
             renderItem={() => (
                 <View style={styles.formContainer}>
-                <Text style={[themed(themedStyles.groupIcon), {textAlign: 'center'}]}>
+                <Text style={[themed(themedStyles.communityIcon), {textAlign: 'center'}]}>
                 {selectedActivity?.icon || "✨"}
                 </Text>
 
-                <Text style={themed(themedStyles.inputLabel)}>Group Name*</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Community Name*</Text>
                 <TextInput
                 style={themed(themedStyles.textInput)}
                 value={name}
@@ -359,27 +354,12 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     style={[themed(themedStyles.textInput), themed(themedStyles.descriptionInput)]}
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="Tell others what your group is about... (Optional)"
+                    placeholder="Tell others what your community is about... (Optional)"
                     placeholderTextColor={theme.colors.textDim}
                     multiline
                     textAlignVertical="top"
                     maxLength={500}
                 />
-
-                <View style={[styles.toggleContainer, themed(themedStyles.toggleContainer)]}>
-                    <View>
-                        <Text style={themed(themedStyles.inputLabel)}>Group Privacy</Text>
-                        <Text style={themed(themedStyles.toggleDescription)}>
-                        {isPublic ? "Public (Anyone can find and join)" : "Private (Closed group)"}
-                        </Text>
-                    </View>
-                        <Switch
-                        onValueChange={setIsPublic}
-                        value={isPublic}
-                        trackColor={{ false: theme.colors.border, true: theme.colors.tint }}
-                        thumbColor={theme.colors.background}
-                        />
-                    </View>
                 </View>
             )}
             />
@@ -638,7 +618,7 @@ const themedStyles = {
         maxHeight: 150,
         textAlignVertical: "top",
     }),
-    groupIcon: (_theme: any): TextStyle => ({
+    communityIcon: (_theme: any): TextStyle => ({
         fontSize: 60,
         lineHeight: 72,
         height: 72,

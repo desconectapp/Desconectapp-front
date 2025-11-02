@@ -31,15 +31,13 @@ export interface Community {
 }
 
 export interface CreateCommunityParams {
-    name: string
-    avatar_url: string
-    location: string
-    location_name: string
-    activity_id: number
-    week_timeslots: number[]
-    description: string 
-    admin_user_ids: number[]
-    user_ids: number[]
+  name: string | null
+  location: string | null
+  location_name: string | null
+  activity_id: number | null
+  week_timeslots: number[]
+  description: string | null
+  user_ids: number[]
 }
 
 export interface PaginatedCommunity {

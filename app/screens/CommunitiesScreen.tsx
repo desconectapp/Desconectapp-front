@@ -71,8 +71,8 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
       image: group.photo,
     })) || []
 
-  const handleAddGroup = () => {
-    navigation.navigate("CreateGroupScreen" as never)
+  const handleAddCommunity = () => {
+    navigation.navigate("CreateCommunityScreen" as never)
   }
 
   const renderCommunityCard = ({ item }: { item: GroupFront }) => { 
@@ -216,7 +216,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
           <Text style={themed([themedStylesGroup.headerTitle, styles.headerTitleOverride])}>
             Communities
           </Text> 
-          <TouchableOpacity onPress={handleAddGroup} activeOpacity={0.7} style={styles.addButton}>
+          <TouchableOpacity onPress={handleAddCommunity} activeOpacity={0.7} style={styles.addButton}>
             <FontAwesome5 name="plus" size={22} color={theme.colors.tint} />
           </TouchableOpacity>
         </View>
