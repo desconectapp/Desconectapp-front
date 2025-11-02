@@ -50,6 +50,9 @@ import { ToastProvider, ToastViewport } from "@tamagui/toast"
 import { api } from "./services/api"
 import { SessionData } from "./services/users"
 import { useNavigation } from "@react-navigation/native"
+import { usePushNotifications } from "./hooks/Notifications"
+import * as Notifications from "expo-notifications"
+import { useGroupMatchNotifications } from "./hooks/GroupMatchNotifications"
 if (__DEV__) {
   // Load Reactotron in development only.
   // Note that you must be using metro's `inlineRequires` for this to work.
@@ -90,6 +93,13 @@ const config = {
 
 const queryClient = new QueryClient()
 
+// Component that uses React Query hooks - must be inside QueryClientProvider
+function AppWithNotifications() {
+  // Monitor for new group matches and show notifications
+  useGroupMatchNotifications()
+  return null
+}
+
 export function App() {
   const {
     initialNavigationState,
@@ -99,6 +109,9 @@ export function App() {
 
   const [areFontsLoaded, fontLoadError] = useFonts(customFontsToLoad)
   const [isI18nInitialized, setIsI18nInitialized] = useState(false)
+  
+  // Initialize push notifications
+  const { expoPushToken } = usePushNotifications()
 
   useEffect(() => {
     initI18n()
@@ -159,6 +172,31 @@ export function App() {
     setTimeout(SplashScreen.hideAsync, 500)
   })
 
+  // Initialize notification permissions on app start
+  useEffect(() => {
+    const initializeNotifications = async () => {
+      try {
+        // Check if we have notification permissions first
+        const { status } = await Notifications.getPermissionsAsync()
+        console.log("Notification permission status:", status)
+        
+        if (status !== 'granted') {
+          console.log("Requesting notification permissions...")
+          const { status: newStatus } = await Notifications.requestPermissionsAsync()
+          console.log("New permission status:", newStatus)
+        }
+      } catch (error) {
+        console.error("Failed to initialize notifications:", error)
+      }
+    }
+
+    // Initialize notifications if app is fully loaded
+    if (rehydrated && isNavigationStateRestored && isI18nInitialized && areFontsLoaded) {
+      console.log("App is ready, initializing notifications...")
+      initializeNotifications()
+    }
+  }, [rehydrated, isNavigationStateRestored, isI18nInitialized, areFontsLoaded])
+
   // Before we show the app, we have to wait for our state to be ready.
   // In the meantime, don't render anything. This will be the background
   // color set in native by rootView's background color.
@@ -186,6 +224,7 @@ export function App() {
         <ToastProvider>
           <YStack flex={1}>
             <QueryClientProvider client={queryClient}>
+              <AppWithNotifications />
               <SafeAreaProvider initialMetrics={initialWindowMetrics}>
                 <KeyboardProvider>
                   <RootStoreProvider value={rootStore}>

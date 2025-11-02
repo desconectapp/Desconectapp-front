@@ -34,7 +34,7 @@ export interface PhotoGallerySliderProps {
 
 export const PhotoGallerySlider = observer(function PhotoGallerySlider({
   data,
-  title = "Featured Photos",
+  title = "",
   onItemPress,
   itemWidth = width * 0.4,
   showSubtitle = true,
@@ -80,7 +80,7 @@ export const PhotoGallerySlider = observer(function PhotoGallerySlider({
             {item.title}
           </Text>
           {showSubtitle && item.subtitle && (
-            <Text style={themed($photoSubtitle)} numberOfLines={1}>
+            <Text style={themed($photoSubtitle)} numberOfLines={2}>
               {item.subtitle}
             </Text>
           )}

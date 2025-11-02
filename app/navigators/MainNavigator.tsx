@@ -45,8 +45,12 @@ export type MainStackParamList = {
   PreferencesScreen: undefined
   GroupScreen: { groupId: string }
   SuggestionScreen: { id: string }
-  LocationPickerScreen: { nextScreen?: string; onLocationSelect: (location: any) => void } | undefined
-  SchedulePickerScreen: { nextScreen?: string; onScheduleSelect: (schedules: any) => void } | undefined
+  LocationPickerScreen:
+  | { nextScreen?: string; onLocationSelect: (location: any) => void }
+  | undefined
+  SchedulePickerScreen:
+  | { nextScreen?: string; onScheduleSelect: (schedules: any) => void }
+  | undefined
   ActivityPickerScreen: { nextScreen?: string }
   RequestConfirmationScreen: { nextScreen?: string }
   MyGroupsScreen: undefined
@@ -97,7 +101,7 @@ const CustomTabBarButton = ({ onPress }: any) => {
           width: "100%",
           height: "100%",
           borderRadius: 24,
-          backgroundColor: "rgba(200, 220, 180, 0.25)", // más claro
+          backgroundColor: "rgba(132, 153, 79, .8)", // más claro
           borderWidth: 1,
           borderColor: "rgba(255,255,255,0.4)",
           filter: "blur(15px)" as any,
@@ -130,12 +134,12 @@ const CustomTabBarButton = ({ onPress }: any) => {
 
 function TabNavigator() {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator screenOptions={{ headerShown: false, tabBarActiveTintColor: "#84994F" }}>
       <Tab.Screen
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <AntDesign name="team" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <AntDesign name="home" size={size} color={color} />,
           tabBarLabel: "Groups",
         }}
       />
@@ -151,7 +155,6 @@ function TabNavigator() {
         name="SearchScreen"
         component={SearchScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <AntDesign name="find" size={28} color="#fff" />,
           tabBarLabel: "",
           tabBarButton: (props) => <CustomTabBarButton {...props} />,
         }}
@@ -160,9 +163,7 @@ function TabNavigator() {
         name="ActivityRequestsScreen"
         component={ActivityRequestsScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <AntDesign name="search1" size={size} color={color} />,
           tabBarLabel: "Búsquedas",
         }}
       />
@@ -256,4 +257,3 @@ export function MainNavigator() {
         
   )
 }
-

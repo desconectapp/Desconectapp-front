@@ -1,7 +1,6 @@
 export interface GroupFront {
   id: number
   name: string
-  lastMessage?: string
   icon?: string
   memberCount?: number
   activity?: string
@@ -9,4 +8,21 @@ export interface GroupFront {
   description?: string
   location?: string
   avatar_url?: string | null
+  lastMessage: LastMessageFront | undefined
+  members: MembersFront[]
+}
+
+type LastMessageFront = {
+  content: string
+  group_id: number
+  id: number
+  image_url: string | null
+  sent_at: string
+  user_id: string
+  not_seen: boolean | undefined
+}
+
+type MembersFront = {
+  uuid: string
+  name: string
 }

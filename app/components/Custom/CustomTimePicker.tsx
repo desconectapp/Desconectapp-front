@@ -77,12 +77,33 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
     // Auto-format as user types
     let cleaned = text.replace(/[^\d]/g, '') // Remove non-digits
     
-    if (cleaned.length >= 3) {
-      // Insert colon after first 1-2 digits
+    // Smart autocomplete based on input length
+    if (cleaned.length === 1) {
+      // Single digit: if >= 3, assume it's hour like "9" -> "09:"
+      const digit = parseInt(cleaned, 10)
+      if (digit >= 3 && digit <= 9) {
+        cleaned = `0${digit}:`
+      }
+      setTempValue(cleaned)
+    } else if (cleaned.length === 2) {
+      // Two digits: check if valid hour, add colon
+      const hours = parseInt(cleaned, 10)
+      if (hours <= 23) {
+        // Valid hour, add colon to continue typing minutes
+        cleaned = `${cleaned}:`
+      }
+      setTempValue(cleaned)
+    } else if (cleaned.length === 3) {
+      // Three digits: format as HH:M
+      cleaned = cleaned.slice(0, 2) + ':' + cleaned.slice(2, 3)
+      setTempValue(cleaned)
+    } else if (cleaned.length >= 4) {
+      // Four or more digits: format as HH:MM
       cleaned = cleaned.slice(0, 2) + ':' + cleaned.slice(2, 4)
+      setTempValue(cleaned)
+    } else {
+      setTempValue(cleaned)
     }
-    
-    setTempValue(cleaned)
   }
 
   const handleInputBlur = () => {

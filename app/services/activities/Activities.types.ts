@@ -14,6 +14,7 @@ export interface ActivityRequest {
   maximum_participants: number
   latitude: number
   longitude: number
+  location_name: string
   search_radius: number
   created_at: string
   expires_at: string

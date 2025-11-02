@@ -72,18 +72,18 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
           {/* Search Input */}
           <CustomAutocomplete
             placeholder="Buscar ubicación en Argentina..."
-            onSelection={(address: any) => {
-              console.log("Selected address:", address)
+            onSelection={(location: any) => {
+              console.log("Selected location:", location)
               Keyboard.dismiss()
 
               // Small delay to ensure proper state management
               setTimeout(() => {
                 setSelectedLocation({
-                  id: address.place_id ? String(address.place_id) : "unknown",
-                  name: address.name || address.formattedAddress.split(",")[0],
-                  latitude: address.latitude,
-                  longitude: address.longitude,
-                  address: address.formattedAddress,
+                  id: location.id,
+                  name: location.name,
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  address: location.address,
                 })
               }, 100)
             }}

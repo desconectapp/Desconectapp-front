@@ -31,6 +31,7 @@ import { selectedLocation } from "types"
 
 import { useCreateGroup } from "@/hooks/Groups"
 import { useActivities } from "@/hooks/Users"
+import { convertScheduleToTimeSlot } from "@/models/RequestStore"
 
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
@@ -134,6 +135,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
     // --- Location Handlers ---
     const handleLocationSelect = useCallback((selectedLoc: selectedLocation) => {
         const coordString = `${selectedLoc.longitude},${selectedLoc.latitude}`
+        console.log("location set:", coordString)
         setLocation(coordString) 
         setDisplayAddress(selectedLoc.name || selectedLoc.address)
         
@@ -162,8 +164,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
     const handleScheduleSelect = useCallback((selectedSchedules: SelectedScheduleData) => {
         setScheduleData(selectedSchedules)
-        setDisplaySchedule(formatScheduleForDisplay(selectedSchedules))
-        
+        setDisplaySchedule(formatScheduleForDisplay(selectedSchedules))        
         showToast("Success", "Schedule selected.")
     }, [showToast])
 
@@ -192,7 +193,9 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             return;
         }
 
-        const apiScheduleData = scheduleData ? convertScheduleToApiFormat(scheduleData) : [];
+        // const apiScheduleData = scheduleData ? convertScheduleToApiFormat(scheduleData) : [];
+
+        const timeSlots = convertScheduleToTimeSlot(scheduleData!)
 
         const newGroup: CreateGroupParams = {
             name: name.trim(),
@@ -201,7 +204,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             location_name: displayAddress.trim() || null,
             activity_id: activityId,
             public: isPublic,
-            week_timeslots: apiScheduleData, 
+            week_timeslots: timeSlots,
             user_ids: [],
         };
 
@@ -227,7 +230,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 name: "Main",
                 params: {
                     screen: "GroupInfoScreen",
-                    params: { groupId: createdGroup.id },
+                    params: { groupId: createdGroup?.id },
                 },}
             ],
             });å
