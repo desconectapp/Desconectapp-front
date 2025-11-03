@@ -103,7 +103,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
     if (communityData) {
       setTempName(communityData.name)
       setTempDescription(communityData.description ?? "")
-      setTempDisplayLocation(communityData.location ?? "")
+      setTempDisplayLocation(communityData.locationName ?? "")
       setTempLocation("") 
     }
   }, [communityData])
@@ -179,13 +179,13 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
       }
 
       const locationHasChanged = 
-        tempLocation !== "" || tempDisplayLocation !== communityData.location
+        tempLocation !== "" || tempDisplayLocation !== communityData.locationName
 
       if (locationHasChanged) {
         updateGroupLocation({ 
           id: communityData.id, 
           location: tempLocation,
-          location_name: tempDisplayLocation
+          locationName: tempDisplayLocation
         })
       }
       
@@ -197,7 +197,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         name: tempName,
         description: tempDescription,
         location: tempDisplayLocation, 
-        location_name: tempDisplayLocation, 
+        locationName: tempDisplayLocation, 
       }))
     } catch (error) {
       console.error("Failed to save changes:", error)
@@ -208,13 +208,14 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
     setTempName(communityData.name)
     setTempDescription(communityData.description ?? "")
     setTempLocation("") 
-    setTempDisplayLocation(communityData.location ?? "")
+    setTempDisplayLocation(communityData.locationName ?? "")
     setIsEditing(false)
   }
 
+  
   const currentLocationDisplay = isEditing 
     ? (tempDisplayLocation || "Tap to set location...")
-    : (communityData.location_name || communityData.location || "No Location Set")
+    : (communityData.locationName || communityData.location || "No Location Set")
 
   const locationTextStyle = isEditing && !tempDisplayLocation
     ? themedStyles.locationPlaceholderText
