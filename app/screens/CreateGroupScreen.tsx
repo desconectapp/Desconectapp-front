@@ -233,7 +233,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     params: { groupId: createdGroup?.id },
                 },}
             ],
-            });å
+            });
         } catch (error) {
             console.error("Error creating group:", error);
             showToast("Error", "Failed to create the group. Please try again.");

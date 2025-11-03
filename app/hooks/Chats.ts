@@ -45,7 +45,7 @@ export const useGetLastChatMessages = (user_uuid: string) => {
         p_limit: 200,
       })
 
-      console.log("RPC get_last_message_per_group data:", data)
+      // console.log("RPC get_last_message_per_group data:", data)
 
       if (error) {
         if (error.code === "PGRST303" || error.message?.includes("JWT expired")) {

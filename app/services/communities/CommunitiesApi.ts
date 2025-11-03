@@ -20,6 +20,12 @@ export const communityService = {
         return response.data
       },
 
-
+    getCommunityById: async (id: string): Promise<CommunityData | undefined> => {
+        const response = await api.apisauce.get<CommunityData>(`/community/${id}`)
+        if (!response.ok) {
+          throw new Error("Error al cargar el grupo")
+        }
+        return response.data
+      },
 
 }

@@ -14,8 +14,11 @@ export interface CommunityData {
   activity: string
   icon: string
   location: string
+  location_name: string
   avatar_url: string | null
   members: Member[]
+  is_current_user_admin: boolean
+  week_timeslots: number[]
 }
 
 export interface Community {

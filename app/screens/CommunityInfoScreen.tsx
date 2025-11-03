@@ -22,13 +22,13 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import {
-  // Keeping mutation hooks as they might update community data in the 'groups' table
   useExitGroup, 
   updateGroupDescription,
   updateGroupName as useUpdateGroupName,
   updateGroupLocation as useUpdateGroupLocation,
   useUpdateGroupPhoto,
 } from "@/hooks/Groups"
+import { useCommunityById } from "@/hooks/Communities"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
@@ -42,17 +42,6 @@ import { AutoImage } from "@/components"
 import useImagePicker from "@/hooks/Image"
 import { useUploadGroupImage } from "@/hooks/Chats"
 
-// NEW: Placeholder for the Community Hook (Assume this is defined elsewhere)
-const useCommunityById = (id: string) => {
-    // In a real app, this would be a custom hook using TanStack Query
-    // return useQuery({ queryKey: ['community', id], queryFn: () => fetchCommunity(id) })
-    return { data: undefined as (GroupData | undefined), isLoading: false } as {
-      data: GroupData | undefined
-      isLoading: boolean
-    }
-}
-
-
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
 const formatTimeDisplay = (timeString: string | undefined): string => {
@@ -63,7 +52,7 @@ const formatTimeDisplay = (timeString: string | undefined): string => {
 
 
 export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route }: any) {
-  const { groupId } = route.params
+  const { communityId } = route.params
 
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
@@ -75,8 +64,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
   const { mutateAsync: exitGroupAsync } = useExitGroup()
   
-  // NEW HOOK USAGE: Replaced useGroupById with useCommunityById
-  const { data: communityData, isLoading } = useCommunityById(groupId)
+  const { data: communityData, isLoading } = useCommunityById(communityId)!!!!!
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
@@ -96,7 +84,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const { imageUri, handleImagePicker } = useImagePicker()
   const { isPending: isUploadingImage, mutateAsync: uploadGroupImageAsync } = useUploadGroupImage()
 
-  const isAdmin = communityData?.is_admin ?? false
+  const isAdmin = communityData?.is_current_user_admin ?? false
 
   const handlePressLeave = () => {
     setIsModalVisible(true)
@@ -117,7 +105,6 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
       setTempDescription(communityData.description ?? "")
       setTempDisplayLocation(communityData.location ?? "")
       setTempLocation("") 
-      setTempEventTime(communityData.event_time ?? "") 
     }
   }, [communityData])
 
@@ -166,8 +153,8 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         ],
       })
 
-      await exitGroupAsync(groupId)
-      await queryClient.removeQueries({ queryKey: ["community", groupId] }) // INVALIDATION KEY: Changed to 'community'
+      await exitGroupAsync(communityId)
+      await queryClient.removeQueries({ queryKey: ["community", communityId] }) // INVALIDATION KEY: Changed to 'community'
       await queryClient.invalidateQueries({ queryKey: ["communities"] }) // INVALIDATION KEY: Changed to 'communities'
       showToast("Success", "You have left the community successfully.")
     } catch (error) {
@@ -178,10 +165,10 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
   const handleSave = async () => {
     try {
-      if (imageUri) {
-        const url = await uploadGroupImageAsync({ groupId, uri: imageUri })
-        updateGroupPhoto({ id: communityData.id, avatar_url: url })
-      }
+      // if (imageUri) {
+      //   const url = await uploadGroupImageAsync({ communityId, uri: imageUri })
+      //   updateGroupPhoto({ id: communityData.id, avatar_url: url })
+      // }
 
       if (tempName !== communityData.name) {
         updateGroupName({ id: communityData.id, name: tempName })
@@ -202,24 +189,15 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         })
       }
       
-      // PLACEHOLDER: Logic to update event_time if it changes 
-      // if (tempEventTime !== communityData.event_time) {
-      //   // Replace with your actual update hook for event time
-      //   // updateCommunityEventTime({ id: communityData.id, event_time: tempEventTime })
-      // }
-
 
       setIsEditing(false)
 
-      // CACHE UPDATE: Changed query key to 'community'
-      queryClient.setQueryData(["community", groupId], (oldData: GroupData) => ({
+      queryClient.setQueryData(["community", communityId], (oldData: GroupData) => ({
         ...oldData,
         name: tempName,
         description: tempDescription,
         location: tempDisplayLocation, 
         location_name: tempDisplayLocation, 
-        // PLACEHOLDER: Update event_time in cache
-        event_time: tempEventTime,
       }))
     } catch (error) {
       console.error("Failed to save changes:", error)
@@ -231,7 +209,6 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
     setTempDescription(communityData.description ?? "")
     setTempLocation("") 
     setTempDisplayLocation(communityData.location ?? "")
-    setTempEventTime(communityData.event_time ?? "")
     setIsEditing(false)
   }
 
@@ -242,10 +219,6 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const locationTextStyle = isEditing && !tempDisplayLocation
     ? themedStyles.locationPlaceholderText
     : themedStyles.groupLocationInput
-
-  const currentTimeDisplay = isEditing 
-    ? (tempEventTime || "Tap to set time...")
-    : formatTimeDisplay(communityData.event_time)
 
   const timeTextStyle = isEditing && !tempEventTime
     ? themedStyles.locationPlaceholderText
@@ -388,7 +361,6 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
                     numberOfLines={1} 
                     ellipsizeMode="tail"
                 >
-                    {currentTimeDisplay}
                 </Text>
             )}
         </View>

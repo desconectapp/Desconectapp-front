@@ -25,3 +25,15 @@ export const useCommunity = (options?: { enabled?: boolean }) => {
     enabled: options?.enabled ?? true,
   })
 }
+
+export const useCommunityById = (id: string, options?: { enabled?: boolean }) => {
+  return useQuery({
+    queryKey: ["groups", id],
+    queryFn: async () => {
+      const response = await communityService.getCommunityById(id)
+      if (!response) throw new Error("Error al cargar grupos")
+      return response
+    },
+    enabled: options?.enabled ?? true,
+  })
+}

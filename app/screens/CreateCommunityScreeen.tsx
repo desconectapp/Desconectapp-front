@@ -207,7 +207,8 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
 
             showToast("Success", `Community "${name}" created successfully!`);
 
-            // In CreateGroupScreen.tsx after successful group creation:
+            console.log("Created Community:", createdCommunity);
+
             navigation.reset({
             index: 1,
             routes: [
@@ -222,7 +223,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                 name: "Main",
                 params: {
                     screen: "CommunityInfoScreen",
-                    params: { communityId: createdCommunity.id },
+                    params: { communityId: createdCommunity?.id },
                 },}
             ],
             });
