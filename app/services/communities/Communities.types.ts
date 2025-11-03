@@ -44,6 +44,6 @@ export interface CreateCommunityParams {
 }
 
 export interface PaginatedCommunity {
-  community: Community[]
+  communities: Community[]
   has_more: boolean
 }

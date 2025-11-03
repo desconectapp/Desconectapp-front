@@ -1,7 +1,6 @@
-import { Group } from "@/services/groups/Groups.types"
 
 import { observer } from "mobx-react-lite"
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import {
   View,
   type ViewStyle,
@@ -9,19 +8,16 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
-  Dimensions,
   StyleSheet,
 } from "react-native"
 import { Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
-import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
-import { PhotoGallerySlider, type PhotoItem } from "@/components/Custom/PhotoGallerySlider"
 import { useGroups } from "@/hooks/Groups"
 import { spacing } from "@/theme"
 import { GroupFront } from "./GroupsFront.types"
+import { useSafeAreaInsets } from "react-native-safe-area-context" 
 
 
 type NavigationProp = AppStackScreenProps<"MyGroupsScreen">["navigation"]
@@ -32,6 +28,7 @@ export const MyGroupsScreen = observer(function MyGroupsScreen() {
   const isFocused = useIsFocused()
   const { data: paginatedGroups, isLoading, refetch } = useGroups({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
+  const insets = useSafeAreaInsets()
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -94,21 +91,66 @@ export const MyGroupsScreen = observer(function MyGroupsScreen() {
 
 
   return (
-    <FlatList
-      data={paginatedGroups?.groups || []}
-      renderItem={renderGroupCard}
-      keyExtractor={(item) => String(item.id)}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      onEndReached={() => {
-        if (paginatedGroups?.has_more && !isLoading) refetch()
-      }}
-      onEndReachedThreshold={0.5}
-    />
+    <Screen preset="fixed" safeAreaEdges={["bottom"]} style={themed(themedStyles.headerBackground)}>
+          <View style={[styles.header, { paddingTop: insets.top }, themed(themedStyles.headerBackground)]}>
+            
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
+            >
+              <Text style={themed(themedStyles.backButtonText)}>←</Text>
+            </TouchableOpacity>
+    
+            <TouchableOpacity
+              style={styles.headerInfo}
+              activeOpacity={1}
+            >
+              <View style={styles.headerTextContainer}>
+                <Text style={themed(themedStyles.nameTheme)}>{"My Communities"}</Text>
+                </View>
+            </TouchableOpacity>
+    
+            <View style={styles.headerAction} />
+          </View>
+          {/* --- */}
+
+      <FlatList
+        data={paginatedGroups?.groups || []}
+        renderItem={renderGroupCard}
+        keyExtractor={(item) => String(item.id)}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        onEndReached={() => {
+          if (paginatedGroups?.has_more && !isLoading) refetch()
+        }}
+        onEndReachedThreshold={0.5}
+      />
+    </Screen>
   )
 })
 
 
 const styles = StyleSheet.create({
+  backButton: { paddingRight: spacing.md } as ViewStyle,
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+  } as ViewStyle,
+
+  headerAction: { paddingLeft: spacing.md } as ViewStyle,
+
+  headerInfo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  } as ViewStyle,
+  
+  headerTextContainer: { flex: 1 } as ViewStyle,
+
   groupCardContainer: {
     marginVertical: 6,
     marginHorizontal: 12,
@@ -180,3 +222,20 @@ const styles = StyleSheet.create({
     color: '#ccc',
   },
 })
+
+export const themedStyles = {
+  headerBackground: (theme: any): ViewStyle => ({
+    backgroundColor: theme.colors.background,
+    borderBottomColor: theme.colors.border,
+  }),
+  backButtonText: (theme: any): TextStyle => ({
+    fontSize: 24,
+    color: theme.colors.tint,
+    fontWeight: "600",
+  }),
+  nameTheme: (theme: any): TextStyle => ({
+    fontSize: 18,
+    fontWeight: "600",
+    color: theme.colors.text,
+  }),
+}

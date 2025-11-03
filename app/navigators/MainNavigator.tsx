@@ -30,6 +30,7 @@ import { CommunitiesScreen } from "@/screens/CommunitiesScreen"
 import { CommunityChatScreen } from "@/screens/CommunityChatScreen"
 import { CommunityInfoScreen } from "@/screens/CommunityInfoScreen"
 import { CreateCommunityScreen } from "@/screens/CreateCommunityScreeen"
+import { MyCommunitiesScreen } from "@/screens/MyCommunitiesScreen"
 
 
 export type MainTabParamList = {
@@ -61,6 +62,7 @@ export type MainStackParamList = {
   CommunityChatScreen: { communityId: string }
   CommunityInfoScreen: undefined
   CreateCommunityScreen: undefined
+  MyCommunitiesScreen: undefined
 }
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -247,6 +249,11 @@ export function MainNavigator() {
       <Stack.Screen
         name="CreateCommunityScreen"
         component={CreateCommunityScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MyCommunitiesScreen"
+        component={MyCommunitiesScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Nearby Groups" }} />

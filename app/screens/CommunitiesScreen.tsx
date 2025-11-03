@@ -26,7 +26,7 @@ import { GroupFront } from "./GroupsFront.types"
 import { OpenGroup } from "@/services/groups/Groups.types"
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { Community } from "@/services/communities"
+import { Community, CommunityData } from "@/services/communities"
 
 const { width } = Dimensions.get("window")
 
@@ -36,7 +36,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
   const navigation = useNavigation<AppStackScreenProps<"CommunitiesScreen">["navigation"]>() 
 
   const isFocused = useIsFocused()
-  const { data: paginatedGroups, isLoading, refetch } = useCommunity({ enabled: isFocused })
+  const { data: paginatedCommunities, isLoading, refetch } = useCommunity({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
   const [allCommunities, setAllCommunities] = useState<Community[]>([]) 
 
@@ -46,7 +46,6 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
     refetch: refetchRecs,
   } = useGroupsRecs(0, { enabled: isFocused })
   const [refreshingRecs, setRefreshingRecs] = useState(false)
-
   
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -60,8 +59,8 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
   }, [refetch, refetchRecs])
 
   useEffect(() => {
-    if (paginatedGroups?.community) setAllCommunities(paginatedGroups.community) 
-  }, [paginatedGroups])
+    if (paginatedCommunities?.communities) setAllCommunities(paginatedCommunities.communities) 
+  }, [paginatedCommunities])
 
   const recommendedPhotoItems: PhotoItem[] =
     recommendedGroups?.groups?.map((group: OpenGroup) => ({
@@ -75,7 +74,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
     navigation.navigate("CreateCommunityScreen" as never)
   }
 
-  const renderCommunityCard = ({ item }: { item: GroupFront }) => { 
+  const renderCommunityCard = ({ item }: { item: Community }) => { 
     return (
       <TouchableOpacity
         style={themed(themedStylesGroup.groupCardContainer)}
@@ -103,21 +102,21 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
                 {item.name}
               </Text>
 
-              {item.unreadCount && item.unreadCount > 0 && (
+              {/* {item.unreadCount && item.unreadCount > 0 && (
                 <View style={themed(themedStylesGroup.unreadBadge)}>
                   <Text style={themed(themedStylesGroup.unreadText)}>
                     {item.unreadCount > 99 ? "99+" : item.unreadCount}
                   </Text>
-                </View>
-              )}
+                </View> */}
+              {/* )} */}
             </View>
 
             <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
               {!isLoading ? item.description || "No description yet" : ""}
             </Text>
 
-            {item.memberCount && (
-              <Text style={themed(themedStylesGroup.memberCount)}>{item.memberCount} members</Text>
+            {item.members_count && (
+              <Text style={themed(themedStylesGroup.memberCount)}>{item.members_count} members</Text>
             )}
           </View>
 
@@ -151,7 +150,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
             {allCommunities.length > 3 && (
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => navigation.navigate("MyGroupsScreen" as never)} 
+                onPress={() => navigation.navigate("MyCommunitiesScreen" as never)} 
               >
                 <Text style={themed(themedStylesGroup.seeAllText)}>See All</Text>
               </TouchableOpacity>
