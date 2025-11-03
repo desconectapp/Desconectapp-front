@@ -23,12 +23,12 @@ import { PostCard, PostCardType } from "@/components/Custom/PostCard"
 import { useCommunityById } from "@/hooks/Communities"
 
 import { useStores } from "@/models"
-import {
-  useCreateCommunityPost,
-  useInfiniteCommunityPosts,
-  usePostSubscription,
-  useUploadCommunityImage,
-} from "@/hooks/Chats"
+// import {
+//   useCreateCommunityPost,
+//   useInfiniteCommunityPosts,
+//   usePostSubscription,
+//   useUploadCommunityImage,
+// } from "@/hooks/Chats"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { MainStackParamList } from "@/navigators/MainNavigator"
@@ -56,16 +56,16 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
 
   const { imageUri, setImage, handleImagePicker } = useImagePicker()
 
-  const {
-    data: infiniteData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading: isLoadingPosts,
-  } = useInfiniteCommunityPosts(communityId, { pageSize: 30 })
+  // const {
+  //   data: infiniteData,
+  //   fetchNextPage,
+  //   hasNextPage,
+  //   isFetchingNextPage,
+  //   isLoading: isLoadingPosts,
+  // } = useInfiniteCommunityPosts(communityId, { pageSize: 30 })
 
-  const { isPending: isSendingPost, mutateAsync: createPostAsync } = useCreateCommunityPost()
-  const { isPending: isUploadingImage, mutateAsync: uploadMutateAsync } = useUploadCommunityImage()
+  // const { isPending: isSendingPost, mutateAsync: createPostAsync } = useCreateCommunityPost()
+  // const { isPending: isUploadingImage, mutateAsync: uploadMutateAsync } = useUploadCommunityImage()
 
   const membersMap = useMemo(() => {
     if (!communityData?.members) return new Map()
@@ -73,7 +73,7 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
   }, [communityData?.members])
 
   // 🔐 Check if the current user is an admin
-  const isCurrentUserAdmin = communityData?.is_admin ?? false
+  const isCurrentUserAdmin = communityData?.is_current_user_admin ?? false
 
   const handleNewPost = useCallback(
     (newPost: any) => {
@@ -100,59 +100,59 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
     [membersMap],
   )
 
-  usePostSubscription(communityId, handleNewPost, { enabled: isFocused })
+  // usePostSubscription(communityId, handleNewPost, { enabled: isFocused })
 
-  const formattedPosts = useMemo(() => {
-    if (!infiniteData?.pages) return []
-    const flat = infiniteData.pages.flatMap((p) => p.items)
-    // Sort descending by ID (newest first) for a standard feed
-    const sorted = [...flat].sort((a, b) => b.id - a.id)
-    return sorted.map((post) => {
-      const member = membersMap.get(post.user_id)
-      return {
-        id: post.id.toString(),
-        text: post.content,
-        sender: {
-          id: post.user_id,
-          name: member?.name || post.user_id,
-          picture: member?.picture,
-        },
-        timestamp: new Date(post.sent_at),
-        imageUrl: post.image_url || undefined,
-      }
-    })
-  }, [infiniteData?.pages, membersMap])
+  // const formattedPosts = useMemo(() => {
+  //   if (!infiniteData?.pages) return []
+  //   const flat = infiniteData.pages.flatMap((p) => p.items)
+  //   // Sort descending by ID (newest first) for a standard feed
+  //   const sorted = [...flat].sort((a, b) => b.id - a.id)
+  //   return sorted.map((post) => {
+  //     const member = membersMap.get(post.user_id)
+  //     return {
+  //       id: post.id.toString(),
+  //       text: post.content,
+  //       sender: {
+  //         id: post.user_id,
+  //         name: member?.name || post.user_id,
+  //         picture: member?.picture,
+  //       },
+  //       timestamp: new Date(post.sent_at),
+  //       imageUrl: post.image_url || undefined,
+  //     }
+  //   })
+  // }, [infiniteData?.pages, membersMap])
 
-  useEffect(() => {
-    if (formattedPosts.length > 0) {
-      setPosts(formattedPosts)
-    }
-  }, [formattedPosts])
+  // useEffect(() => {
+  //   if (formattedPosts.length > 0) {
+  //     setPosts(formattedPosts)
+  //   }
+  // }, [formattedPosts])
 
   const sendPost = async () => {
     if (!isCurrentUserAdmin) return // Admin check
 
-    let url = null
-    if (imageUri) {
-      url = await uploadMutateAsync({ communityId, uri: imageUri })
-    }
+  //   let url = null
+  //   if (imageUri) {
+  //     url = await uploadMutateAsync({ communityId, uri: imageUri })
+  //   }
 
-    await createPostAsync({
-      communityId: parseInt(communityId),
-      post: inputText.trim(),
-      imageUrl: url,
-    })
+  //   await createPostAsync({
+  //     communityId: parseInt(communityId),
+  //     post: inputText.trim(),
+  //     imageUrl: url,
+  //   })
 
-    setInputText("")
-    setImage(null)
-  }
+  //   setInputText("")
+  //   setImage(null)
+  // }
 
-  if (isLoading || isLoadingPosts) {
-    return <Text>Loading...</Text>
-  }
+  // if (isLoading || isLoadingPosts) {
+  //   return <Text>Loading...</Text>
+  // }
 
-  // Helper component for Post Input Area (only if admin)
-  const PostInputArea = () => {
+  // // Helper component for Post Input Area (only if admin)
+  // const PostInputArea = () => {
     if (!isCurrentUserAdmin) {
       return (
         <View style={[
@@ -168,7 +168,7 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
       )
     }
 
-    const isDisabled = isSendingPost || isUploadingImage || (!imageUri && !inputText.trim())
+    // const isDisabled = isSendingPost || isUploadingImage || (!imageUri && !inputText.trim())
 
     return (
       <>
@@ -204,7 +204,7 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
             multiline
             maxLength={500}
           />
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[
               themed(themedStyles.sendButton),
               isDisabled ? themed(themedStyles.sendButtonDisabled) : {},
@@ -214,7 +214,7 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
             activeOpacity={0.7}
           >
             <Text style={themed(themedStyles.sendButtonText)}>→</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </>
     )
@@ -272,11 +272,11 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
           showsVerticalScrollIndicator={false}
           onEndReachedThreshold={0.5} 
           onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+            // if (hasNextPage && !isFetchingNextPage) fetchNextPage()
           }}
         />
 
-        <PostInputArea />
+        {/* <PostInputArea /> */}
       </KeyboardAvoidingView>
     </View>
   )
