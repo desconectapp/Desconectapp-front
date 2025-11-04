@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import * as Notifications from 'expo-notifications'
+import { Platform } from 'react-native'
 import { useGroups } from './Groups'
 import { Group } from '@/services/groups/Groups.types'
 
@@ -32,12 +33,20 @@ export const useGroupMatchNotifications = () => {
             content: {
               title: "🎉 ¡Nuevo grupo encontrado!",
               body: `Te has unido al grupo "${group.name}". ¡Es hora de conectarte!`,
+              sound: true, // Enable sound
               data: { 
                 groupId: group.id,
                 type: 'group_match'
               },
             },
             trigger: null, // Show immediately
+            ...(Platform.OS === 'android' && {
+              android: {
+                channelId: 'default', // Use the default channel which has vibration configured
+                sound: true,
+                vibrate: [0, 250, 250, 250], // Vibration pattern: wait 0ms, vibrate 250ms, pause 250ms, vibrate 250ms
+              },
+            }),
           })
           console.log(`Notification sent for new group: ${group.name}`)
         } catch (error) {
