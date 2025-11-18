@@ -48,8 +48,8 @@ export const SuggestionScreen = observer(({ route }: any) => {
 
   const formatDate = (dateString: string) => {
     let cleanString = dateString
-    cleanString = cleanString.replace(" ", "T")
-    cleanString = cleanString.replace(/ \+0000 UTC$/, "Z")
+    cleanString = cleanString?.replace(" ", "T")
+    cleanString = cleanString?.replace(/ \+0000 UTC$/, "Z")
 
     const dateObject = new Date(cleanString)
 
@@ -65,11 +65,23 @@ export const SuggestionScreen = observer(({ route }: any) => {
   }
   const radarApiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY
   const groupCoordsMock = "-34.84805455099598,-58.379922809809486"
-  console.log("coords:", group.coords)
-  const lat = group.coords?.split(",")[1]
-  const long = group.coords?.split(",")[0]
+  console.log("coordsss:", group.coords)
+  
+  // Handle both array and string formats for coordinates
+  let lat, long
+  if (Array.isArray(group.coords)) {
+    // coords is an array: [lng, lat]
+    long = group.coords[0]
+    lat = group.coords[1]
+  } else if (typeof group.coords === 'string') {
+    // coords is a string: "lat,lng"
+    lat = group.coords?.split(",")[1]
+    long = group.coords?.split(",")[0]
+  }
+  
   const locationImage = `https://api.radar.io/maps/static?center=${lat},${long}&zoom=13&width=400&height=400&publishableKey=${radarApiKey}`
   console.log("locationImage:", locationImage)
+  console.log("group.avatar_url:", group.avatar_url)
   return (
     <View style={styles.container}>
       <View style={[styles.header, themed(themedStyles.header), $topInsets]}>

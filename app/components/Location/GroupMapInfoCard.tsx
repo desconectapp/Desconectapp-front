@@ -58,9 +58,9 @@ export const GroupMapInfoCard = ({ group }: { group: MapGroup }) => {
       position: "absolute",
       bottom: 0,
    }}>
-      {group.avatarUrl ? (
+      {group.avatar_url ? (
         <ImageBackground
-          source={{ uri: group.avatarUrl }}
+          source={{ uri: group.avatar_url }}
           style={{ 
             position: 'absolute',
             width: '100%',

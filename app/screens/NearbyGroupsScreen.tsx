@@ -62,7 +62,7 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
       }
     }
   }, [])
-
+  console.log("groups:", groups)
   return (
     <Screen
       preset="fixed"

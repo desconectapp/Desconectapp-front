@@ -123,13 +123,13 @@ export const groupsService = {
         id: group.id.toString(),
         name: group.name,
         icon: group.photo || "👥",
-        coordinates: [longitude, latitude] as [number, number], // MapLibre expects [lng, lat]
+        coords: [longitude, latitude] as [number, number], // MapLibre expects [lng, lat]
         location: group.location,
         location_name: group.location_name,
         description: group.description,
         membersCount: group.member_count,
         radius: 1, // Default radius, adjust as needed
-        avatarUrl: group.avatar_url || "👤",
+        avatar_url: group.avatar_url || "👤",
         week_timeslots: group.week_timeslots || []
       };
     });

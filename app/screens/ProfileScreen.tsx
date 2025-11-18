@@ -215,7 +215,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
   }
 
   if (!profile) {
-    return null
+
+    logOut()
   }
 
   return (

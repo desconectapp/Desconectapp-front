@@ -31,7 +31,7 @@ export const chatsService = {
     const { error, data } = await supabase.from("messages").select("*").eq("group_id", groupId)
 
     if (error) {
-      console.error("Supabase error:", error)
+      //console.error("Supabase error:", error)
       throw new Error(`Error al cargar los mensajes: ${error.message}`)
     }
 
@@ -56,7 +56,7 @@ export const chatsService = {
       .single()
 
     if (error) {
-      console.error("Supabase error:", error)
+   //   console.error("Supabase error:", error)
       throw new Error(`Error al crear el mensaje: ${error.message}`)
     }
 

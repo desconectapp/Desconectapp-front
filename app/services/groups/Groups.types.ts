@@ -64,13 +64,13 @@ export interface MapGroup {
   id: string
   name: string
   icon: string
-  coordinates: [number, number] // [longitude, latitude]
+  coords: [number, number] // [longitude, latitude]
   radius?: number // in km
   location: string
   location_name?: string
   description?: string
   membersCount?: number
-  avatarUrl?: string
+  avatar_url?: string
   week_timeslots?: number[]
 }
 
