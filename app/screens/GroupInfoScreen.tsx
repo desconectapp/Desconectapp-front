@@ -45,7 +45,6 @@ import { useUploadGroupImage } from "@/hooks/Chats"
 
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
-
 export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any) {
   const { groupId } = route.params
 
@@ -100,27 +99,30 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
       setTempName(groupData.name)
       setTempDescription(groupData.description ?? "")
       setTempDisplayLocation(groupData.location ?? "")
-      setTempLocation("") 
+      setTempLocation("")
     }
   }, [groupData])
 
   // --- Location Handlers ---
-  const handleLocationSelect = useCallback((selectedLoc: selectedLocation) => {
+  const handleLocationSelect = useCallback(
+    (selectedLoc: selectedLocation) => {
       const coordString = `${selectedLoc.longitude},${selectedLoc.latitude}`
-      setTempLocation(coordString) 
+      setTempLocation(coordString)
       setTempDisplayLocation(selectedLoc.name || selectedLoc.address)
-      
+
       showToast("Success", `New location selected: ${selectedLoc.name || selectedLoc.address}`)
-  }, [showToast])
+    },
+    [showToast],
+  )
 
   const handleOpenLocationPicker = () => {
-      if (!isEditing) return
-      
-      navigation.navigate("LocationPickerScreen" as any, { 
-          onLocationSelect: handleLocationSelect,
-      })
+    if (!isEditing) return
+
+    navigation.navigate("LocationPickerScreen" as any, {
+      onLocationSelect: handleLocationSelect,
+    })
   }
-  
+
   const renderMember = ({ item }: { item: Member }) => {
     return (
       <View style={[styles.memberItem, themed(themedStyles.memberItem)]}>
@@ -196,14 +198,13 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         updateDescription({ id: groupData.id, description: tempDescription })
       }
 
-      const locationHasChanged = 
-        tempLocation !== "" || tempDisplayLocation !== groupData.location
+      const locationHasChanged = tempLocation !== "" || tempDisplayLocation !== groupData.location
 
       if (locationHasChanged) {
-        updateGroupLocation({ 
-          id: groupData.id, 
+        updateGroupLocation({
+          id: groupData.id,
           location: tempLocation,
-          location_name: tempDisplayLocation
+          location_name: tempDisplayLocation,
         })
       }
 
@@ -213,9 +214,9 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         ...oldData,
         name: tempName,
         description: tempDescription,
-        location: tempDisplayLocation, 
+        location: tempDisplayLocation,
 
-        location_name: tempDisplayLocation, 
+        location_name: tempDisplayLocation,
       }))
     } catch (error) {
       console.error("Failed to save changes:", error)
@@ -225,7 +226,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   const handleCancelEdit = () => {
     setTempName(groupData.name)
     setTempDescription(groupData.description ?? "")
-    setTempLocation("") 
+    setTempLocation("")
     setTempDisplayLocation(groupData.location ?? "")
     setIsEditing(false)
   }
@@ -296,15 +297,15 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
       )
     }
   }
-  
-  const currentLocationDisplay = isEditing 
-    ? (tempDisplayLocation || "Tap to set location...")
-    : (groupData.location || "No Location Set")
 
-  const locationTextStyle = isEditing && !tempDisplayLocation
-    ? themedStyles.locationPlaceholderText
-    : themedStyles.groupLocationInput
+  const currentLocationDisplay = isEditing
+    ? tempDisplayLocation || "Tap to set location..."
+    : groupData.location || "No Location Set"
 
+  const locationTextStyle =
+    isEditing && !tempDisplayLocation
+      ? themedStyles.locationPlaceholderText
+      : themedStyles.groupLocationInput
 
   return (
     <SafeAreaView style={[styles.container, themed(themedStyles.container)]}>
@@ -410,29 +411,20 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         {/* Location Section */}
         {isEditing ? (
           // Use Pressable to navigate to LocationPickerScreen
-          <Pressable 
-            onPress={handleOpenLocationPicker} 
+          <Pressable
+            onPress={handleOpenLocationPicker}
             style={[
-              styles.locationPressableContainer, 
+              styles.locationPressableContainer,
               themed(themedStyles.locationPressableContainer),
-              { marginBottom: spacing.md }
+              { marginBottom: spacing.md },
             ]}
           >
-            <Text 
-              style={[
-                styles.groupLocation, 
-                themed(locationTextStyle)
-              ]}
-            >
+            <Text style={[styles.groupLocation, themed(locationTextStyle)]}>
               {currentLocationDisplay}
             </Text>
           </Pressable>
         ) : (
-          <Text 
-            style={themed(themedStyles.groupLocation)}
-            numberOfLines={1} 
-            ellipsizeMode="tail"
-          >
+          <Text style={themed(themedStyles.groupLocation)} numberOfLines={1} ellipsizeMode="tail">
             {currentLocationDisplay}
           </Text>
         )}
@@ -451,13 +443,15 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
       </View>
 
       {/* Members List */}
-      <FlatList
-        data={groupData.members}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMember}
-        contentContainerStyle={styles.membersListContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {groupData?.members && groupData.members.length > 0 && (
+        <FlatList
+          data={groupData?.members}
+          keyExtractor={(item, i) => item.id || i}
+          renderItem={renderMember}
+          contentContainerStyle={styles.membersListContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Footer */}
       <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
@@ -722,7 +716,7 @@ export const styles = StyleSheet.create({
   } as ViewStyle,
 
   locationPressableContainer: {
-    width: '100%',
+    width: "100%",
     paddingHorizontal: spacing.lg,
   } as ViewStyle,
 })
@@ -834,7 +828,7 @@ export const themedStyles = {
   }),
 
   locationPressableContainer: (theme: any): ViewStyle => ({
-    width: '80%',
+    width: "80%",
     alignSelf: "center",
     paddingHorizontal: 0,
   }),
@@ -849,7 +843,7 @@ export const themedStyles = {
     borderRadius: spacing.xs,
     padding: spacing.sm,
   }),
-  
+
   // Style for placeholder text (when location is not set)
   locationPlaceholderText: (theme: any): TextStyle => ({
     fontSize: 16,
@@ -977,3 +971,4 @@ export const themedStyles = {
     marginLeft: spacing.sm,
   }),
 }
+

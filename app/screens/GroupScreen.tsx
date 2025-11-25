@@ -42,8 +42,9 @@ const { height: screenHeight } = Dimensions.get("window")
 type NavigationProp = NativeStackNavigationProp<MainStackParamList>
 
 export const GroupScreen = observer(function GroupScreen({ route }: any) {
-  const { groupId } = route.params
-  const { data: groupData, isLoading } = useGroupById(groupId)
+  const { groupId, placeholderGroupData } = route.params
+
+  const { data: groupData, isLoading } = useGroupById(groupId, placeholderGroupData)
   const [messages, setMessages] = useState<MessageBubbleType[]>([])
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
@@ -71,7 +72,9 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
   // Memoize the members map for better performance
   const membersMap = useMemo(() => {
-    if (!groupData?.members) return new Map()
+    if (!groupData?.members)  { 
+        return new Map() 
+    }
     return new Map(groupData.members.map((member) => [member.uuid, member]))
   }, [groupData?.members])
 
@@ -155,10 +158,6 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     })
   }
 
-  if (isLoading || isLoadingMessages) {
-    return <Text>Loading...</Text>
-  }
-
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
@@ -190,7 +189,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             <View style={styles.headerTextContainer}>
               <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
               <Text style={themed(themedStyles.memberCount)}>
-                {groupData?.members.length} members
+                {groupData?.members?.length} members
               </Text>
             </View>
           </TouchableOpacity>

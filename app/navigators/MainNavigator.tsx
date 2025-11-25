@@ -27,6 +27,7 @@ import { SuggestionScreen } from "@/screens/SuggestionScreen"
 import { GroupInfoScreen } from "@/screens/GroupInfoScreen"
 import { NearbyGroupsScreen } from "@/screens/NearbyGroupsScreen"
 import { AIScreen } from "@/screens/SearchRequestFlow/AIScreen"
+import { GroupFront } from "@/screens/GroupsFront.types"
 
 export type MainTabParamList = {
   HomeScreen: undefined
@@ -39,7 +40,7 @@ export type MainTabParamList = {
 export type MainStackParamList = {
   Tabs: { screen?: keyof MainTabParamList } | undefined
   PreferencesScreen: undefined
-  GroupScreen: { groupId: string }
+  GroupScreen: { groupId: string; placeholderGroupData: GroupFront | undefined }
   SuggestionScreen: { id: string }
   LocationPickerScreen:
   | { nextScreen?: string; onLocationSelect: (location: any) => void }
