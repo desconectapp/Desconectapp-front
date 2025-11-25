@@ -13,7 +13,7 @@ import {
   Image,
   ImageStyle,
 } from "react-native"
-import { AutoImage, Icon, Screen, Text } from "@/components"
+import { AutoImage, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -27,9 +27,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useGetLastChatMessages } from "@/hooks/Chats"
 import { useStores } from "@/models"
-import { formatDate } from "@/utils/formatDate"
 import { formatDateGroupCard } from "@/utils/formatTime"
-import { userService } from "@/services/users"
 
 const { width } = Dimensions.get("window")
 
@@ -99,7 +97,12 @@ export const HomeScreen = observer(function HomeScreen() {
           themed(themedStylesGroup.groupCardContainer),
           item.lastMessage?.not_seen ? themed(themedStylesGroup.groupCardContainerSeen) : {},
         ]}
-        onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
+        onPress={() =>
+          navigation.navigate("GroupScreen", {
+            groupId: item.id,
+            placeholderGroupData: item,
+          })
+        }
         disabled={isLoading}
         activeOpacity={0.8}
       >
@@ -188,7 +191,7 @@ export const HomeScreen = observer(function HomeScreen() {
       return (
         <View style={themed(themedStylesGroup.sectionContainer)}>
           <View style={themed(themedStylesGroup.sectionHeader)}>
-            <Text style={themed(themedStylesGroup.sectionTitle)}>My Groups</Text>
+            <Text style={themed(themedStylesGroup.sectionTitle)}>Mis Grupos</Text>
             {allGroups.length > 3 && (
               <TouchableOpacity
                 activeOpacity={0.7}

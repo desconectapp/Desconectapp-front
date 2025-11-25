@@ -214,18 +214,13 @@ export const ProfileScreen = observer(function ProfileScreen() {
     setIsEditing(false)
   }
 
-  if (!profile) {
-
-    logOut()
-  }
-
   return (
     <Screen
       contentContainerStyle={[$container, $bottomContainerInsets]}
       backgroundColor={theme.colors.background}
     >
       <Text preset="heading" style={themed({ fontSize: 24, fontWeight: "bold" })}>
-        My Profile
+        Mi perfil
       </Text>
 
       <Pressable

@@ -125,7 +125,12 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
         requestStore.setMaxParticipants(maxParticipants)
         console.log("selecting activities:", activityToSave)
         // Navigate to the next screen using proper navigation structure
-        navigation.navigate("LocationPickerScreen" as any)
+
+        if (nextScreen) {
+          navigation.navigate(nextScreen as any)
+        } else {
+          navigation.navigate("LocationPickerScreen" as any)
+        }
       } else {
         Alert.alert("Error", "Por favor selecciona una actividad")
       }
