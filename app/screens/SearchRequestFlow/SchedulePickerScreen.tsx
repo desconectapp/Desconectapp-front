@@ -24,21 +24,27 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
 
   useEffect(() => {
-    setUpdateKey(prev => prev + 1)
+    setUpdateKey((prev) => prev + 1)
   }, [requestStore.schedules])
 
   const handleNext = () => {
     if (!requestStore.isScheduleSelected) {
-        Alert.alert("Selección Requerida", "Por favor, selecciona al menos un día y horario disponible.")
-        return
+      Alert.alert(
+        "Selección Requerida",
+        "Por favor, selecciona al menos un día y horario disponible.",
+      )
+      return
     }
 
     if (onScheduleSelect) {
-        onScheduleSelect(requestStore.schedules)
-        navigation.goBack()
-
+      onScheduleSelect(requestStore.schedules)
+      navigation.goBack()
     } else {
+      if (nextScreen) {
+        navigation.navigate(nextScreen as any)
+      } else {
         navigation.navigate("RequestConfirmationScreen" as any)
+      }
     }
   }
 
@@ -49,7 +55,7 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
       backgroundColor={themed(() => theme.colors.background)}
       safeAreaEdges={["top"]}
     >
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={themed($scrollContent)}
       >
@@ -71,11 +77,11 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
           style={[
             themed(buttons.primary),
             themed($nextButton),
-            !requestStore.isScheduleSelected && themed(buttons.primaryDisabled)
+            !requestStore.isScheduleSelected && themed(buttons.primaryDisabled),
           ]}
           textStyle={[
             themed(buttonTexts.primary),
-            !requestStore.isScheduleSelected && themed(buttonTexts.primaryDisabled)
+            !requestStore.isScheduleSelected && themed(buttonTexts.primaryDisabled),
           ]}
           disabled={!requestStore.isScheduleSelected}
           onPress={handleNext}
@@ -85,7 +91,7 @@ export const SchedulePickerScreen = observer(function SchedulePickerScreen({
   )
 })
 
-const $container = (theme: any): ViewStyle => ({ 
+const $container = (theme: any): ViewStyle => ({
   flex: 1,
 })
 
@@ -104,7 +110,6 @@ const $subtitle = (theme: any): TextStyle => ({
   marginTop: theme.spacing.xs,
 })
 
-
 const $buttonContainer = (theme: any): ViewStyle => ({
   padding: theme.spacing.md,
   paddingBottom: theme.spacing.xl,
@@ -114,3 +119,4 @@ const $buttonContainer = (theme: any): ViewStyle => ({
 const $nextButton = (theme: any): ViewStyle => ({
   marginTop: 0,
 })
+

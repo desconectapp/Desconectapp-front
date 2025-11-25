@@ -109,13 +109,17 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
           }}
         >
           <FontAwesome name="star" size={14} color="#A68CFF" />
-          <Text style={{ color: "#595259", fontSize: 14, fontWeight: "800" }}>Generado por Asistente de Búsquedas</Text>
+          <Text style={{ color: "#595259", fontSize: 14, fontWeight: "800" }}>
+            Generado por Asistente de Búsquedas
+          </Text>
         </View>
       )}
 
       {/* Activity Section */}
       <Pressable
-        onPress={() => navigation.navigate("ActivityPickerScreen")}
+        onPress={() =>
+          navigation.navigate("ActivityPickerScreen", { nextScreen: "RequestConfirmationScreen" })
+        }
         style={({ pressed }) => [
           themed(containers.card),
           themed($section),
@@ -135,7 +139,9 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
 
       {/* Participants Section */}
       <Pressable
-        onPress={() => navigation.navigate("ActivityPickerScreen")}
+        onPress={() =>
+          navigation.navigate("ActivityPickerScreen", { nextScreen: "RequestConfirmationScreen" })
+        }
         style={({ pressed }) => [
           themed(containers.card),
           themed($section),
@@ -155,7 +161,9 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
 
       {/* Location Section */}
       <Pressable
-        onPress={() => navigation.navigate("LocationPickerScreen")}
+        onPress={() =>
+          navigation.navigate("LocationPickerScreen", { nextScreen: "RequestConfirmationScreen" })
+        }
         style={({ pressed }) => [
           themed(containers.card),
           themed($section),
@@ -177,7 +185,9 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
 
       {/* Schedule Section */}
       <Pressable
-        onPress={() => navigation.navigate("SchedulePickerScreen")}
+        onPress={() =>
+          navigation.navigate("SchedulePickerScreen", { nextScreen: "RequestConfirmationScreen" })
+        }
         style={({ pressed }) => [
           themed(containers.card),
           themed($section),

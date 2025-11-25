@@ -52,8 +52,11 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
       navigation.goBack()
 
     } else {
-      // Fallback/Original Flow: Navigate to the next screen
-      navigation.navigate("SchedulePickerScreen" as any)
+      if (nextScreen) {
+        navigation.navigate(nextScreen as any)
+      } else {
+        navigation.navigate("SchedulePickerScreen" as any)
+      }
     }
   }
 
