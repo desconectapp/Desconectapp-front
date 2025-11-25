@@ -10,6 +10,7 @@ export const containers = {
   screen: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#fff",
   } as ViewStyle,
 
   screenPadded: (theme: any): ViewStyle => ({
