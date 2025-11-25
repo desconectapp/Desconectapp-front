@@ -49,7 +49,7 @@ export type MainStackParamList = {
   | undefined
   ActivityPickerScreen: { nextScreen?: string }
   AIScreen: { nextScreen?: string }
-  RequestConfirmationScreen: { nextScreen?: string }
+  RequestConfirmationScreen: { nextScreen?: string; isAiGenerated?: boolean } | undefined
   MyGroupsScreen: undefined
   GroupInfoScreen: { groupId: string }
   NearbyGroupsScreen: undefined
@@ -214,7 +214,7 @@ export function MainNavigator() {
       <Stack.Screen
         name="RequestConfirmationScreen"
         component={RequestConfirmationScreen}
-        options={{ headerShown: true, title: "Confirmar Busqueda" }}
+        options={{ headerShown: true, title: "Confirmar Búsqueda" }}
       />
       <Stack.Screen
         name="MyGroupsScreen"

@@ -72,7 +72,7 @@ export function AIScreen() {
 
   const [prompt, setPrompt] = useState("")
   const [isThinking, setIsThinking] = useState(false)
-  const [result, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const { requestStore } = useStores()
 
@@ -98,9 +98,9 @@ export function AIScreen() {
         id: 2,
         name: "Basket",
         icon: "basket_icon",
-      })
+      });
 
-      navigation.navigate("RequestConfirmationScreen")
+      navigation.navigate("RequestConfirmationScreen", { isAiGenerated: true })
     } catch (error) {
       setError("Error al procesar tu solicitud")
     } finally {
@@ -152,6 +152,8 @@ export function AIScreen() {
               multiline
               numberOfLines={4}
             />
+
+            {error ? <Text style={[themed(texts.error), { fontSize: 14 }]}>{error}</Text> : null}
           </View>
 
           {/* Submit Button */}

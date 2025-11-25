@@ -3,14 +3,14 @@ import { MainStackParamList } from "@/navigators/MainNavigator"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useNavigation } from "@react-navigation/native"
-import { Alert, View } from "react-native"
+import { Alert, Pressable, View } from "react-native"
 import { observer } from "mobx-react-lite"
 import { useStores } from "@/models"
 import { useSearch } from "@/hooks/Search"
 import { containers, buttons, buttonTexts, texts } from "@/theme/commonStyles"
 import { useAppToast } from "@/components/useToast"
 
-import { Pressable } from "react-native"
+import { FontAwesome } from "@expo/vector-icons"
 
 type RequestConfirmationScreenProps = NativeStackScreenProps<
   MainStackParamList,
@@ -20,6 +20,12 @@ type RequestConfirmationScreenProps = NativeStackScreenProps<
 export const RequestConfirmationScreen = observer(function RequestConfirmationScreen({
   route,
 }: RequestConfirmationScreenProps) {
+  let isAiGenerated = false
+  if (route.params !== undefined) {
+    const { isAiGenerated: s } = route.params
+    isAiGenerated = s ?? false
+  }
+
   const { themed, theme } = useAppTheme()
   const navigation = useNavigation<NativeStackScreenProps<MainStackParamList>["navigation"]>()
   const { requestStore, sessionStore } = useStores()
@@ -86,29 +92,76 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
         ¡Todo listo para buscar!
       </Text>
 
+      {isAiGenerated && (
+        <View
+          style={{
+            alignSelf: "flex-start",
+            paddingHorizontal: 12,
+            paddingVertical: 5,
+            borderRadius: 14,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+            backgroundColor: "rgba(120, 80, 255, 0.15)", // violeta suave translúcido
+            borderWidth: 1,
+            borderColor: "rgba(160, 130, 255, 0.4)",
+            marginBottom: 15,
+          }}
+        >
+          <FontAwesome name="star" size={14} color="#A68CFF" />
+          <Text style={{ color: "#595259", fontSize: 14, fontWeight: "800" }}>Generado por Asistente de Búsquedas</Text>
+        </View>
+      )}
+
       {/* Activity Section */}
       <Pressable
         onPress={() => navigation.navigate("ActivityPickerScreen")}
-        style={[themed(containers.card), themed($section)]}
+        style={({ pressed }) => [
+          themed(containers.card),
+          themed($section),
+          { position: "relative" },
+          pressed && { opacity: 0.6 },
+        ]}
       >
         <Text style={themed(texts.label)}>Actividad</Text>
         <Text style={themed(texts.body)}>
           {requestStore.activity ? requestStore.activity.name : "No seleccionada"}
         </Text>
+
+        <View style={{ position: "absolute", top: 15, right: 15 }}>
+          <FontAwesome name="pencil" size={20} color={theme.colors.textDim} />
+        </View>
       </Pressable>
 
       {/* Participants Section */}
-      <Pressable onPress={() => { }} style={[themed(containers.card), themed($section)]}>
+      <Pressable
+        onPress={() => navigation.navigate("ActivityPickerScreen")}
+        style={({ pressed }) => [
+          themed(containers.card),
+          themed($section),
+          { position: "relative" },
+          pressed && { opacity: 0.6 },
+        ]}
+      >
         <Text style={themed(texts.label)}>Participantes</Text>
         <Text style={themed(texts.body)}>
           De {requestStore.minParticipants} a {requestStore.maxParticipants} personas
         </Text>
+
+        <View style={{ position: "absolute", top: 15, right: 15 }}>
+          <FontAwesome name="pencil" size={20} color={theme.colors.textDim} />
+        </View>
       </Pressable>
 
       {/* Location Section */}
       <Pressable
         onPress={() => navigation.navigate("LocationPickerScreen")}
-        style={[themed(containers.card), themed($section)]}
+        style={({ pressed }) => [
+          themed(containers.card),
+          themed($section),
+          { position: "relative" },
+          pressed && { opacity: 0.6 },
+        ]}
       >
         <Text style={themed(texts.label)}>Ubicación</Text>
         <Text style={themed(texts.body)}>{formatLocation()}</Text>
@@ -116,21 +169,35 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
         {requestStore.location && (
           <Text style={themed(texts.caption)}>Radio de {requestStore.radiusKm} km</Text>
         )}
+
+        <View style={{ position: "absolute", top: 15, right: 15 }}>
+          <FontAwesome name="pencil" size={20} color={theme.colors.textDim} />
+        </View>
       </Pressable>
 
       {/* Schedule Section */}
       <Pressable
         onPress={() => navigation.navigate("SchedulePickerScreen")}
-        style={[themed(containers.card), themed($section)]}
+        style={({ pressed }) => [
+          themed(containers.card),
+          themed($section),
+          { position: "relative" },
+          pressed && { opacity: 0.6 },
+        ]}
       >
         <Text style={themed(texts.label)}>Horarios</Text>
         <Text style={[themed(texts.body), themed($scheduleText)]}>{formatSchedules()}</Text>
+
+        <View style={{ position: "absolute", top: 15, right: 15 }}>
+          <FontAwesome name="pencil" size={20} color={theme.colors.textDim} />
+        </View>
       </Pressable>
 
       {/* Search Button */}
       <Button
-        text="🔍 Buscar"
+        text="Confirmar Busqueda 🔍"
         style={[themed(buttons.primary), themed($searchButton)]}
+        pressedStyle={themed(buttons.primaryPressed)}
         textStyle={themed(buttonTexts.primary)}
         onPress={handleSearch}
       />

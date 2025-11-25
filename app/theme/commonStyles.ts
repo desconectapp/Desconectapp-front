@@ -75,6 +75,11 @@ export const buttons = {
     backgroundColor: theme.colors.tint,
   }),
 
+  primaryPressed: (theme: any): ViewStyle => ({
+    ...buttons.base(theme),
+    opacity: 0.5,
+  }),
+
   primaryDisabled: (theme: any): ViewStyle => ({
     ...buttons.base(theme),
     backgroundColor: theme.colors.backgroundMuted,
