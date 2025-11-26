@@ -46,7 +46,6 @@ export const useGroupById = (
   return useQuery({
     queryKey: ["groups", id],
     queryFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 50000)) // Simula una espera de 500 ms
       const response = await groupsService.getGroupById(id)
       if (!response) throw new Error("Error al cargar grupos")
       return response
