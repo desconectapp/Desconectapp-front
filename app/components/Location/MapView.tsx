@@ -389,7 +389,7 @@ export const MapViewComponent = ({
             <CustomSlider
               value={searchRadiusKm}
               min={0.5}
-              max={10}
+              max={5}
               step={0.5}
               label="Radio de búsqueda"
               formatValue={(value) => `${value} km`}

@@ -130,7 +130,9 @@ export const groupsService = {
         membersCount: group.member_count,
         radius: 1, // Default radius, adjust as needed
         avatar_url: group.avatar_url || "👤",
-        week_timeslots: group.week_timeslots || []
+        week_timeslots: group.week_timeslots || [],
+        created_at: group.created_at,
+        activity_name: group.activity_name,
       };
     });
     return modifiedResponse??[];

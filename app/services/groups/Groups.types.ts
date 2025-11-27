@@ -58,6 +58,7 @@ export interface OpenGroup {
 	photo:	string
   avatar_url: string | null
   week_timeslots?: number[]
+  created_at?: string
 }
 
 export interface MapGroup {
@@ -72,6 +73,7 @@ export interface MapGroup {
   membersCount?: number
   avatar_url?: string
   week_timeslots?: number[]
+  created_at?: string
 }
 
 

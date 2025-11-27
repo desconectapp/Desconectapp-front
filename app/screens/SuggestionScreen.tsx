@@ -138,15 +138,29 @@ export const SuggestionScreen = observer(({ route }: any) => {
         <View style={styles.infoSection}>
           {/* Description */}
             <Text style={themed(themedStyles.sectionTitle)}>Descripcion</Text>
-            <Text style={themed(themedStyles.descriptionText)}>{group.description}</Text>
+            {group.description ? (
+              <Text style={themed(themedStyles.descriptionText)}>{group.description}</Text>
+
+            ) : (
+              <Text style={themed(themedStyles.descriptionText)}>No hay descripcion disponible.</Text>
+            )}
         </View>
           <View style={styles.infoSection}>
           <Text style={themed(themedStyles.sectionTitle)}>Ubicacion</Text>
-          <Animated.Image
-            source={{ uri: locationImage }}
-            style={{ width: "100%", height: 200, marginBottom: spacing.lg }}
-            // sharedTransitionTag={group.id.toString()}
-          />
+          {locationImage ? (
+            <Animated.Image
+              source={{ uri: locationImage }}
+              style={{ width: "100%", height: 200, marginBottom: spacing.lg, borderRadius: spacing.md,
+                borderColor: "#050505ff", borderWidth: 1
+               }}
+              // sharedTransitionTag={group.id.toString()}
+            />
+
+          ) : (
+            <Text style={themed(themedStyles.descriptionText)}>No hay ubicacion disponible.</Text>
+          )
+        
+        }
         </View>
 
         <View style={styles.scheduleSection}>
