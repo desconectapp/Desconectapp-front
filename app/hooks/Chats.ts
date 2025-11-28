@@ -50,7 +50,7 @@ export const useGetLastChatMessages = (user_uuid: string) => {
       if (error) {
         if (error.code === "PGRST303" || error.message?.includes("JWT expired")) {
         } else {
-          console.error("Supabase error:", error)
+          // console.error("Supabase error:", error)
         }
         throw new Error(`Error al cargar los mensajes: ${error.message}`)
       }
@@ -110,7 +110,7 @@ export const useGetChatMessages = (groupId: string) => {
           }
           return { messages: retryData as Message[] }
         } else {
-          console.error("Supabase error:", error)
+          //console.error("Supabase error:", error)
         }
         throw new Error(`Error al cargar los mensajes: ${error.message}`)
       }
@@ -315,7 +315,7 @@ export const useCreateMessage = () => {
           }
           return retryData as Message
         } else {
-          console.error("Supabase error:", error)
+         // console.error("Supabase error:", error)
         }
         throw new Error(`Error al crear el mensaje: ${error.message}`)
       }

@@ -221,7 +221,7 @@ export const MapViewComponent = ({
       setIsSettingFromSearch(true)
 
       // Move camera to selected marker location
-      setCameraCenter([selectedMarker.coordinates[0], selectedMarker.coordinates[1]])
+      setCameraCenter([selectedMarker.coords[0], selectedMarker.coords[1]])
       setZoom(zoom < 13 ? 13 : zoom) // Zoom in a bit more for markers
       // Clear the flag after a short delay
       setTimeout(() => {
@@ -365,7 +365,7 @@ export const MapViewComponent = ({
           <MapLibreGL.PointAnnotation
             key={`group-${group.id}`}
             id={`group-${group.id}`}
-            coordinate={group.coordinates}
+            coordinate={group.coords}
             onSelected={() => handleGroupPress(group)}
           >
               <GroupMapIcon group={group} />
@@ -389,7 +389,7 @@ export const MapViewComponent = ({
             <CustomSlider
               value={searchRadiusKm}
               min={0.5}
-              max={10}
+              max={5}
               step={0.5}
               label="Radio de búsqueda"
               formatValue={(value) => `${value} km`}

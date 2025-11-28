@@ -9,8 +9,9 @@ import {
   FlatList,
   RefreshControl,
   StyleSheet,
+  ImageStyle,
 } from "react-native"
-import { Screen, Text } from "@/components"
+import { AutoImage, Screen, Text } from "@/components"
 import type { AppStackScreenProps } from "../navigators"
 import { useAppTheme } from "@/utils/useAppTheme"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
@@ -18,7 +19,6 @@ import { useGroups } from "@/hooks/Groups"
 import { spacing } from "@/theme"
 import { GroupFront } from "./GroupsFront.types"
 import { useSafeAreaInsets } from "react-native-safe-area-context" 
-
 
 type NavigationProp = AppStackScreenProps<"MyGroupsScreen">["navigation"]
 
@@ -40,55 +40,66 @@ export const MyGroupsScreen = observer(function MyGroupsScreen() {
   }
 
   const renderGroupCard = ({ item }: { item: GroupFront }) => (
-  <TouchableOpacity
-    style={themed(styles.groupCardContainer)}
-    onPress={() => navigation.navigate("GroupScreen", { groupId: item.id })}
-    disabled={isLoading}
-    activeOpacity={0.8}
-  >
-    <View style={themed(styles.groupCardInner)}>
-      {/* Avatar */}
-      <View style={themed(styles.groupAvatar)}>
-        <Text style={themed(styles.groupAvatarText)}>
-          {item.icon || item.name.charAt(0).toUpperCase()}
-        </Text>
-      </View>
+    <TouchableOpacity
+      style={themed(styles.groupCardContainer)}
+      onPress={() =>
+        navigation.navigate("GroupScreen", {
+          groupId: item.id,
+          placeholderGroupData: item,
+        })
+      }
+      disabled={isLoading}
+      activeOpacity={0.8}
+    >
+      <View style={themed(styles.groupCardInner)}>
+        {item.avatar_url ? (
+          <AutoImage
+            source={{ uri: item.avatar_url }}
+            style={[
+              themed(themedStylesGroup.groupAvatarImage),
+              item.lastMessage?.not_seen ? themed(themedStylesGroup.groupAvatarImageSeen) : {},
+            ]}
+          />
+        ) : (
+          <View style={themed(styles.groupAvatar)}>
+            <Text style={themed(styles.groupAvatarText)}>
+              {item.icon || item.name.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        )}
 
-      {/* Group Info */}
-      <View style={styles.groupInfo}>
-        <View style={styles.groupHeader}>
-          <Text style={themed(styles.groupName)} numberOfLines={1}>
-            {item.name}
+        {/* Group Info */}
+        <View style={styles.groupInfo}>
+          <View style={styles.groupHeader}>
+            <Text style={themed(styles.groupName)} numberOfLines={1}>
+              {item.name}
+            </Text>
+
+            {item.unreadCount && item.unreadCount > 0 && (
+              <View style={themed(styles.unreadBadge)}>
+                <Text style={themed(styles.unreadText)}>
+                  {item.unreadCount > 99 ? "99+" : item.unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={themed(styles.description)} numberOfLines={1}>
+            {!isLoading ? item.description || "No description yet" : ""}
           </Text>
 
-          {item.unreadCount && item.unreadCount > 0 && (
-            <View style={themed(styles.unreadBadge)}>
-              <Text style={themed(styles.unreadText)}>
-                {item.unreadCount > 99 ? "99+" : item.unreadCount}
-              </Text>
-            </View>
+          {item.memberCount && (
+            <Text style={themed(styles.memberCount)}>{item.memberCount} members</Text>
           )}
         </View>
 
-        <Text style={themed(styles.description)} numberOfLines={1}>
-          {!isLoading ? item.description || "No description yet" : ""}
-        </Text>
-
-        {item.memberCount && (
-          <Text style={themed(styles.memberCount)}>
-            {item.memberCount} members
-          </Text>
-        )}
+        {/* Arrow */}
+        <View style={styles.groupArrow}>
+          <Text style={themed(styles.arrowText)}>›</Text>
+        </View>
       </View>
-
-      {/* Arrow */}
-      <View style={styles.groupArrow}>
-        <Text style={themed(styles.arrowText)}>›</Text>
-      </View>
-    </View>
-  </TouchableOpacity>
-)
-
+    </TouchableOpacity>
+  )
 
   return (
     <Screen preset="fixed" safeAreaEdges={["bottom"]} style={themed(themedStyles.headerBackground)}>
@@ -130,7 +141,6 @@ export const MyGroupsScreen = observer(function MyGroupsScreen() {
   )
 })
 
-
 const styles = StyleSheet.create({
   backButton: { paddingRight: spacing.md } as ViewStyle,
   header: {
@@ -151,75 +161,75 @@ const styles = StyleSheet.create({
   
   headerTextContainer: { flex: 1 } as ViewStyle,
 
+  arrowText: {
+    color: "#ccc",
+    fontSize: 24,
+  },
+  description: {
+    color: "#666",
+    fontSize: 14,
+    marginTop: 2,
+  },
+  groupArrow: {
+    marginLeft: 12,
+  },
+  groupAvatar: {
+    alignItems: "center",
+    backgroundColor: "#eee",
+    borderRadius: 25,
+    height: 50,
+    justifyContent: "center",
+    marginRight: 12,
+    width: 50,
+  },
+  groupAvatarText: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
   groupCardContainer: {
     marginVertical: 6,
     marginHorizontal: 12,
     borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#fff', // fallback
-    shadowColor: '#000',
+    overflow: "hidden",
+    backgroundColor: "#fff", // fallback
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 3,
   },
   groupCardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: "center",
+    flexDirection: "row",
     padding: 12,
   },
-  groupAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#eee',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  groupAvatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  groupHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   groupInfo: {
     flex: 1,
   },
-  groupHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   groupName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
+  },
+  memberCount: {
+    color: "#999",
+    fontSize: 12,
+    marginTop: 2,
   },
   unreadBadge: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: "#FF3B30",
     borderRadius: 8,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   unreadText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: 'bold',
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  memberCount: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-  groupArrow: {
-    marginLeft: 12,
-  },
-  arrowText: {
-    fontSize: 24,
-    color: '#ccc',
+    fontWeight: "bold",
   },
 })
 
@@ -237,5 +247,18 @@ export const themedStyles = {
     fontSize: 18,
     fontWeight: "600",
     color: theme.colors.text,
+  }),
+}
+export const themedStylesGroup = {
+  groupAvatarImage: (_theme: any): ImageStyle => ({
+    width: 60,
+    height: 60,
+    borderRadius: 100,
+    resizeMode: "cover",
+    marginRight: spacing.md,
+  }),
+  groupAvatarImageSeen: (theme: any): ImageStyle => ({
+    borderWidth: 3,
+    borderColor: theme.colors.palette.primary500,
   }),
 }

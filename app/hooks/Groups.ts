@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { groupsService } from "../services/groups"
 import { CreateGroupParams, GroupData } from "@/services/groups/Groups.types"
+import { GroupFront } from "@/screens/GroupsFront.types"
 
 export const useExitGroup = () => {
   const queryClient = useQueryClient()
@@ -37,7 +38,11 @@ export const useGroupsRecs = (activity_id: number, options?: { enabled?: boolean
   })
 }
 
-export const useGroupById = (id: string, options?: { enabled?: boolean }) => {
+export const useGroupById = (
+  id: string,
+  placeholderGroupData: GroupFront | undefined,
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: ["groups", id],
     queryFn: async () => {
@@ -46,6 +51,12 @@ export const useGroupById = (id: string, options?: { enabled?: boolean }) => {
       return response
     },
     enabled: options?.enabled ?? true,
+    initialData: () => {
+      if (!placeholderGroupData) {
+        return {}
+      }
+      return placeholderGroupData
+    },
   })
 }
 
@@ -96,8 +107,9 @@ export const updateGroupName = () => {
 export const updateGroupLocation = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<boolean, Error, { id: string; location: string, location_name: string }>({
-    mutationFn: ({ id, location, location_name }) => groupsService.updateGroupLocation(id, location, location_name),
+  return useMutation<boolean, Error, { id: string; location: string; location_name: string }>({
+    mutationFn: ({ id, location, location_name }) =>
+      groupsService.updateGroupLocation(id, location, location_name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] })
     },
@@ -123,8 +135,8 @@ export const useJoinGroup = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] })
     },
-  });
-};
+  })
+}
 
 export const useNearbyGroups = (latitude: number, longitude: number, radius: number) => {
   return useQuery({
@@ -136,4 +148,3 @@ export const useNearbyGroups = (latitude: number, longitude: number, radius: num
     },
   })
 }
-

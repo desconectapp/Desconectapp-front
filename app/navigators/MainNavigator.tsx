@@ -32,6 +32,8 @@ import { CommunityInfoScreen } from "@/screens/CommunityInfoScreen"
 import { CreateCommunityScreen } from "@/screens/CreateCommunityScreeen"
 import { MyCommunitiesScreen } from "@/screens/MyCommunitiesScreen"
 
+import { AIScreen } from "@/screens/SearchRequestFlow/AIScreen"
+import { GroupFront } from "@/screens/GroupsFront.types"
 
 export type MainTabParamList = {
   HomeScreen: undefined
@@ -44,7 +46,7 @@ export type MainTabParamList = {
 export type MainStackParamList = {
   Tabs: { screen?: keyof MainTabParamList } | undefined
   PreferencesScreen: undefined
-  GroupScreen: { groupId: string }
+  GroupScreen: { groupId: string; placeholderGroupData: GroupFront | undefined }
   SuggestionScreen: { id: string }
   LocationPickerScreen:
   | { nextScreen?: string; onLocationSelect: (location: any) => void }
@@ -53,7 +55,8 @@ export type MainStackParamList = {
   | { nextScreen?: string; onScheduleSelect: (schedules: any) => void }
   | undefined
   ActivityPickerScreen: { nextScreen?: string }
-  RequestConfirmationScreen: { nextScreen?: string }
+  AIScreen: { nextScreen?: string }
+  RequestConfirmationScreen: { nextScreen?: string; isAiGenerated?: boolean } | undefined
   MyGroupsScreen: undefined
   GroupInfoScreen: { groupId: string }
   NearbyGroupsScreen: undefined
@@ -217,9 +220,14 @@ export function MainNavigator() {
         options={{ headerShown: true, title: "Actividad" }}
       />
       <Stack.Screen
+        name="AIScreen"
+        component={AIScreen}
+        options={{ headerShown: true, title: "Actividad" }}
+      />
+      <Stack.Screen
         name="RequestConfirmationScreen"
         component={RequestConfirmationScreen}
-        options={{ headerShown: true, title: "Confirmar Busqueda" }}
+        options={{ headerShown: true, title: "Confirmar Búsqueda" }}
       />
       <Stack.Screen
         name="MyGroupsScreen"

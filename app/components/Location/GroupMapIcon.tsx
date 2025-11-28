@@ -12,7 +12,7 @@ const getColorFromCoords = ([lng, lat]: [number, number]) => {
   return `rgb(${r},${g},${b})`
 }
 const getMarkerStyle = (marker: MapGroup) => ({
-  backgroundColor: getColorFromCoords(marker.coordinates),
+  backgroundColor: getColorFromCoords(marker.coords),
   borderRadius: 45,
   width: 65,
   height: 65,
@@ -36,10 +36,10 @@ export const GroupMapIcon = ({ group }: { group: MapGroup }) => {
         overflow: "hidden",
       }}
     >
-      {group.avatarUrl ? (
+      {group.avatar_url ? (
         <>
           <Image
-            source={{ uri: group.avatarUrl }}
+            source={{ uri: group.avatar_url }}
             style={{
               width: 50,
               height: 50,

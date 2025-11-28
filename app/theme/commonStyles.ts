@@ -10,6 +10,7 @@ export const containers = {
   screen: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#fff",
   } as ViewStyle,
 
   screenPadded: (theme: any): ViewStyle => ({
@@ -72,6 +73,11 @@ export const buttons = {
   primary: (theme: any): ViewStyle => ({
     ...buttons.base(theme),
     backgroundColor: theme.colors.tint,
+  }),
+
+  primaryPressed: (theme: any): ViewStyle => ({
+    ...buttons.base(theme),
+    opacity: 0.5,
   }),
 
   primaryDisabled: (theme: any): ViewStyle => ({

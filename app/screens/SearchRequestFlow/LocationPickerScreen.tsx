@@ -39,6 +39,7 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
 
     // 1. Save data to the store regardless of the final navigation action
     requestStore.setLocation(selectedLocation)
+    console.log("Selected Location saved to store:", selectedLocation)
     requestStore.setRadiusKm(searchRadiusKm)
 
     // 2. CHECK THE MODE: If the callback is present, this screen was opened for selection.
@@ -51,8 +52,11 @@ export const LocationPickerScreen = observer(function LocationPickerScreen({
       navigation.goBack()
 
     } else {
-      // Fallback/Original Flow: Navigate to the next screen
-      navigation.navigate("SchedulePickerScreen" as any)
+      if (nextScreen) {
+        navigation.navigate(nextScreen as any)
+      } else {
+        navigation.navigate("SchedulePickerScreen" as any)
+      }
     }
   }
 
