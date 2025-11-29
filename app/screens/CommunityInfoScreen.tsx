@@ -24,12 +24,11 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import {
-  useExitGroup,
-  updateGroupDescription,
-  updateGroupName as useUpdateGroupName,
-  updateGroupLocation as useUpdateGroupLocation,
-  useUpdateGroupPhoto,
-} from "@/hooks/Groups"
+  updateCommunityDescription,
+  updateCommunityLocation,
+  useExitCommunity,
+  updateCommunityName,
+} from "@/hooks/Communities"
 import { useCommunityById } from "@/hooks/Communities"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -65,16 +64,15 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
   const queryClient = useQueryClient()
 
-  const { mutateAsync: exitGroupAsync } = useExitGroup()
+  const { mutateAsync: exitGroupAsync } = useExitCommunity()
 
   const { data: communityData, isLoading } = useCommunityById(communityId)
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
-  const { mutate: updateDescription } = updateGroupDescription()
-  const { mutate: updateGroupName } = useUpdateGroupName()
-  const { mutate: updateGroupLocation } = useUpdateGroupLocation()
-  const { mutate: updateGroupPhoto } = useUpdateGroupPhoto()
+  const { mutate: updateDescription } = updateCommunityDescription()
+  const { mutate: updateLocation } = updateCommunityLocation()
+  const { mutate: updateName } = updateCommunityName()
 
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState("")
@@ -180,7 +178,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const handleSave = async () => {
     try {
       if (tempName !== communityData.name) {
-        updateGroupName({ id: communityData.id, name: tempName })
+        updateName({ id: communityData.id, name: tempName })
       }
 
       if (tempDescription !== communityData.description) {
@@ -191,7 +189,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         tempLocation !== "" || tempDisplayLocation !== communityData.location_name
 
       if (locationHasChanged) {
-        updateGroupLocation({
+        updateLocation({
           id: communityData.id,
           location: tempLocation,
           location_name: tempDisplayLocation

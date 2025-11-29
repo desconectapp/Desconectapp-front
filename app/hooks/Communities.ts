@@ -37,3 +37,48 @@ export const useCommunityById = (id: string, options?: { enabled?: boolean }) =>
     enabled: options?.enabled ?? true,
   })
 }
+
+export const updateCommunityDescription = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<boolean, Error, { id: string; description: string }>({
+    mutationFn: ({ id, description }) => communityService.updateCommunityDescription(id, description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
+    },
+  })
+}
+
+export const updateCommunityLocation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<boolean, Error, { id: string; location: string; location_name: string }>({
+    mutationFn: ({ id, location, location_name }) =>
+      communityService.updateCommunityLocation(id, location, location_name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
+    },
+  })
+}
+
+export const useExitCommunity = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<any, Error, any>({
+    mutationFn: (id) => communityService.exitCommunity(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
+    },
+  })
+}
+
+export const updateCommunityName = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<boolean, Error, { id: string; name: string }>({
+    mutationFn: ({ id, name }) => communityService.updateCommunityName(id, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
+    },
+  })
+}

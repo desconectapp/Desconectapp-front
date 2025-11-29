@@ -28,4 +28,37 @@ export const communityService = {
         return response.data
       },
 
+    updateCommunityLocation: async (id: string, location: string, location_name: string): Promise<boolean> => {
+      const response = await api.apisauce.put(`/community/location/${id}`, { location, location_name });
+      if (!response.ok) {
+        throw new Error("Error al cambiar la location de la community");
+      }
+      return true;
+    },
+
+    updateCommunityDescription: async (id: string, description: string): Promise<boolean> => {
+      const response = await api.apisauce.put(`/community/description/${id}`, { description });
+      if (!response.ok) {
+        throw new Error("Error al cambiar la descripcion de la community");
+      }
+      return true;
+    },
+
+    exitCommunity: async (id: string): Promise<boolean> => {
+        const response = await api.apisauce.delete<CommunityData>(`/community/user-from-community/${id}`)
+        if (!response.ok) {
+          throw new Error("Error al salir de la community")
+        }
+        return true
+      },
+
+    updateCommunityName: async (id: string, name: string): Promise<boolean> => {
+      const response = await api.apisauce.put(`/community/name/${id}`, { name });
+      if (!response.ok) {
+        throw new Error("Error al cambiar el nombre de la community");
+      }
+      return true;
+    },
+    
+
 }
