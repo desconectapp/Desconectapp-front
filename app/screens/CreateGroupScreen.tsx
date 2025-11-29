@@ -40,22 +40,10 @@ const { width, height } = Dimensions.get("window")
 // Types inferred from RequestConfirmationScreen.tsx
 type ScheduleTimeSlot = { start: string; end: string }
 type DaySchedule = {
-  day: string; // e.g., "Lunes", "Martes"
+  day: string;
   timeSlots: ScheduleTimeSlot[];
 }
 type SelectedScheduleData = DaySchedule[];
-
-
-const convertScheduleToApiFormat = (schedules: SelectedScheduleData): number[] => {
-    if (!schedules || schedules.length === 0) return []
-    
-    // Placeholder logic: This must be replaced with your actual mapping logic.
-    // e.g., return schedules.flatMap(s => s.timeSlots.map(t => calculateTimeSlotId(s.day, t)))
-    
-    console.warn("Schedule conversion logic is a placeholder and needs implementation.")
-    // Returning dummy data or an empty array for now.
-    return [] 
-}
 
 
 export const CreateGroupScreen = observer(function CreateGroupScreen() {

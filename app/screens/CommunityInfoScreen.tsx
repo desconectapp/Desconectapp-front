@@ -38,7 +38,6 @@ import { GroupData } from "@/services/groups/Groups.types"
 import { selectedLocation } from "types"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { FontAwesome } from "@expo.vector-icons"
 
 import { AutoImage } from "@/components"
 import useImagePicker from "@/hooks/Image"
@@ -373,22 +372,9 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
           <View style={styles.placeholderContainer}>
               <Text style={themed(themedStyles.sectionTitle)}>Horarios</Text>
-              {isEditing ? (
-                  <TextInput
-                      style={[
-                          themed(timeTextStyle),
-                          styles.timeInput,
-                          { marginBottom: spacing.md }
-                      ]}
-                      value={tempEventTime}
-                      onChangeText={setTempEventTime}
-                      placeholder="Tap to set time (e.g., 2025-12-31T10:00:00Z)"
-                  />
-              ) : (
                 <View style={styles.scheduleSection}>
                       <SchedulePreview weekTimeslots={communityData.week_timeslots} />
                   </View>
-              )}
           </View>
         </View>
         

@@ -30,29 +30,20 @@ import { useCreateCommunity } from "@/hooks/Communities"
 import { selectedLocation } from "types" 
 import { useActivities } from "@/hooks/Users"
 import { CreateCommunityParams } from "@/services/communities"
+import { convertScheduleToTimeSlot } from "@/models/RequestStore"
+
 
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
 const { width, height } = Dimensions.get("window")
 
-// Types inferred from RequestConfirmationScreen.tsx
 type ScheduleTimeSlot = { start: string; end: string }
 type DaySchedule = {
-  day: string; // e.g., "Lunes", "Martes"
+  day: string;
   timeSlots: ScheduleTimeSlot[];
 }
 type SelectedScheduleData = DaySchedule[];
 
-const convertScheduleToApiFormat = (schedules: SelectedScheduleData): number[] => {
-    if (!schedules || schedules.length === 0) return []
-    
-    // Placeholder logic: This must be replaced with your actual mapping logic.
-    // e.g., return schedules.flatMap(s => s.timeSlots.map(t => calculateTimeSlotId(s.day, t)))
-    
-    console.warn("Schedule conversion logic is a placeholder and needs implementation.")
-    // Returning dummy data or an empty array for now.
-    return [] 
-}
 
 export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
     const { themed, theme } = useAppTheme()
@@ -74,7 +65,6 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
     const [displaySchedule, setDisplaySchedule] = useState("")
     
     const [activityId, setActivityId] = useState<number | null>(null)
-    const [isPublic, setIsPublic] = useState(false)
 
     // ... (rest of the state and useCallbacks for activities remain the same)
     const [showActivityModal, setShowActivityModal] = useState(false)
@@ -188,7 +178,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
             return;
         }
 
-        const apiScheduleData = scheduleData ? convertScheduleToApiFormat(scheduleData) : [];
+        const apiScheduleData = scheduleData ? convertScheduleToTimeSlot(scheduleData) : [];
 
         const newCommunity: CreateCommunityParams = {
             name: name.trim(),
