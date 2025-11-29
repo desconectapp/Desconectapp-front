@@ -14,7 +14,9 @@ import {
   type ViewStyle,
   type TextStyle,
   type ImageStyle,
+  ScrollView,
 } from "react-native"
+import Animated from "react-native-reanimated"
 import { Button, Text } from "@/components"
 import { useSafeAreaInsetsStyle } from "../utils/useSafeAreaInsetsStyle"
 import { useAppTheme } from "@/utils/useAppTheme"
@@ -22,7 +24,7 @@ import { useAppTheme } from "@/utils/useAppTheme"
 import { useAppToast } from "@/components/useToast"
 import { spacing } from "@/theme"
 import {
-  useExitGroup, 
+  useExitGroup,
   updateGroupDescription,
   updateGroupName as useUpdateGroupName,
   updateGroupLocation as useUpdateGroupLocation,
@@ -32,27 +34,29 @@ import { useCommunityById } from "@/hooks/Communities"
 import { useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { AppStackParamList } from "@/navigators/AppNavigator"
-import { GroupData } from "@/services/groups/Groups.types" // NOTE: Replace GroupData with CommunityData if available
+import { GroupData } from "@/services/groups/Groups.types"
 import { selectedLocation } from "types"
 
 import { useQueryClient } from "@tanstack/react-query"
-import { FontAwesome } from "@expo/vector-icons"
+import { FontAwesome } from "@expo.vector-icons"
 
 import { AutoImage } from "@/components"
 import useImagePicker from "@/hooks/Image"
 import { useUploadGroupImage } from "@/hooks/Chats"
+import { SchedulePreview } from "@/components/Custom/SchedulePreview"
 
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
 const formatTimeDisplay = (timeString: string | undefined): string => {
     if (!timeString) return "No Time Set"
-    // Example: Simple display, replace with your actual formatting logic
     return new Date(timeString).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
 }
 
 
 export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route }: any) {
   const { communityId } = route.params
+
+  const radarApiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY
 
   const { themed, theme } = useAppTheme()
   const $topInsets = useSafeAreaInsetsStyle(["top"])
@@ -63,8 +67,8 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const queryClient = useQueryClient()
 
   const { mutateAsync: exitGroupAsync } = useExitGroup()
-  
-  const { data: communityData, isLoading } = useCommunityById(communityId)!!!!!
+
+  const { data: communityData, isLoading } = useCommunityById(communityId)
 
   const [isModalVisible, setIsModalVisible] = useState(false)
 
@@ -73,13 +77,12 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const { mutate: updateGroupLocation } = useUpdateGroupLocation()
   const { mutate: updateGroupPhoto } = useUpdateGroupPhoto()
 
-  // Editing States
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState("")
   const [tempDescription, setTempDescription] = useState("")
   const [tempLocation, setTempLocation] = useState("")
   const [tempDisplayLocation, setTempDisplayLocation] = useState("")
-  const [tempEventTime, setTempEventTime] = useState("") 
+  const [tempEventTime, setTempEventTime] = useState("")
 
   const { imageUri, handleImagePicker } = useImagePicker()
   const { isPending: isUploadingImage, mutateAsync: uploadGroupImageAsync } = useUploadGroupImage()
@@ -103,27 +106,39 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
     if (communityData) {
       setTempName(communityData.name)
       setTempDescription(communityData.description ?? "")
-      setTempDisplayLocation(communityData.locationName ?? "")
-      setTempLocation("") 
+      setTempDisplayLocation(communityData.location_name ?? "")
+      setTempLocation("")
     }
   }, [communityData])
 
-  // --- Location Handlers ---
   const handleLocationSelect = useCallback((selectedLoc: selectedLocation) => {
       const coordString = `${selectedLoc.longitude},${selectedLoc.latitude}`
-      setTempLocation(coordString) 
+      setTempLocation(coordString)
       setTempDisplayLocation(selectedLoc.name || selectedLoc.address)
-      
+
       showToast("Success", `New location selected: ${selectedLoc.name || selectedLoc.address}`)
   }, [showToast])
 
   const handleOpenLocationPicker = () => {
       if (!isEditing) return
-      
-      navigation.navigate("LocationPickerScreen" as any, { 
+
+      navigation.navigate("LocationPickerScreen" as any, {
           onLocationSelect: handleLocationSelect,
       })
   }
+
+  let lat: string | undefined
+  let long: string | undefined
+  const coords = communityData?.location
+
+  if (typeof coords === 'string' && coords.includes(',')) {
+    long = coords.split(",")[0]
+    lat = coords.split(",")[1]
+  }
+
+  const locationImage = (lat && long && radarApiKey)
+    ? `https://api.radar.io/maps/static?center=${lat},${long}&zoom=13&width=400&height=400&publishableKey=${radarApiKey}`
+    : undefined
 
   if (isLoading) {
     return <Text>Loading...</Text>
@@ -154,8 +169,8 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
       })
 
       await exitGroupAsync(communityId)
-      await queryClient.removeQueries({ queryKey: ["community", communityId] }) // INVALIDATION KEY: Changed to 'community'
-      await queryClient.invalidateQueries({ queryKey: ["communities"] }) // INVALIDATION KEY: Changed to 'communities'
+      await queryClient.removeQueries({ queryKey: ["community", communityId] })
+      await queryClient.invalidateQueries({ queryKey: ["communities"] })
       showToast("Success", "You have left the community successfully.")
     } catch (error) {
       console.error("Error leaving community:", error)
@@ -165,11 +180,6 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
   const handleSave = async () => {
     try {
-      // if (imageUri) {
-      //   const url = await uploadGroupImageAsync({ communityId, uri: imageUri })
-      //   updateGroupPhoto({ id: communityData.id, avatar_url: url })
-      // }
-
       if (tempName !== communityData.name) {
         updateGroupName({ id: communityData.id, name: tempName })
       }
@@ -178,17 +188,17 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         updateDescription({ id: communityData.id, description: tempDescription })
       }
 
-      const locationHasChanged = 
-        tempLocation !== "" || tempDisplayLocation !== communityData.locationName
+      const locationHasChanged =
+        tempLocation !== "" || tempDisplayLocation !== communityData.location_name
 
       if (locationHasChanged) {
-        updateGroupLocation({ 
-          id: communityData.id, 
+        updateGroupLocation({
+          id: communityData.id,
           location: tempLocation,
-          locationName: tempDisplayLocation
+          location_name: tempDisplayLocation
         })
       }
-      
+
 
       setIsEditing(false)
 
@@ -196,8 +206,8 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         ...oldData,
         name: tempName,
         description: tempDescription,
-        location: tempDisplayLocation, 
-        locationName: tempDisplayLocation, 
+        location: tempDisplayLocation,
+        locationName: tempDisplayLocation,
       }))
     } catch (error) {
       console.error("Failed to save changes:", error)
@@ -207,13 +217,13 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const handleCancelEdit = () => {
     setTempName(communityData.name)
     setTempDescription(communityData.description ?? "")
-    setTempLocation("") 
-    setTempDisplayLocation(communityData.locationName ?? "")
+    setTempLocation("")
+    setTempDisplayLocation(communityData.location_name ?? "")
     setIsEditing(false)
   }
 
-  
-  const currentLocationDisplay = isEditing 
+
+  const currentLocationDisplay = isEditing
     ? (tempDisplayLocation || "Tap to set location...")
     : (communityData.locationName || communityData.location || "No Location Set")
 
@@ -240,7 +250,6 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
         <Text style={themed(themedStyles.headerTitle)}>Community Info</Text>
 
-        {/* Conditional Edit/Save/Cancel Buttons - Only visible if isAdmin is true */}
         {isAdmin && (
             isEditing ? (
                 <View style={styles.headerButtonContainer}>
@@ -257,137 +266,151 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
                 </Pressable>
             )
         )}
-        
+
         {!isAdmin && !isEditing && <View style={{ width: 40 }} />}
       </View>
 
-      <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
-        <View style={{ alignItems: "center", marginBottom: spacing.md }}>
-          <View style={{ position: "relative" }}>
-            <AutoImage
-              source={
-                imageUri || communityData?.avatar_url
-                  ? { uri: imageUri ?? communityData?.avatar_url }
-                  : require("../../assets/images/default-avatar.png")
-              }
-              style={{ width: 100, height: 100, borderRadius: 50 }}
-              resizeMode="cover"
+      <ScrollView contentContainerStyle={styles.scrollContentContainer}>
+        <View style={[styles.groupInfoContainer, themed(themedStyles.groupInfoSection)]}>
+          <View style={{ alignItems: "center", marginBottom: spacing.md }}>
+            <View style={{ position: "relative" }}>
+              <AutoImage
+                source={
+                  imageUri || communityData?.avatar_url
+                    ? { uri: imageUri ?? communityData?.avatar_url }
+                    : require("../../assets/images/default-avatar.png")
+                }
+                style={{ width: 100, height: 100, borderRadius: 50 }}
+                resizeMode="cover"
+              />
+              {isEditing && (
+                <TouchableOpacity
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: 50,
+                    backgroundColor: "rgba(0,0,0,0.6)",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={handleImagePicker}
+                  activeOpacity={0.8}
+                >
+                  {isUploadingImage ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={{ color: "#fff", fontSize: 20 }}>✏️</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {isEditing ? (
+            <TextInput
+              style={themed(themedStyles.groupNameInput)}
+              value={tempName}
+              onChangeText={setTempName}
+              placeholder="Community Name"
             />
-            {isEditing && (
-              <TouchableOpacity
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  borderRadius: 50,
-                  backgroundColor: "rgba(0,0,0,0.6)",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-                onPress={handleImagePicker}
-                activeOpacity={0.8}
-              >
-                {isUploadingImage ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={{ color: "#fff", fontSize: 20 }}>✏️</Text>
-                )}
-              </TouchableOpacity>
-            )}
+          ) : (
+            <Text style={themed(themedStyles.groupName)}>{communityData.name}</Text>
+          )}
+
+          <View style={styles.placeholderContainer}>
+              <Text style={themed(themedStyles.sectionTitle)}>Ubicacion</Text>
+              {isEditing ? (
+                  <Pressable
+                      onPress={handleOpenLocationPicker}
+                      style={[
+                          styles.locationPressableContainer,
+                          themed(themedStyles.locationPressableContainer),
+                          { marginBottom: spacing.sm }
+                      ]}
+                  >
+                      <Text
+                          style={[
+                              styles.groupLocation,
+                              themed(locationTextStyle)
+                          ]}
+                      >
+                          {currentLocationDisplay}
+                      </Text>
+                  </Pressable>
+              ) : (
+                  <>
+                      <Text
+                          style={[themed(themedStyles.groupLocation), { marginBottom: spacing.sm }]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                      >
+                          {currentLocationDisplay}
+                      </Text>
+
+                      <View style={styles.infoSection}>
+                          {locationImage ? (
+                              <Animated.Image
+                                  source={{ uri: locationImage }}
+                                  style={{
+                                      width: "100%",
+                                      height: 200,
+                                      marginBottom: spacing.lg,
+                                      borderRadius: spacing.md,
+                                      borderColor: themed(themedStyles.mapBorderColor).color,
+                                      borderWidth: 1,
+                                  }}
+                              />
+                          ) : (
+                              <Text style={themed(themedStyles.descriptionText)}>No hay ubicacion disponible.</Text>
+                          )}
+                      </View>
+                  </>
+              )}
+          </View>
+
+          <View style={styles.placeholderContainer}>
+              <Text style={themed(themedStyles.sectionTitle)}>Horarios</Text>
+              {isEditing ? (
+                  <TextInput
+                      style={[
+                          themed(timeTextStyle),
+                          styles.timeInput,
+                          { marginBottom: spacing.md }
+                      ]}
+                      value={tempEventTime}
+                      onChangeText={setTempEventTime}
+                      placeholder="Tap to set time (e.g., 2025-12-31T10:00:00Z)"
+                  />
+              ) : (
+                <View style={styles.scheduleSection}>
+                      <SchedulePreview weekTimeslots={communityData.week_timeslots} />
+                  </View>
+              )}
           </View>
         </View>
-
-        {isEditing ? (
-          <TextInput
-            style={themed(themedStyles.groupNameInput)}
-            value={tempName}
-            onChangeText={setTempName}
-            placeholder="Community Name"
-          />
-        ) : (
-          <Text style={themed(themedStyles.groupName)}>{communityData.name}</Text>
-        )}
-
-        {/* PLACEHOLDER: Location Section */}
-        <View style={styles.placeholderContainer}>
-            <Text style={themed(themedStyles.placeholderLabel)}>Location</Text>
-            {isEditing ? (
-                <Pressable 
-                    onPress={handleOpenLocationPicker} 
-                    style={[
-                        styles.locationPressableContainer, 
-                        themed(themedStyles.locationPressableContainer),
-                        { marginBottom: spacing.sm }
-                    ]}
-                >
-                    <Text 
-                        style={[
-                            styles.groupLocation, 
-                            themed(locationTextStyle)
-                        ]}
-                    >
-                        {currentLocationDisplay}
-                    </Text>
-                </Pressable>
-            ) : (
-                <Text 
-                    style={[themed(themedStyles.groupLocation), { marginBottom: spacing.sm }]}
-                    numberOfLines={1} 
-                    ellipsizeMode="tail"
-                >
-                    {currentLocationDisplay}
-                </Text>
-            )}
+        
+        <View style={styles.descriptionSection}>
+          <Text style={themed(themedStyles.sectionTitle)}>About the Community</Text>
+          
+          {isEditing ? (
+            <TextInput
+              style={themed(themedStyles.groupDescriptionInput)}
+              value={tempDescription}
+              onChangeText={setTempDescription}
+              multiline
+              placeholder="Community Description"
+            />
+          ) : (
+            <Text style={[themed(themedStyles.placeholderText), styles.descriptionTextContent]}>
+                {communityData.description || "No description provided."}
+            </Text>
+          )}
         </View>
+      </ScrollView>
 
-        {/* PLACEHOLDER: Time/Date Section */}
-        <View style={styles.placeholderContainer}>
-            <Text style={themed(themedStyles.placeholderLabel)}>Time</Text>
-            {isEditing ? (
-                <TextInput
-                    style={[
-                        themed(timeTextStyle), 
-                        styles.timeInput,
-                        { marginBottom: spacing.md }
-                    ]}
-                    value={tempEventTime}
-                    onChangeText={setTempEventTime}
-                    placeholder="Tap to set time (e.g., 2025-12-31T10:00:00Z)"
-                />
-            ) : (
-                <Text 
-                    style={[themed(themedStyles.groupLocation), { marginBottom: spacing.md }]} 
-                    numberOfLines={1} 
-                    ellipsizeMode="tail"
-                >
-                </Text>
-            )}
-        </View>
-
-        {isEditing ? (
-          <TextInput
-            style={themed(themedStyles.groupDescriptionInput)}
-            value={tempDescription}
-            onChangeText={setTempDescription}
-            multiline
-            placeholder="Community Description"
-          />
-        ) : (
-          <Text style={themed(themedStyles.groupDescription)}>{communityData.description}</Text>
-        )}
-      </View>
-
-      {/* PLACEHOLDER: Members List Replacement */}
-      <View style={styles.placeholderSection}>
-        <Text style={themed(themedStyles.sectionTitle)}>About the Community</Text>
-        <Text style={themed(themedStyles.placeholderText)}>
-          This section contains information about the community, such as description, location, and time.
-        </Text>
-      </View>
-
-      {/* Footer */}
       <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
         <Button
           text="Leave Community"
@@ -399,7 +422,6 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
           onPress={handlePressLeave}
         />
 
-        {/* Leave Community Confirmation Modal */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -440,6 +462,11 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
 export const styles = StyleSheet.create({
   container: { flex: 1 } as ViewStyle,
+
+  scrollContentContainer: {
+    flexGrow: 1,
+    paddingBottom: spacing.lg,
+  } as ViewStyle,
 
   descriptionInput: {
     minHeight: 60,
@@ -548,6 +575,9 @@ export const styles = StyleSheet.create({
   groupInfoContainer: {
     alignItems: "center",
     paddingVertical: spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    width: '100%',
   } as ViewStyle,
 
   groupIcon: {
@@ -581,6 +611,12 @@ export const styles = StyleSheet.create({
     marginVertical: spacing.md,
   } as ViewStyle,
 
+  infoSection: {
+      width: '100%',
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.md,
+  } as ViewStyle,
+
   placeholderContainer: {
     width: '100%',
     alignItems: 'center',
@@ -588,13 +624,13 @@ export const styles = StyleSheet.create({
     marginTop: spacing.md,
   } as ViewStyle,
 
-  placeholderSection: {
-    flex: 1,
-    padding: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  // MODIFIED: Removed border and adjusted padding/alignment for seamless integration
+  descriptionSection: {
+    width: '100%',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md, // Add vertical padding to match other sections
   } as ViewStyle,
-  
+
   footer: {
     padding: spacing.lg,
     borderTopWidth: 1,
@@ -620,9 +656,21 @@ export const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: spacing.lg,
   } as ViewStyle,
-  
+
   timeInput: {
       width: '100%',
+  } as TextStyle,
+
+  scheduleSection: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
+  } as ViewStyle,
+  
+  // Custom style for the description text inside the new section
+  descriptionTextContent: {
+    paddingHorizontal: 0, // Reset padding if inherited from placeholderText
+    textAlign: 'left',
+    marginTop: spacing.xs,
   } as TextStyle,
 })
 
@@ -721,7 +769,7 @@ export const themedStyles = {
   groupDescriptionInput: (theme: any): TextStyle => ({
     fontSize: 14,
     color: theme.colors.text,
-    textAlign: "center",
+    textAlign: "left",
     marginTop: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderWidth: 1,
@@ -730,7 +778,7 @@ export const themedStyles = {
     padding: spacing.sm,
     minHeight: 80,
     textAlignVertical: "top",
-    width: '90%',
+    width: '100%',
   }),
 
   locationPressableContainer: (theme: any): ViewStyle => ({
@@ -750,7 +798,7 @@ export const themedStyles = {
     padding: spacing.sm,
     width: '100%',
   }),
-  
+
   locationPlaceholderText: (theme: any): TextStyle => ({
     fontSize: 16,
     color: theme.colors.textDim,
@@ -763,16 +811,29 @@ export const themedStyles = {
     width: '100%',
   }),
 
+  descriptionText: (theme: any): TextStyle => ({
+      fontSize: 14,
+      color: theme.colors.textDim,
+      textAlign: 'center',
+  }),
+
+  mapBorderColor: (theme: any): TextStyle => ({
+      color: theme.colors.border,
+  }),
+
   sectionTitle: (theme: any): TextStyle => ({
       fontSize: 18,
       fontWeight: 'bold',
       color: theme.colors.text,
       marginBottom: spacing.sm,
+      textAlign: 'left',
+      alignSelf: 'flex-start',
   }),
   placeholderText: (theme: any): TextStyle => ({
       fontSize: 16,
       color: theme.colors.textDim,
-      textAlign: 'center',
+      // Removed centered alignment so description content can align left
+      // textAlign: 'center', 
   }),
   placeholderLabel: (theme: any): TextStyle => ({
       fontSize: 12,

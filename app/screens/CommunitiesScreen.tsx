@@ -39,36 +39,19 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
   const { data: paginatedCommunities, isLoading, refetch } = useCommunity({ enabled: isFocused })
   const [refreshing, setRefreshing] = useState(false)
   const [allCommunities, setAllCommunities] = useState<Community[]>([]) 
-
-  const {
-    data: recommendedGroups,
-    isLoading: isLoadingRecs,
-    refetch: refetchRecs,
-  } = useGroupsRecs(0, { enabled: isFocused })
-  const [refreshingRecs, setRefreshingRecs] = useState(false)
   
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
-    setRefreshingRecs(true)
     try {
-      await Promise.all([refetch(), refetchRecs()])
+      await refetch()
     } finally {
       setRefreshing(false)
-      setRefreshingRecs(false)
     }
-  }, [refetch, refetchRecs])
+  }, [refetch])
 
   useEffect(() => {
     if (paginatedCommunities?.communities) setAllCommunities(paginatedCommunities.communities) 
   }, [paginatedCommunities])
-
-  const recommendedPhotoItems: PhotoItem[] =
-    recommendedGroups?.groups?.map((group: OpenGroup) => ({
-      id: String(group.id),
-      title: group.name, 
-      subtitle: group.activity_name, 
-      image: group.photo,
-    })) || []
 
   const handleAddCommunity = () => {
     navigation.navigate("CreateCommunityScreen" as never)
@@ -169,40 +152,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
       )
     }
 
-    const discoverSection = () => (
-      <View style={themed(themedStylesGroup.sectionContainer)}>
-        <View style={themed(themedStylesGroup.sectionHeader)}>
-          <Text style={themed(themedStylesGroup.sectionTitle)}>Discover New Communities</Text> 
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate("NearbyGroupsScreen" as never)} 
-            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-          >
-            <FontAwesome5 name="globe-americas" size={20} color={theme.colors.tint} />
-            <Text style={themed(themedStylesGroup.seeAllText)}>See All</Text>
-          </TouchableOpacity>
-        </View>
 
-        {isLoadingRecs ? (
-          <ActivityIndicator style={{ marginVertical: 20 }} size="large" />
-        ) : recommendedPhotoItems.length === 0 ? (
-          <View style={themed(themedStylesGroup.emptyContainer)}>
-            <Text style={themed(themedStylesGroup.emptySubtitle)}>
-              No new communities to recommend right now 👀
-            </Text>
-          </View>
-        ) : (
-          <PhotoGallerySlider
-            onItemPress={(item) => {
-              const selected = recommendedGroups?.groups.find((g) => String(g.id) === item.id)
-              if (selected) navigation.navigate("SuggestionScreen", { group: selected }) 
-            }}
-            data={recommendedPhotoItems}
-            itemWidth={width * 0.42}
-          />
-        )}
-      </View>
-    )
 
     return (
       <SafeAreaView style={[styles.container, themed(themedStylesGroup.container)]}>
@@ -220,7 +170,6 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
           </TouchableOpacity>
         </View>
         {myCommunitiesSection()} 
-        {discoverSection()}
       </SafeAreaView>
     )
   }
@@ -232,7 +181,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
       keyExtractor={(item) => item.key}
       refreshControl={
         <RefreshControl
-          refreshing={refreshing || refreshingRecs}
+          refreshing={refreshing}
           onRefresh={onRefresh}
           tintColor={theme.colors.tint}
         />
