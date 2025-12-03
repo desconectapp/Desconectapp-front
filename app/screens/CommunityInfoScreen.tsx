@@ -46,7 +46,7 @@ import { SchedulePreview } from "@/components/Custom/SchedulePreview"
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
 
 const formatTimeDisplay = (timeString: string | undefined): string => {
-    if (!timeString) return "No Time Set"
+    if (!timeString) return "Sin horario"
     return new Date(timeString).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
 }
 
@@ -113,7 +113,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
       setTempLocation(coordString)
       setTempDisplayLocation(selectedLoc.name || selectedLoc.address)
 
-      showToast("Success", `New location selected: ${selectedLoc.name || selectedLoc.address}`)
+      showToast("Éxito", `Nueva ubicación seleccionada: ${selectedLoc.name || selectedLoc.address}`)
   }, [showToast])
 
   const handleOpenLocationPicker = () => {
@@ -138,14 +138,14 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
     : undefined
 
   if (isLoading) {
-    return <Text>Loading...</Text>
+    return <Text>Cargando...</Text>
   }
 
   if (!communityData) {
     return (
       <View>
-        <Text>Community not found or has been left.</Text>
-        <Button onPress={() => navigation.goBack()} text="Go Back" />
+        <Text>La comunidad no fue encontrada o ha sido abandonada.</Text>
+        <Button onPress={() => navigation.goBack()} text="Volver" />
       </View>
     )
   }
@@ -168,10 +168,10 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
       await exitGroupAsync(communityId)
       await queryClient.removeQueries({ queryKey: ["community", communityId] })
       await queryClient.invalidateQueries({ queryKey: ["communities"] })
-      showToast("Success", "You have left the community successfully.")
+      showToast("Éxito", "Has abandonado la comunidad exitosamente.")
     } catch (error) {
       console.error("Error leaving community:", error)
-      showToast("Error", "Failed to leave the community. Please try again.")
+      showToast("Error", "No se pudo abandonar la comunidad. Por favor intenta de nuevo.")
     }
   }
 
@@ -221,8 +221,8 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
 
   const currentLocationDisplay = isEditing
-    ? (tempDisplayLocation || "Tap to set location...")
-    : (communityData.locationName || communityData.location || "No Location Set")
+    ? (tempDisplayLocation || "Tocá para establecer ubicación...")
+    : (communityData.locationName || communityData.location || "Sin Ubicación")
 
   const locationTextStyle = isEditing && !tempDisplayLocation
     ? themedStyles.locationPlaceholderText
@@ -245,16 +245,16 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
           <Text style={themed(themedStyles.backButtonText)}>←</Text>
         </TouchableOpacity>
 
-        <Text style={themed(themedStyles.headerTitle)}>Community Info</Text>
+        <Text style={themed(themedStyles.headerTitle)}>Información de la Comunidad</Text>
 
         {isAdmin && (
             isEditing ? (
                 <View style={styles.headerButtonContainer}>
                     <Pressable onPress={handleCancelEdit}>
-                        <Text style={themed(themedStyles.headerCancelButton)}>Cancel</Text>
+                        <Text style={themed(themedStyles.headerCancelButton)}>Cancelar</Text>
                     </Pressable>
                     <Pressable onPress={handleSave} style={{ marginLeft: spacing.sm }}>
-                        <Text style={themed(themedStyles.headerButton)}>Save</Text>
+                        <Text style={themed(themedStyles.headerButton)}>Guardar</Text>
                     </Pressable>
                 </View>
             ) : (
@@ -311,7 +311,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
               style={themed(themedStyles.groupNameInput)}
               value={tempName}
               onChangeText={setTempName}
-              placeholder="Community Name"
+              placeholder="Nombre de la Comunidad"
             />
           ) : (
             <Text style={themed(themedStyles.groupName)}>{communityData.name}</Text>
@@ -377,7 +377,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         </View>
         
         <View style={styles.descriptionSection}>
-          <Text style={themed(themedStyles.sectionTitle)}>About the Community</Text>
+          <Text style={themed(themedStyles.sectionTitle)}>Acerca de la Comunidad</Text>
           
           {isEditing ? (
             <TextInput
@@ -385,11 +385,11 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
               value={tempDescription}
               onChangeText={setTempDescription}
               multiline
-              placeholder="Community Description"
+              placeholder="Descripción de la Comunidad"
             />
           ) : (
             <Text style={[themed(themedStyles.placeholderText), styles.descriptionTextContent]}>
-                {communityData.description || "No description provided."}
+                {communityData.description || "No se proporcionó descripción."}
             </Text>
           )}
         </View>
@@ -397,7 +397,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
       <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
         <Button
-          text="Leave Community"
+          text="Abandonar Comunidad"
           preset="default"
           style={[styles.leaveButton, themed(themedStyles.leaveButton)]}
           textStyle={[styles.leaveButtonText, themed(themedStyles.leaveButtonText)]}
@@ -414,16 +414,16 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         >
           <View style={styles.centeredView}>
             <View style={[styles.modalView, themed(themedStyles.modalView)]}>
-              <Text style={styles.modalTitle}>Leave Community?</Text>
+              <Text style={styles.modalTitle}>¿Abandonar Comunidad?</Text>
               <Text style={styles.modalDescription}>
-                Are you sure you want to leave this community? This can not be undone.
+                ¿Estás seguro/a de que querés abandonar esta comunidad? Esto no se puede deshacer.
               </Text>
               <View style={styles.modalButtonsContainer}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.cancelButton]}
                   onPress={handleCancelLeave}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={styles.modalButtonText}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -433,7 +433,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
                   ]}
                   onPress={handleConfirmLeave}
                 >
-                  <Text style={styles.modalButtonText}>Leave</Text>
+                  <Text style={styles.modalButtonText}>Abandonar</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -74,7 +74,7 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
       }}
     >
       <Text style={themed($title)}>
-        Explore groups near your location.
+        Explora grupos cerca de tu ubicación.
       </Text>
       <View style={themed($mapContainer)}>
         <MapViewComponent

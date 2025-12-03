@@ -74,7 +74,7 @@ export const LoginScreen = observer(() => {
           Conecta con lo que te gusta
         </Text>
         <Text preset="subheading" style={themed($subtitleText)}>
-          Enter your credentials to continue
+          Ingresa tus credenciales para continuar
         </Text>
       </View>
 
@@ -87,10 +87,10 @@ export const LoginScreen = observer(() => {
             label: "Email",
             placeholder: "example@mail.com",
             rules: {
-              required: "Email is required",
+              required: "El email es requerido",
               pattern: {
                 value: /^\S+@\S+$/i,
-                message: "Invalid email",
+                message: "Email inválido",
               },
             },
           },
@@ -98,7 +98,7 @@ export const LoginScreen = observer(() => {
             name: "password",
             label: "Password",
             placeholder: "••••••••",
-            rules: { required: "Password is required" },
+            rules: { required: "La contraseña es necesaria" },
             render: ({ value, onChange }) => (
               <View style={$passwordContainer}>
                 <TextInput
@@ -120,7 +120,7 @@ export const LoginScreen = observer(() => {
             ),
           },
         ]}
-        submitText="Login"
+        submitText="Iniciar Sesión"
         onSubmit={onSubmit}
         forgotPassword={false}
         isSubmitting={loading}
@@ -136,7 +136,7 @@ export const LoginScreen = observer(() => {
           })}
           onPress={() => navigation.navigate("SignUpScreen")}
         >
-          Don&apos;t have an account? Sign Up
+          ¿No tienes una cuenta? Regístrate
         </Text>
       </View>
 
@@ -150,7 +150,7 @@ export const LoginScreen = observer(() => {
           })}
           onPress={() => navigation.navigate("ForgotPasswordScreen")}
         >
-          Forgot your password? Reset
+          ¿Olvidaste tu contraseña? Restablecer
         </Text>
       </View>
     </Screen>

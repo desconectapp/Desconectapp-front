@@ -145,7 +145,7 @@ export const HomeScreen = observer(function HomeScreen() {
               {item.lastMessage ? (
                 item.lastMessage.image_url ? (
                   <Text style={themed(themedStylesGroup.lastMessage)}>
-                    <FontAwesome5 name="image" size={14} /> Photo
+                    <FontAwesome5 name="image" size={14} /> Foto
                   </Text>
                 ) : (
                   addThreeDotsToText(item.lastMessage.content, 20)
@@ -168,8 +168,8 @@ export const HomeScreen = observer(function HomeScreen() {
         return (
           <View style={themed(themedStylesGroup.emptyContainer)}>
             <Text style={themed(themedStylesGroup.emptyIcon)}>👥</Text>
-            <Text style={themed(themedStylesGroup.emptyTitle)}>No Groups Yet</Text>
-            <Text style={themed(themedStylesGroup.emptySubtitle)}>Make your first search!</Text>
+            <Text style={themed(themedStylesGroup.emptyTitle)}>Aún No Hay Grupos</Text>
+            <Text style={themed(themedStylesGroup.emptySubtitle)}>¡Haz tu primera búsqueda!</Text>
           </View>
         )
 
@@ -197,7 +197,7 @@ export const HomeScreen = observer(function HomeScreen() {
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate("MyGroupsScreen")}
               >
-                <Text style={themed(themedStylesGroup.seeAllText)}>See All</Text>
+                <Text style={themed(themedStylesGroup.seeAllText)}>Ver Todo</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -217,7 +217,7 @@ export const HomeScreen = observer(function HomeScreen() {
     const discoverSection = () => (
       <View style={themed(themedStylesGroup.sectionContainer)}>
         <View style={themed(themedStylesGroup.sectionHeader)}>
-          <Text style={themed(themedStylesGroup.sectionTitle)}>Discover New Groups</Text>
+          <Text style={themed(themedStylesGroup.sectionTitle)}>Descubrir Nuevos Grupos</Text>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigation.navigate("NearbyGroupsScreen" as never)}
@@ -258,7 +258,7 @@ export const HomeScreen = observer(function HomeScreen() {
             resizeMode="contain"
           />
           <Text style={themed([themedStylesGroup.headerTitle, styles.headerTitleOverride])}>
-            Groups
+            Grupos
           </Text>
           <TouchableOpacity onPress={handleAddGroup} activeOpacity={0.7} style={styles.addButton}>
             <FontAwesome5 name="plus" size={22} color={theme.colors.tint} />

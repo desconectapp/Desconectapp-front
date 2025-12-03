@@ -189,7 +189,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             <View style={styles.headerTextContainer}>
               <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
               <Text style={themed(themedStyles.memberCount)}>
-                {groupData?.members?.length} members
+                {groupData?.members?.length} miembros
               </Text>
             </View>
           </TouchableOpacity>
@@ -244,7 +244,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             style={themed(themedStyles.textInput)}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Type a message..."
+            placeholder="Escribe un mensaje..."
             placeholderTextColor={theme.colors.textDim}
             multiline
             maxLength={500}

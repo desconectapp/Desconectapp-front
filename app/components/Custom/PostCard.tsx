@@ -61,7 +61,7 @@ export const PostCard = ({ item }: PostCardProps) => {
       return messageDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     } else {
       // For a post card, we show more context (e.g., Oct 27 at 8:28 PM)
-      return messageDate.toLocaleDateString('en-US', {
+      return messageDate.toLocaleDateString('es-ES', {
         month: 'short',
         day: 'numeric',
         hour: 'numeric',

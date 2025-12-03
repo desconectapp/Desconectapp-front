@@ -25,7 +25,7 @@ export const ActivityPickerScreen = observer(function ActivityPickerScreen({
     console.error("RequestStore not available in ActivityPickerScreen")
     return (
       <Screen preset="fixed">
-        <Text>Loading...</Text>
+        <Text>Cargando...</Text>
       </Screen>
     )
   }

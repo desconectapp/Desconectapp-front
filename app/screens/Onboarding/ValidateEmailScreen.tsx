@@ -71,7 +71,7 @@ export const ValidateEmailScreen = observer(() => {
         navigation.navigate("MoreInfoScreen")
       })
       .catch(() => {
-        setErrorMessage("Invalid code. Please try again.")
+        setErrorMessage("Código inválido. Por favor intenta de nuevo.")
         setDigits(Array(codeLength).fill(""))
         inputsRef.current[0]?.focus()
       })
@@ -84,9 +84,9 @@ export const ValidateEmailScreen = observer(() => {
       backgroundColor={themed($screenBackground)}
     >
       <Text preset="heading" style={themed($title)}>
-        Verify your Email
+        Verifica tu Email
       </Text>
-      <Text style={themed($subtitle)}>We sent you an email. Paste the code below to validate.</Text>
+      <Text style={themed($subtitle)}>Te enviamos un email. Pega el código a continuación para validar.</Text>
 
       <View style={$inputsRow}>
         {Array.from({ length: codeLength }).map((_, idx) => (
@@ -106,13 +106,13 @@ export const ValidateEmailScreen = observer(() => {
       </View>
 
       <TouchableOpacity onPress={handlePaste} style={$pasteButton}>
-        <Text style={themed($pasteText)}>Paste Code</Text>
+        <Text style={themed($pasteText)}>Pegar Código</Text>
       </TouchableOpacity>
 
       <Text style={themed($errorMessage)}>{errorMessage}</Text>
 
       <Button
-        text="Validate"
+        text="Validar"
         onPress={handleSubmit}
         disabled={digits.join("").length !== codeLength}
         style={themed($validateButton)}

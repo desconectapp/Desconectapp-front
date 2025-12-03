@@ -31,7 +31,7 @@ export function AuthForm<T>({
   form,
   fields,
   onSubmit,
-  submitText = "Submit",
+  submitText = "Enviar",
   isSubmitting = false,
 }: AuthFormProps<T>) {
   const {
@@ -77,7 +77,7 @@ export function AuthForm<T>({
       ))}
 
       <Button
-        text={isSubmitting ? "Submitting..." : submitText}
+        text={isSubmitting ? "Enviando..." : submitText}
         onPress={handleSubmit(onSubmit)}
         loading={isSubmitting}
         disabled={isSubmitting}

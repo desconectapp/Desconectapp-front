@@ -132,7 +132,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
         })
     }
     
-    const displayLocation = displayAddress.trim() || "Tap to select a location..."
+    const displayLocation = displayAddress.trim() || "Toca para seleccionar una ubicación..."
 
     // --- Schedule Handlers ---
     const formatScheduleForDisplay = (schedules: SelectedScheduleData): string => {
@@ -159,7 +159,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
         })
     }
 
-    const displayScheduleText = displaySchedule.trim() || "Tap to select available times..."
+    const displayScheduleText = displaySchedule.trim() || "Toca para seleccionar horarios disponibles..."
 
     // --- Activity Handlers ---
     const toggleSingleActivity = useCallback((id: number) => {
@@ -174,7 +174,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
     // --- Community Creation Handler ---
     const handleCreateCommunity = async () => {
         if (!name.trim() || !activityId) {
-            showToast("Error", "Community Name and Activity are required.");
+            showToast("Error", "El Nombre de la Comunidad y la Actividad son requeridos.");
             return;
         }
 
@@ -195,7 +195,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
 
             await queryClient.invalidateQueries({ queryKey: ["community"] });
 
-            showToast("Success", `Community "${name}" created successfully!`);
+            showToast("Éxito", `¡Comunidad "${name}" creada exitosamente!`);
 
             console.log("Created Community:", createdCommunity);
 
@@ -219,7 +219,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
             });
         } catch (error) {
             console.error("Error creating community:", error);
-            showToast("Error", "Failed to create the community. Please try again.");
+            showToast("Error", "No se pudo crear la comunidad. Por favor intenta de nuevo.");
         }
     }
 
@@ -253,14 +253,14 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                     <Text style={themed(themedStyles.backButtonText)}>←</Text>
                 </TouchableOpacity>
 
-                <Text style={themed(themedStyles.headerTitle)}>Create New Community</Text>
+                <Text style={themed(themedStyles.headerTitle)}>Crear Nueva Comunidad</Text>
 
                 <Pressable
                     onPress={handleCreateCommunity}
                     disabled={isCreating || !name.trim() || !activityId}
                     >
                     <Text style={[themed(themedStyles.headerButton), (isCreating || !name.trim() || !activityId) && { opacity: 0.5 }]}>
-                    {isCreating ? 'Creating...' : 'Create'}
+                    {isCreating ? 'Creando...' : 'Crear'}
                     </Text>
                 </Pressable>
             </View>
@@ -276,17 +276,17 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                 {selectedActivity?.icon || "✨"}
                 </Text>
 
-                <Text style={themed(themedStyles.inputLabel)}>Community Name*</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Nombre de la Comunidad*</Text>
                 <TextInput
                 style={themed(themedStyles.textInput)}
                 value={name}
                 onChangeText={setName}
-                placeholder="e.g., Sunday Hiking Club"
+                placeholder="ej: Club de Senderismo Dominical"
                 placeholderTextColor={theme.colors.textDim}
                 maxLength={50}
                 />
 
-                <Text style={themed(themedStyles.inputLabel)}>Location</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Ubicación</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)} 
                     onPress={handleOpenLocationPicker} 
@@ -302,7 +302,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                     <FontAwesome name="map-marker" size={18} color={theme.colors.tint} /> 
                 </TouchableOpacity>
                 
-                <Text style={themed(themedStyles.inputLabel)}>Schedule</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Horarios</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)} 
                     onPress={handleOpenSchedulePicker} 
@@ -321,7 +321,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                 </TouchableOpacity>
 
 
-                <Text style={themed(themedStyles.inputLabel)}>Activity*</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Actividad*</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)}
                     onPress={() => setShowActivityModal(true)}
@@ -332,7 +332,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                     ) : (
                         <>
                             <Text style={themed(themedStyles.activitySelectText)}>
-                                {selectedActivity ? `${selectedActivity.icon} ${selectedActivity.name}` : "Select an Activity..."}
+                                {selectedActivity ? `${selectedActivity.icon} ${selectedActivity.name}` : "Selecciona una Actividad..."}
                             </Text>
                             <FontAwesome name="chevron-right" size={14} color={theme.colors.textDim} />
                         </>
@@ -340,12 +340,12 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                 </TouchableOpacity>
 
 
-                <Text style={themed(themedStyles.inputLabel)}>Description</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Descripción</Text>
                 <TextInput
                     style={[themed(themedStyles.textInput), themed(themedStyles.descriptionInput)]}
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="Tell others what your community is about... (Optional)"
+                    placeholder="Cuéntales a otros de qué trata tu comunidad... (Opcional)"
                     placeholderTextColor={theme.colors.textDim}
                     multiline
                     textAlignVertical="top"
@@ -365,7 +365,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                 <View style={styles.centeredView}>
                     <View style={[styles.modalView, themed(themedStyles.modalView)]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Select Primary Activity</Text>
+                            <Text style={styles.modalTitle}>Seleccionar Actividad Principal</Text>
                             <TouchableOpacity
                                 onPress={() => setShowActivityModal(false)}
                                 style={styles.modalCloseButton}
@@ -382,7 +382,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                                 setOffset(0)
                                 setQuery(text)
                             }}
-                            placeholder="Search activities..."
+                            placeholder="Buscar actividades..."
                             autoCapitalize="none"
                         />
                         
@@ -410,7 +410,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                                 style={styles.modalSecondaryButton}
                                 onPress={() => setShowActivityModal(false)}
                             >
-                                <Text style={styles.modalSecondaryButtonText}>Cancel</Text>
+                                <Text style={styles.modalSecondaryButtonText}>Cancelar</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -418,7 +418,7 @@ export const CreateCommunityScreen = observer(function CreateCommunityScreen() {
                                 onPress={handleSaveSingleActivity}
                                 disabled={tempSelectedActivityId === null}
                             >
-                                <Text style={styles.modalPrimaryButtonText}>Save</Text>
+                                <Text style={styles.modalPrimaryButtonText}>Guardar</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

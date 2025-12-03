@@ -20,12 +20,12 @@ export function formatDateGroupCard(sentAt: string): string {
   }
 
   if (target.getTime() === yesterday.getTime()) {
-    return "yesterday"
+    return "ayer"
   }
 
   if (target >= lastWeek) {
     return date.toLocaleDateString(undefined, { weekday: "long" })
   }
 
-  return date.toLocaleDateString("en-GB")
+  return date.toLocaleDateString("es-ES")
 }

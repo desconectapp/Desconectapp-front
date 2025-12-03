@@ -136,7 +136,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         })
     }
     
-    const displayLocation = displayAddress.trim() || "Tap to select a location..."
+    const displayLocation = displayAddress.trim() || "Toca para seleccionar una ubicación..."
 
     // --- Schedule Handlers ---
     const formatScheduleForDisplay = (schedules: SelectedScheduleData): string => {
@@ -162,7 +162,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
         })
     }
 
-    const displayScheduleText = displaySchedule.trim() || "Tap to select available times..."
+    const displayScheduleText = displaySchedule.trim() || "Toca para seleccionar horarios disponibles..."
 
     // --- Activity Handlers ---
     const toggleSingleActivity = useCallback((id: number) => {
@@ -177,7 +177,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
     // --- Group Creation Handler ---
     const handleCreateGroup = async () => {
         if (!name.trim() || !activityId) {
-            showToast("Error", "Group Name and Activity are required.");
+            showToast("Error", "El Nombre del Grupo y la Actividad son requeridos.");
             return;
         }
 
@@ -201,7 +201,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
             await queryClient.invalidateQueries({ queryKey: ["groups"] });
 
-            showToast("Success", `Group "${name}" created successfully!`);
+            showToast("Éxito", `¡Grupo "${name}" creado exitosamente!`);
 
             // In CreateGroupScreen.tsx after successful group creation:
             navigation.reset({
@@ -224,7 +224,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
             });
         } catch (error) {
             console.error("Error creating group:", error);
-            showToast("Error", "Failed to create the group. Please try again.");
+            showToast("Error", "No se pudo crear el grupo. Por favor intenta de nuevo.");
         }
     }
 
@@ -258,14 +258,14 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     <Text style={themed(themedStyles.backButtonText)}>←</Text>
                 </TouchableOpacity>
 
-                <Text style={themed(themedStyles.headerTitle)}>Create New Group</Text>
+                <Text style={themed(themedStyles.headerTitle)}>Crear Nuevo Grupo</Text>
 
                 <Pressable
                     onPress={handleCreateGroup}
                     disabled={isCreating || !name.trim() || !activityId}
                     >
                     <Text style={[themed(themedStyles.headerButton), (isCreating || !name.trim() || !activityId) && { opacity: 0.5 }]}>
-                    {isCreating ? 'Creating...' : 'Create'}
+                    {isCreating ? 'Creando...' : 'Crear'}
                     </Text>
                 </Pressable>
             </View>
@@ -281,17 +281,17 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 {selectedActivity?.icon || "✨"}
                 </Text>
 
-                <Text style={themed(themedStyles.inputLabel)}>Group Name*</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Nombre del Grupo*</Text>
                 <TextInput
                 style={themed(themedStyles.textInput)}
                 value={name}
                 onChangeText={setName}
-                placeholder="e.g., Sunday Hiking Club"
+                placeholder="ej: Club de Senderismo Dominical"
                 placeholderTextColor={theme.colors.textDim}
                 maxLength={50}
                 />
 
-                <Text style={themed(themedStyles.inputLabel)}>Location</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Ubicación</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)} 
                     onPress={handleOpenLocationPicker} 
@@ -307,7 +307,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     <FontAwesome name="map-marker" size={18} color={theme.colors.tint} /> 
                 </TouchableOpacity>
                 
-                <Text style={themed(themedStyles.inputLabel)}>Schedule</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Horarios</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)} 
                     onPress={handleOpenSchedulePicker} 
@@ -326,7 +326,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 </TouchableOpacity>
 
 
-                <Text style={themed(themedStyles.inputLabel)}>Activity*</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Actividad*</Text>
                 <TouchableOpacity
                     style={themed(themedStyles.activitySelectButton)}
                     onPress={() => setShowActivityModal(true)}
@@ -337,7 +337,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                     ) : (
                         <>
                             <Text style={themed(themedStyles.activitySelectText)}>
-                                {selectedActivity ? `${selectedActivity.icon} ${selectedActivity.name}` : "Select an Activity..."}
+                                {selectedActivity ? `${selectedActivity.icon} ${selectedActivity.name}` : "Selecciona una Actividad..."}
                             </Text>
                             <FontAwesome name="chevron-right" size={14} color={theme.colors.textDim} />
                         </>
@@ -345,12 +345,12 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 </TouchableOpacity>
 
 
-                <Text style={themed(themedStyles.inputLabel)}>Description</Text>
+                <Text style={themed(themedStyles.inputLabel)}>Descripción</Text>
                 <TextInput
                     style={[themed(themedStyles.textInput), themed(themedStyles.descriptionInput)]}
                     value={description}
                     onChangeText={setDescription}
-                    placeholder="Tell others what your group is about... (Optional)"
+                    placeholder="Cuéntales a otros de qué trata tu grupo... (Opcional)"
                     placeholderTextColor={theme.colors.textDim}
                     multiline
                     textAlignVertical="top"
@@ -359,9 +359,9 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
 
                 <View style={[styles.toggleContainer, themed(themedStyles.toggleContainer)]}>
                     <View>
-                        <Text style={themed(themedStyles.inputLabel)}>Group Privacy</Text>
+                        <Text style={themed(themedStyles.inputLabel)}>Privacidad del Grupo</Text>
                         <Text style={themed(themedStyles.toggleDescription)}>
-                        {isPublic ? "Public (Anyone can find and join)" : "Private (Closed group)"}
+                        {isPublic ? "Público (Cualquiera puede encontrar y unirse)" : "Privado (Grupo cerrado)"}
                         </Text>
                     </View>
                         <Switch
@@ -385,7 +385,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                 <View style={styles.centeredView}>
                     <View style={[styles.modalView, themed(themedStyles.modalView)]}>
                         <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Select Primary Activity</Text>
+                            <Text style={styles.modalTitle}>Seleccionar Actividad Principal</Text>
                             <TouchableOpacity
                                 onPress={() => setShowActivityModal(false)}
                                 style={styles.modalCloseButton}
@@ -402,7 +402,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                                 setOffset(0)
                                 setQuery(text)
                             }}
-                            placeholder="Search activities..."
+                            placeholder="Buscar actividades..."
                             autoCapitalize="none"
                         />
                         
@@ -430,7 +430,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                                 style={styles.modalSecondaryButton}
                                 onPress={() => setShowActivityModal(false)}
                             >
-                                <Text style={styles.modalSecondaryButtonText}>Cancel</Text>
+                                <Text style={styles.modalSecondaryButtonText}>Cancelar</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -438,7 +438,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                                 onPress={handleSaveSingleActivity}
                                 disabled={tempSelectedActivityId === null}
                             >
-                                <Text style={styles.modalPrimaryButtonText}>Save</Text>
+                                <Text style={styles.modalPrimaryButtonText}>Guardar</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

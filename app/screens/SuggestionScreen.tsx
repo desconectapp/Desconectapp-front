@@ -36,11 +36,11 @@ export const SuggestionScreen = observer(({ route }: any) => {
       { id: group.id },
       {
         onSuccess: () => {
-          showToast("Welcome!", `You've successfully joined ${group.name}`)
+          showToast("¡Bienvenido!", `Te uniste exitosamente a ${group.name}`)
           navigation.goBack()
         },
         onError: () => {
-          showToast("Join Failed", "Unable to join the group. Please try again.")
+          showToast("Error al Unirse", "No se pudo unir al grupo. Por favor intenta de nuevo.")
         },
       },
     )
@@ -54,10 +54,10 @@ export const SuggestionScreen = observer(({ route }: any) => {
     const dateObject = new Date(cleanString)
 
     if (isNaN(dateObject.getTime())) {
-      return "N/A"
+      return "N/D"
     }
 
-    return dateObject.toLocaleDateString("en-US", {
+    return dateObject.toLocaleDateString("es-ES", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -94,7 +94,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
           <Text style={themed(themedStyles.backButtonText)}>←</Text>
         </TouchableOpacity>
 
-        <Text style={themed(themedStyles.headerTitle)}>Informacion del grupo</Text>
+        <Text style={themed(themedStyles.headerTitle)}>Información del Grupo</Text>
       </View>
 
       <View style={styles.heroImageContainer}>
@@ -185,7 +185,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
           activeOpacity={0.8}
         >
           <Text style={themed(themedStyles.joinButtonText)}>
-            {isJoining ? "Joining..." : "Join Group"}
+            {isJoining ? "Uniéndose..." : "Unirse al Grupo"}
           </Text>
         </TouchableOpacity>
       </View>

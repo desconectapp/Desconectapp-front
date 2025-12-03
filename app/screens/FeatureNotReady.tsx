@@ -22,9 +22,9 @@ export const FeatureNotReady = observer(function FeatureNotReady() {
         resizeMode="contain"
         />
 
-        <Text style={titleStyle(theme)}>🚧 In Construction</Text>
+        <Text style={titleStyle(theme)}>🚧 En Construcción</Text>
         <Text style={subtitleStyle(theme)}>
-        This feature is not ready yet. Check back soon!
+        Esta funcionalidad aún no está lista. ¡Vuelve pronto!
         </Text>
     </View>
     </Screen>

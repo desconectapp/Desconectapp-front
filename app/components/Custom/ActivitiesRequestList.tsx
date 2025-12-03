@@ -42,7 +42,7 @@ interface ActivityRequestsListProps {
 
 export const ActivityRequestsList = observer(function ActivityRequestsList({
   onItemPress,
-  title = "Activity Requests",
+  title = "Solicitudes de actividades",
 }: ActivityRequestsListProps) {
   const { themed, theme } = useAppTheme()
   const { data, isLoading, isError, error, refetch } = useActivityRequests()
@@ -66,7 +66,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString("es-ES", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -79,15 +79,15 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
     const diffTime = expiryDate.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffDays < 0) return "Expired"
-    if (diffDays === 0) return "Expires today"
-    if (diffDays === 1) return "1 day left"
-    return `${diffDays} days left`
+    if (diffDays < 0) return "Expirado"
+    if (diffDays === 0) return "Expira hoy"
+    if (diffDays === 1) return "1 día restante"
+    return `${diffDays} días restantes`
   }
 
   const renderActivityRequest = ({ item }: { item: ActivityRequest }) => {
   const daysLeft = calculateDaysLeft(item.expires_at);
-  const isExpired = daysLeft === "Expired";
+  const isExpired = daysLeft === "Expirado";
   
   // Parse numeric week_timeslots into structured schedule
 
@@ -110,7 +110,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
           <View style={[
             themed($statusBadge),
             isExpired && themed($expiredBadge),
-            daysLeft === "Expires today" && themed($urgentBadge)
+            daysLeft === "Expira hoy" && themed($urgentBadge)
           ]}>
             <Text style={themed($statusText)}>{daysLeft}</Text>
           </View>
@@ -157,7 +157,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
       return (
         <View style={$loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.tint} />
-          <Text style={themed($loadingText)}>Loading activity requests...</Text>
+          <Text style={themed($loadingText)}>Cargando solicitudes de actividad...</Text>
         </View>
       )
     }
@@ -165,16 +165,16 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
     if (isError) {
       return (
         <View style={$errorContainer}>
-          <Text style={themed($errorTitle)}>Something went wrong</Text>
+          <Text style={themed($errorTitle)}>Algo salió mal</Text>
           <Text style={themed($errorMessage)}>
-            {error?.message || "Failed to load activity requests"}
+            {error?.message || "No se pudieron cargar las solicitudes de actividad"}
           </Text>
           <TouchableOpacity
             style={themed($retryButton)}
             onPress={() => refetch()}
             activeOpacity={0.7}
           >
-            <Text style={themed($retryButtonText)}>Try Again</Text>
+            <Text style={themed($retryButtonText)}>Intentar de nuevo</Text>
           </TouchableOpacity>
         </View>
       )
@@ -184,8 +184,8 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
       return (
         <View style={$emptyContainer}>
           <Text style={themed($emptyIcon)}>🔍</Text>
-          <Text style={themed($emptyTitle)}>No Activity Requests</Text>
-          <Text style={themed($emptyMessage)}>There are no activity requests at the moment.</Text>
+          <Text style={themed($emptyTitle)}>No Hay Solicitudes de Actividad</Text>
+          <Text style={themed($emptyMessage)}>No hay solicitudes de actividad en este momento.</Text>
         </View>
       )
     }

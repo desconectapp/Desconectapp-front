@@ -128,11 +128,11 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const handleSavePreferences = async () => {
     try {
       await addPreferences.mutateAsync({activity_ids: selectedPreferences})
-      showToast("Preferences Updated", "Your preferences were saved successfully")
+      showToast("Preferencias Actualizadas", "Tus preferencias se guardaron exitosamente")
       setShowPreferencesModal(false)
     } catch (err) {
       console.error(err)
-      showToast("Error", "Failed to save preferences")
+      showToast("Error", "No se pudieron guardar las preferencias")
     }
   }
 
@@ -187,12 +187,12 @@ export const ProfileScreen = observer(function ProfileScreen() {
         avatar_url: url || profile?.avatar_url,
       })
 
-      showToast("Profile Updated", "Your profile has been successfully updated")
+      showToast("Perfil Actualizado", "Tu perfil se actualizó exitosamente")
       setIsEditing(false)
       reset(data)
     } catch (error) {
       console.error("Error updating profile:", error)
-      showToast("Update Failed", "There was an error updating your profile")
+      showToast("Error al Actualizar", "Hubo un error al actualizar tu perfil")
     } finally {
       setIsSaving(false)
     }
@@ -260,8 +260,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
               control={control}
               name="name"
               rules={{
-                required: "Name is required",
-                minLength: { value: 2, message: "Name must be at least 2 characters long" },
+                required: "El nombre es requerido",
+                minLength: { value: 2, message: "El nombre debe tener al menos 2 letras" },
               }}
               render={({ field: { onChange, value } }) => (
                 <View style={$fieldContainer}>
@@ -269,14 +269,14 @@ export const ProfileScreen = observer(function ProfileScreen() {
                     <TextField
                       value={value}
                       onChangeText={onChange}
-                      placeholder="Enter your name"
+                      placeholder="Ingresa tu nombre"
                       helper={errors.name?.message}
                       status={errors.name ? "error" : undefined}
                       autoCapitalize="words"
                       style={$editInput}
                     />
                   ) : (
-                    <Text style={themed($displayName)}>{value || "Your Name"}</Text>
+                    <Text style={themed($displayName)}>{value || "Tu Nombre"}</Text>
                   )}
                 </View>
               )}
@@ -286,8 +286,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
               control={control}
               name="location"
               rules={{
-                required: "Location is required",
-                minLength: { value: 2, message: "Please enter a valid location" },
+                required: "La ubicación es requerida",
+                minLength: { value: 2, message: "Por favor ingresa una ubicación válida" },
               }}
               render={({ field: { onChange, value } }) => (
                 <View style={$fieldContainer}>
@@ -295,14 +295,14 @@ export const ProfileScreen = observer(function ProfileScreen() {
                     <TextField
                       value={value}
                       onChangeText={onChange}
-                      placeholder="City, Country"
+                      placeholder="Ciudad, País"
                       helper={errors.location?.message}
                       status={errors.location ? "error" : undefined}
                       autoCapitalize="words"
                       style={$editInput}
                     />
                   ) : (
-                    <Text style={themed($displayLocation)}>{value || "Your Location"}</Text>
+                    <Text style={themed($displayLocation)}>{value || "Tu Ubicación"}</Text>
                   )}
                 </View>
               )}
@@ -313,7 +313,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
         {isEditing && (
           <View style={$buttonContainer}>
             <Button
-              text={isSaving ? "Saving..." : "Save Changes"}
+              text={isSaving ? "Guardando..." : "Guardar Cambios"}
               onPress={handleSubmit(onSubmit)}
               style={themed($saveButton)}
               textStyle={themed($saveButtonText)}
@@ -322,7 +322,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
             />
 
             <Button
-              text={"Cancel"}
+              text={"Cancelar"}
               onPress={onCancel}
               style={themed($cancelButton)}
               textStyle={themed($cancelButtonText)}
@@ -343,7 +343,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
           },
         ]}
       >
-        <Text style={themed($settingsButtonText)}>{"Edit Preferences"}</Text>
+        <Text style={themed($settingsButtonText)}>{"Editar Preferencias"}</Text>
       </Pressable>
 
       <Pressable
@@ -356,7 +356,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
           },
         ]}
       >
-        <Text style={themed($settingsButtonText)}>{"Log out"}</Text>
+        <Text style={themed($settingsButtonText)}>{"Cerrar Sesión"}</Text>
       </Pressable>
 
       <Modal
@@ -367,7 +367,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
         <View style={createModalStyles(theme).modalOverlay}>
           <View style={createModalStyles(theme).modalContainer}>
             <View style={createModalStyles(theme).modalHeader}>
-              <Text style={createModalStyles(theme).modalTitle}>Select Preferences</Text>
+              <Text style={createModalStyles(theme).modalTitle}>Seleccionar Preferencias</Text>
               <TouchableOpacity
                 onPress={() => setShowPreferencesModal(false)}
                 style={createModalStyles(theme).modalCloseButton}
@@ -384,7 +384,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
                 setOffset(0)
                 setQuery(text)
               }}
-              placeholder="Search preferences..."
+              placeholder="Buscar preferencias..."
               autoCapitalize="none"
             />
 
@@ -405,14 +405,14 @@ export const ProfileScreen = observer(function ProfileScreen() {
                 style={createModalStyles(theme).modalSecondaryButton}
                 onPress={() => setShowPreferencesModal(false)}
               >
-                <Text style={createModalStyles(theme).modalSecondaryButtonText}>Cancel</Text>
+                <Text style={createModalStyles(theme).modalSecondaryButtonText}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={createModalStyles(theme).modalPrimaryButton}
                 onPress={handleSavePreferences}
               >
-                <Text style={createModalStyles(theme).modalPrimaryButtonText}>Save</Text>
+                <Text style={createModalStyles(theme).modalPrimaryButtonText}>Guardar</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -260,7 +260,7 @@ export function SearchScreen() {
         <View style={styles.participantsRow}>
           <View style={styles.sliderWrapper}>
             <CustomSlider
-              label="Min"
+              label="Mín"
               value={minParticipants}
               min={3}
               max={10}
@@ -273,7 +273,7 @@ export function SearchScreen() {
 
           <View style={styles.sliderWrapper}>
             <CustomSlider
-              label="Max"
+              label="Máx"
               value={maxParticipants}
               min={3}
               max={10}
