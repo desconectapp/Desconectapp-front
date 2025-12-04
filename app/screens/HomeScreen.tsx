@@ -224,7 +224,7 @@ export const HomeScreen = observer(function HomeScreen() {
             style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
           >
             <FontAwesome5 name="globe-americas" size={20} color={theme.colors.tint} />
-            <Text style={themed(themedStylesGroup.seeAllText)}>See All</Text>
+            <Text style={themed(themedStylesGroup.seeAllText)}>Ver Todo</Text>
           </TouchableOpacity>
         </View>
 

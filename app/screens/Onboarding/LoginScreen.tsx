@@ -73,9 +73,6 @@ export const LoginScreen = observer(() => {
         <Text preset="heading" style={themed($welcomeText)}>
           Conecta con lo que te gusta
         </Text>
-        <Text preset="subheading" style={themed($subtitleText)}>
-          Ingresa tus credenciales para continuar
-        </Text>
       </View>
 
       {/* 👇 AuthForm with password toggle */}
@@ -96,7 +93,7 @@ export const LoginScreen = observer(() => {
           },
           {
             name: "password",
-            label: "Password",
+            label: "Contraseña",
             placeholder: "••••••••",
             rules: { required: "La contraseña es necesaria" },
             render: ({ value, onChange }) => (
@@ -126,31 +123,49 @@ export const LoginScreen = observer(() => {
         isSubmitting={loading}
       />
 
-      <View>
+      <View style={{ marginTop: spacing.lg }}>
         <Text
           preset="subheading"
           style={themed({
             color: "gray",
             textAlign: "center",
+            fontSize: 18,
             opacity: 0.9,
           })}
-          onPress={() => navigation.navigate("SignUpScreen")}
         >
-          ¿No tienes una cuenta? Regístrate
+          ¿No tienes una cuenta?{" "}
+          <Text
+            style={themed((theme) => ({
+              color: theme.colors.tint,
+              textDecorationLine: "underline",
+            }))}
+            onPress={() => navigation.navigate("SignUpScreen")}
+          >
+            Regístrate
+          </Text>
         </Text>
       </View>
 
-      <View>
+      <View style={{ marginTop: spacing.md }}>
         <Text
           preset="subheading"
           style={themed({
             color: "gray",
+            fontSize: 18,
             textAlign: "center",
             opacity: 0.9,
           })}
-          onPress={() => navigation.navigate("ForgotPasswordScreen")}
         >
-          ¿Olvidaste tu contraseña? Restablecer
+          ¿Olvidaste tu contraseña?{" "}
+          <Text
+            style={themed((theme) => ({
+              color: theme.colors.tint,
+              textDecorationLine: "underline",
+            }))}
+            onPress={() => navigation.navigate("ForgotPasswordScreen")}
+          >
+            Recuperar
+          </Text>
         </Text>
       </View>
     </Screen>

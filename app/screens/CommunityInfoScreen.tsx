@@ -318,7 +318,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
           )}
 
           <View style={styles.placeholderContainer}>
-              <Text style={themed(themedStyles.sectionTitle)}>Ubicacion</Text>
+              <Text style={themed(themedStyles.sectionTitle)}>Ubicación</Text>
               {isEditing ? (
                   <Pressable
                       onPress={handleOpenLocationPicker}
@@ -361,7 +361,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
                                   }}
                               />
                           ) : (
-                              <Text style={themed(themedStyles.descriptionText)}>No hay ubicacion disponible.</Text>
+                              <Text style={themed(themedStyles.descriptionText)}>No hay ubicación disponible.</Text>
                           )}
                       </View>
                   </>

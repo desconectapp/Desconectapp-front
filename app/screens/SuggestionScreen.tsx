@@ -137,7 +137,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
       <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.infoSection}>
           {/* Description */}
-            <Text style={themed(themedStyles.sectionTitle)}>Descripcion</Text>
+            <Text style={themed(themedStyles.sectionTitle)}>Descripción</Text>
             {group.description ? (
               <Text style={themed(themedStyles.descriptionText)}>{group.description}</Text>
 
@@ -146,7 +146,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
             )}
         </View>
           <View style={styles.infoSection}>
-          <Text style={themed(themedStyles.sectionTitle)}>Ubicacion</Text>
+          <Text style={themed(themedStyles.sectionTitle)}>Ubicación</Text>
           {locationImage ? (
             <Animated.Image
               source={{ uri: locationImage }}
@@ -157,7 +157,7 @@ export const SuggestionScreen = observer(({ route }: any) => {
             />
 
           ) : (
-            <Text style={themed(themedStyles.descriptionText)}>No hay ubicacion disponible.</Text>
+            <Text style={themed(themedStyles.descriptionText)}>No hay ubicación disponible.</Text>
           )
         
         }
