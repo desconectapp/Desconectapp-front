@@ -102,17 +102,17 @@ export const PreferencesScreen = observer(() => {
         ListHeaderComponent={
           <View style={$header}>
             <Text preset="heading" style={themed($title)}>
-              What are you into?
+              ¿Qué te interesa hacer?
             </Text>
             <Text preset="subheading" style={themed($subtitle)}>
-              Choose your interests and hobbies. You can select multiple options.
+              Elige tus intereses y pasatiempos. Puedes seleccionar varias opciones.
             </Text>
           </View>
         }
         ListFooterComponent={
           <View style={$footer}>
-            <Text style={themed($selectedCount)}>{selectedPreferences.length} selected</Text>
-            {isFetching && <Text style={themed($selectedCount)}>Loading more...</Text>}
+            <Text style={themed($selectedCount)}>{selectedPreferences.length} seleccionados</Text>
+            {isFetching && <Text style={themed($selectedCount)}>Cargando más...</Text>}
           </View>
         }
         onEndReached={loadMore}
@@ -120,7 +120,7 @@ export const PreferencesScreen = observer(() => {
       />
       <View style={[$bottomBar, $bottomInsets]}>
         <Button
-          text="Continue"
+          text="Continuar"
           onPress={handleContinue}
           disabled={selectedPreferences.length === 0}
           style={[

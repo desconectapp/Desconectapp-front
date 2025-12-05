@@ -145,7 +145,7 @@ function TabNavigator() {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ color, size }) => <AntDesign name="home" size={size} color={color} />,
-          tabBarLabel: "Groups",
+          tabBarLabel: "Grupos",
         }}
       />
       <Tab.Screen
@@ -153,7 +153,7 @@ function TabNavigator() {
         component={CommunitiesScreen}
         options={{
           tabBarIcon: ({ color, size }) => <AntDesign name="earth" size={size} color={color} />,
-          tabBarLabel: "Communities",
+          tabBarLabel: "Comunidades",
         }}
       />
       <Tab.Screen
@@ -177,7 +177,7 @@ function TabNavigator() {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ color, size }) => <AntDesign name="user" size={size} color={color} />,
-          tabBarLabel: "Profile",
+          tabBarLabel: "Perfil",
           tabBarStyle: { display: "flex" }, // Asegura que el tab bar esté visible
         }}
       />
@@ -232,7 +232,7 @@ export function MainNavigator() {
       <Stack.Screen
         name="MyGroupsScreen"
         component={MyGroupsScreen}
-        options={{ title: "My Groups" }}
+        options={{ title: "Mis Grupos" }}
       />
       <Stack.Screen
         name="GroupInfoScreen"
@@ -264,7 +264,7 @@ export function MainNavigator() {
         component={MyCommunitiesScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Nearby Groups" }} />
+      <Stack.Screen name="NearbyGroupsScreen" component={NearbyGroupsScreen} options={{ title: "Grupos Cercanos" }} />
       {/* <Stack.Screen name="SearchScreen" component={SearchScreen} /> */}
       </Stack.Navigator>
       

@@ -73,9 +73,6 @@ export const LoginScreen = observer(() => {
         <Text preset="heading" style={themed($welcomeText)}>
           Conecta con lo que te gusta
         </Text>
-        <Text preset="subheading" style={themed($subtitleText)}>
-          Enter your credentials to continue
-        </Text>
       </View>
 
       {/* 👇 AuthForm with password toggle */}
@@ -87,18 +84,18 @@ export const LoginScreen = observer(() => {
             label: "Email",
             placeholder: "example@mail.com",
             rules: {
-              required: "Email is required",
+              required: "El email es requerido",
               pattern: {
                 value: /^\S+@\S+$/i,
-                message: "Invalid email",
+                message: "Email inválido",
               },
             },
           },
           {
             name: "password",
-            label: "Password",
+            label: "Contraseña",
             placeholder: "••••••••",
-            rules: { required: "Password is required" },
+            rules: { required: "La contraseña es necesaria" },
             render: ({ value, onChange }) => (
               <View style={$passwordContainer}>
                 <TextInput
@@ -120,37 +117,55 @@ export const LoginScreen = observer(() => {
             ),
           },
         ]}
-        submitText="Login"
+        submitText="Iniciar Sesión"
         onSubmit={onSubmit}
         forgotPassword={false}
         isSubmitting={loading}
       />
 
-      <View>
+      <View style={{ marginTop: spacing.lg }}>
         <Text
           preset="subheading"
           style={themed({
             color: "gray",
             textAlign: "center",
+            fontSize: 18,
             opacity: 0.9,
           })}
-          onPress={() => navigation.navigate("SignUpScreen")}
         >
-          Don&apos;t have an account? Sign Up
+          ¿No tienes una cuenta?{" "}
+          <Text
+            style={themed((theme) => ({
+              color: theme.colors.tint,
+              textDecorationLine: "underline",
+            }))}
+            onPress={() => navigation.navigate("SignUpScreen")}
+          >
+            Regístrate
+          </Text>
         </Text>
       </View>
 
-      <View>
+      <View style={{ marginTop: spacing.md }}>
         <Text
           preset="subheading"
           style={themed({
             color: "gray",
+            fontSize: 18,
             textAlign: "center",
             opacity: 0.9,
           })}
-          onPress={() => navigation.navigate("ForgotPasswordScreen")}
         >
-          Forgot your password? Reset
+          ¿Olvidaste tu contraseña?{" "}
+          <Text
+            style={themed((theme) => ({
+              color: theme.colors.tint,
+              textDecorationLine: "underline",
+            }))}
+            onPress={() => navigation.navigate("ForgotPasswordScreen")}
+          >
+            Recuperar
+          </Text>
         </Text>
       </View>
     </Screen>

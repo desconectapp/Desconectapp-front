@@ -43,7 +43,7 @@ export const ForgotPasswordScreen = observer(() => {
       })
       .catch((e) => {
         console.log(e)
-        setErrorMessage("Error sending reset code. User doesn't exist.")
+        setErrorMessage("Error al enviar código de restablecimiento. El usuario no fue encontrado.")
       })
       .finally(() => setLoading(false))
   }
@@ -67,12 +67,12 @@ export const ForgotPasswordScreen = observer(() => {
 
   const handleSubmitNewPassword = () => {
     if (!code || code.length !== codeLength) {
-      setErrorMessage("Please enter the 6-character reset code.")
+      setErrorMessage("Por favor ingresa el código de restablecimiento de 6 dígitos.")
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setErrorMessage("Passwords do not match.")
+      setErrorMessage("Las contraseñas no coinciden.")
       return
     }
 
@@ -84,7 +84,7 @@ export const ForgotPasswordScreen = observer(() => {
         navigation.navigate("LoginScreen")
       })
       .catch((e) => {
-        setErrorMessage("Error resetting password. Invalid code or other error.")
+        setErrorMessage("Error al restablecer contraseña. Código inválido u otro error.")
       })
       .finally(() => setLoading(false))
   }
@@ -105,7 +105,7 @@ export const ForgotPasswordScreen = observer(() => {
           <Text style={[styles.backButtonText, themed(themedStyles.backButtonText)]}>←</Text>
         </TouchableOpacity>
 
-        <Text style={[styles.headerTitle, themed(themedStyles.headerTitle)]}>Forgot Password</Text>
+        <Text style={[styles.headerTitle, themed(themedStyles.headerTitle)]}>Olvidé mi Contraseña</Text>
 
       </View>
 
@@ -122,10 +122,10 @@ export const ForgotPasswordScreen = observer(() => {
               containerStyle={$inputFull}
             />
             
-            <Text style={themed($subtitle)}>Enter your email and we’ll send you a reset code.</Text>
+            <Text style={themed($subtitle)}>Ingresa tu email y te enviaremos un código de restablecimiento.</Text>
             
             <Button
-              text="Send Reset Code"
+              text="Enviar Código de Restablecimiento"
               onPress={handleRequestReset}
               disabled={!email.includes("@") || loading}
               loading={loading}
@@ -140,26 +140,26 @@ export const ForgotPasswordScreen = observer(() => {
 
         {step === 2 && (
           <>
-            <Text style={themed($subtitle)}>Enter the code we sent to your email</Text>
+            <Text style={themed($subtitle)}>Ingresa el código que enviamos a tu email</Text>
 
             <TextField
               value={code}
               onChangeText={setCode}
-              placeholder="Reset code"
+              placeholder="Código de restablecimiento"
               autoCapitalize="characters"
               keyboardType="default"
               containerStyle={$inputFull}
             />
 
             <TouchableOpacity onPress={handlePaste} style={$pasteButton}>
-              <Text style={themed($pasteText)}>Paste Code</Text>
+              <Text style={themed($pasteText)}>Pegar Código</Text>
             </TouchableOpacity>
 
             <TextField
               value={newPassword}
               onChangeText={setNewPassword}
-              label="New Password"
-              placeholder="New password"
+              label="Nueva Contraseña"
+              placeholder="Nueva contraseña"
               secureTextEntry
               containerStyle={$inputFull}
             />
@@ -167,14 +167,14 @@ export const ForgotPasswordScreen = observer(() => {
             <TextField
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              label="Confirm Password"
-              placeholder="Re-enter new password"
+              label="Confirmar Contraseña"
+              placeholder="Reingresa la nueva contraseña"
               secureTextEntry
               containerStyle={$inputFull}
             />
 
             <Button
-              text="Reset Password"
+              text="Restablecer Contraseña"
               onPress={handleSubmitNewPassword}
               disabled={code.length !== codeLength || newPassword.length < 6}
               loading={loading}

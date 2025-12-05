@@ -64,12 +64,12 @@ export const MyCommunitiesScreen = observer(function MyCommunitiesScreen() {
           </View>
 
           <Text style={themed(styles.description)} numberOfLines={1}>
-            {!isLoading ? item.description || "No description yet" : ""}
+            {!isLoading ? item.description || "Aún no hay descripción" : ""}
           </Text>
 
           {item.members_count && (
             <Text style={themed(styles.memberCount)}>
-              {item.members_count} members
+              {item.members_count} miembros
             </Text>
           )}
         </View>
@@ -100,7 +100,7 @@ export const MyCommunitiesScreen = observer(function MyCommunitiesScreen() {
           activeOpacity={1}
         >
           <View style={styles.headerTextContainer}>
-            <Text style={themed(themedStyles.nameTheme)}>{"My Communities"}</Text>
+            <Text style={themed(themedStyles.nameTheme)}>{"Mis Comunidades"}</Text>
             </View>
         </TouchableOpacity>
 

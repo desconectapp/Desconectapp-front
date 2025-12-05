@@ -162,7 +162,7 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
           ]}
         >
           <Text style={themed(themedStyles.nonAdminText)}>
-            Only admins can post to this community.
+            Solo los administradores pueden publicar en esta comunidad.
           </Text>
         </View>
       )
@@ -199,7 +199,7 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
             style={themed(themedStyles.textInput)}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Create a new post..."
+            placeholder="Crear una nueva publicación..."
             placeholderTextColor={theme.colors.textDim}
             multiline
             maxLength={500}
@@ -251,7 +251,7 @@ export const CommunityChatScreen = observer(function CommunityChatScreen({ route
             <View style={styles.headerTextContainer}>
               <Text style={themed(themedStyles.communityName)}>{communityData?.name}</Text>
               <Text style={themed(themedStyles.memberCount)}>
-                {communityData?.members.length} members
+                {communityData?.members.length} miembros
               </Text>
             </View>
           </TouchableOpacity>

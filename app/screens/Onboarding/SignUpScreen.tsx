@@ -51,15 +51,15 @@ export const SignUpScreen = observer(() => {
 
   const getErrorMessage = (error: any) => {
     const errorMessages = {
-      invalid_credentials: "Oops! Those credentials don't match our records",
-      network_error: "Connection hiccup! Check your internet and try again",
-      server_error: "Our servers are taking a quick break. Try again in a moment",
-      validation_error: "Please double-check your information",
-      account_locked: "Account temporarily locked for security. Contact support",
-      email_not_verified: "Please verify your email before logging in",
+      invalid_credentials: "¡Ups! Esas credenciales no coinciden con nuestros registros",
+      network_error: "¡Problema de conexión! Verifica tu internet e intenta de nuevo",
+      server_error: "Nuestros servidores están tomando un descanso rápido. Intenta de nuevo en un momento",
+      validation_error: "Por favor verifica tu información",
+      account_locked: "Cuenta temporalmente bloqueada por seguridad. Contacta soporte",
+      email_not_verified: "Por favor verifica tu email antes de iniciar sesión",
     }
 
-    return errorMessages[error?.code] || "Unexpected Error. Try again later"
+    return errorMessages[error?.code] || "Error inesperado. Intenta de nuevo más tarde"
   }
 
   const onSubmit = (data: SignUpFormData) => {
@@ -83,7 +83,7 @@ export const SignUpScreen = observer(() => {
       onError: (error) => {
         setLoading(false)
         const friendlyMessage = getErrorMessage(error)
-        showToast("Login Failed", friendlyMessage)
+        showToast("Error al Registrarse", friendlyMessage)
       },
     })
   }
@@ -97,10 +97,10 @@ export const SignUpScreen = observer(() => {
       <View style={$logoContainer}>
         <AutoImage source={logoImage} style={$logo} resizeMode="contain" />
         <Text preset="heading" style={themed($welcomeText)}>
-          Join DesconectApp
+          Únete a DesconectApp
         </Text>
         <Text preset="subheading" style={themed($subtitleText)}>
-          Create your Account
+          Crea tu Cuenta
         </Text>
       </View>
       <AuthForm
@@ -111,10 +111,10 @@ export const SignUpScreen = observer(() => {
             label: "Email",
             placeholder: "example@mail.com",
             rules: {
-              required: "Email is required",
+              required: "El email es requerido",
               pattern: {
                 value: /^\S+@\S+$/i,
-                message: "Invalid email",
+                message: "Email inválido",
               },
             },
           },
@@ -122,7 +122,7 @@ export const SignUpScreen = observer(() => {
             name: "password",
             label: "Password",
             placeholder: "••••••••",
-            rules: { required: "Password is required" },
+            rules: { required: "La contraseña es requerida" },
             render: ({ value, onChange }) => (
               <View style={$passwordContainer}>
                 <TextInput
@@ -144,7 +144,7 @@ export const SignUpScreen = observer(() => {
             ),
           },
         ]}
-        submitText="Login"
+        submitText="Registrarse"
         onSubmit={onSubmit}
         forgotPassword={false}
         isSubmitting={loading}
@@ -159,7 +159,7 @@ export const SignUpScreen = observer(() => {
           })}
           onPress={() => navigation.navigate("LoginScreen")}
         >
-          Already have an account? Log In
+          ¿Ya tienes una cuenta? Iniciar Sesión
         </Text>
       </View>
     </Screen>

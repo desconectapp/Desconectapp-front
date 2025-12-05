@@ -146,14 +146,14 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   }
 
   if (isLoading) {
-    return <Text>Loading...</Text>
+    return <Text>Cargando...</Text>
   }
 
   if (!groupData) {
     return (
       <View>
-        <Text>Group not found or has been left.</Text>
-        <Button onPress={() => navigation.goBack()} text="Go Back" />
+        <Text>El grupo no fue encontrado o ha sido abandonado.</Text>
+        <Button onPress={() => navigation.goBack()} text="Volver" />
       </View>
     )
   }
@@ -176,10 +176,10 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
       await exitGroupAsync(groupId)
       await queryClient.removeQueries({ queryKey: ["group", groupId] })
       await queryClient.invalidateQueries({ queryKey: ["groups"] })
-      showToast("Success", "You have left the group successfully.")
+      showToast("Éxito", "Has abandonado el grupo.")
     } catch (error) {
       console.error("Error leaving group:", error)
-      showToast("Error", "Failed to leave the group. Please try again.")
+      showToast("Error", "No se pudo abandonar el grupo. Por favor intenta de nuevo.")
     }
   }
 
@@ -252,22 +252,22 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
     if (isPrivate) {
       return (
         <>
-          <Text style={styles.modalTitle}>Would you like to make the group public?</Text>
+          <Text style={styles.modalTitle}>¿Te gustaría hacer el grupo público?</Text>
           <Text style={styles.modalDescription}>
-            This will allow others to view and join the group.
+            Esto permitirá que otros vean y se unan al grupo.
           </Text>
           <View style={styles.modalButtonsContainer}>
             <TouchableOpacity
               style={[styles.modalButton, themed(themedStyles.cancelButton)]}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.modalButtonText}>Cancel</Text>
+              <Text style={styles.modalButtonText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalButton, themed(themedStyles.acceptButton)]}
               onPress={() => handleStatusChange(true)}
             >
-              <Text style={styles.modalButtonText}>Accept</Text>
+              <Text style={styles.modalButtonText}>Aceptar</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -275,22 +275,22 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
     } else {
       return (
         <>
-          <Text style={styles.modalTitle}>Would you like to make the group private?</Text>
+          <Text style={styles.modalTitle}>¿Te gustaría hacer el grupo privado?</Text>
           <Text style={styles.modalDescription}>
-            This will prevent others from viewing and joining the group.
+            Esto impedirá que otros vean y se unan al grupo.
           </Text>
           <View style={styles.modalButtonsContainer}>
             <TouchableOpacity
               style={[styles.modalButton, themed(themedStyles.cancelButton)]}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={styles.modalButtonText}>Cancel</Text>
+              <Text style={styles.modalButtonText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalButton, themed(themedStyles.acceptButton)]}
               onPress={() => handleStatusChange(false)} // Set status to false (private)
             >
-              <Text style={styles.modalButtonText}>Accept</Text>
+              <Text style={styles.modalButtonText}>Aceptar</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -299,8 +299,8 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
   }
 
   const currentLocationDisplay = isEditing
-    ? tempDisplayLocation || "Tap to set location..."
-    : groupData.location || "No Location Set"
+    ? tempDisplayLocation || "Toca para establecer ubicación..."
+    : groupData.location || "Sin Ubicación"
 
   const locationTextStyle =
     isEditing && !tempDisplayLocation
@@ -319,16 +319,16 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
           <Text style={themed(themedStyles.backButtonText)}>←</Text>
         </TouchableOpacity>
 
-        <Text style={themed(themedStyles.headerTitle)}>Group Info</Text>
+        <Text style={themed(themedStyles.headerTitle)}>Información del Grupo</Text>
 
         {/* Conditional Edit/Save/Cancel Buttons */}
         {isEditing ? (
           <View style={styles.headerButtonContainer}>
             <Pressable onPress={handleCancelEdit}>
-              <Text style={themed(themedStyles.headerCancelButton)}>Cancel</Text>
+              <Text style={themed(themedStyles.headerCancelButton)}>Cancelar</Text>
             </Pressable>
             <Pressable onPress={handleSave} style={{ marginLeft: spacing.sm }}>
-              <Text style={themed(themedStyles.headerButton)}>Save</Text>
+              <Text style={themed(themedStyles.headerButton)}>Guardar</Text>
             </Pressable>
           </View>
         ) : (
@@ -402,7 +402,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             style={themed(themedStyles.groupNameInput)}
             value={tempName}
             onChangeText={setTempName}
-            placeholder="Group Name"
+            placeholder="Nombre del Grupo"
           />
         ) : (
           <Text style={themed(themedStyles.groupName)}>{groupData.name}</Text>
@@ -435,7 +435,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
             value={tempDescription}
             onChangeText={setTempDescription}
             multiline
-            placeholder="Group Description"
+            placeholder="Descripción del Grupo"
           />
         ) : (
           <Text style={themed(themedStyles.groupDescription)}>{groupData.description}</Text>
@@ -456,7 +456,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
       {/* Footer */}
       <View style={[styles.footer, themed(themedStyles.footer), $bottomInsets]}>
         <Button
-          text="Leave Group"
+          text="Abandonar Grupo"
           preset="default"
           style={[styles.leaveButton, themed(themedStyles.leaveButton)]}
           textStyle={[styles.leaveButtonText, themed(themedStyles.leaveButtonText)]}
@@ -474,16 +474,16 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
         >
           <View style={styles.centeredView}>
             <View style={[styles.modalView, themed(themedStyles.modalView)]}>
-              <Text style={styles.modalTitle}>Leave Group?</Text>
+              <Text style={styles.modalTitle}>¿Abandonar Grupo?</Text>
               <Text style={styles.modalDescription}>
-                Are you sure you want to leave this group? This can not be undone.
+                ¿Estás seguro de que quieres abandonar este grupo? Esto no se puede deshacer.
               </Text>
               <View style={styles.modalButtonsContainer}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.cancelButton]}
                   onPress={handleCancelLeave}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={styles.modalButtonText}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -493,7 +493,7 @@ export const GroupInfoScreen = observer(function GroupInfoScreen({ route }: any)
                   ]}
                   onPress={handleConfirmLeave}
                 >
-                  <Text style={styles.modalButtonText}>Leave</Text>
+                  <Text style={styles.modalButtonText}>Abandonar</Text>
                 </TouchableOpacity>
               </View>
             </View>

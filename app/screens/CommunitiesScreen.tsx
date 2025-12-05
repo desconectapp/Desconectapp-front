@@ -95,11 +95,11 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
             </View>
 
             <Text style={themed(themedStylesGroup.description)} numberOfLines={1}>
-              {!isLoading ? item.description || "No description yet" : ""}
+              {!isLoading ? item.description || "Aún no hay descripción" : ""}
             </Text>
 
             {item.members_count && (
-              <Text style={themed(themedStylesGroup.memberCount)}>{item.members_count} members</Text>
+              <Text style={themed(themedStylesGroup.memberCount)}>{item.members_count} miembros</Text>
             )}
           </View>
 
@@ -120,8 +120,8 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
         return (
           <View style={themed(themedStylesGroup.emptyContainer)}>
             <Text style={themed(themedStylesGroup.emptyIcon)}>🫂</Text> 
-            <Text style={themed(themedStylesGroup.emptyTitle)}>No Communities Yet</Text> 
-            <Text style={themed(themedStylesGroup.emptySubtitle)}>Start by creating one or checking recommendations!</Text> 
+            <Text style={themed(themedStylesGroup.emptyTitle)}>Aún No Hay Comunidades</Text> 
+            <Text style={themed(themedStylesGroup.emptySubtitle)}>¡Comienza creando una o revisando tus recomendaciones!</Text> 
           </View>
         )
 
@@ -129,13 +129,13 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
       return (
         <View style={themed(themedStylesGroup.sectionContainer)}>
           <View style={themed(themedStylesGroup.sectionHeader)}>
-            <Text style={themed(themedStylesGroup.sectionTitle)}>My Communities</Text> 
+            <Text style={themed(themedStylesGroup.sectionTitle)}>Mis Comunidades</Text> 
             {allCommunities.length > 3 && (
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => navigation.navigate("MyCommunitiesScreen" as never)} 
               >
-                <Text style={themed(themedStylesGroup.seeAllText)}>See All</Text>
+                <Text style={themed(themedStylesGroup.seeAllText)}>Ver Todo</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -163,7 +163,7 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
             resizeMode="contain"
           />
           <Text style={themed([themedStylesGroup.headerTitle, styles.headerTitleOverride])}>
-            Communities
+            Comunidades
           </Text> 
           <TouchableOpacity onPress={handleAddCommunity} activeOpacity={0.7} style={styles.addButton}>
             <FontAwesome5 name="plus" size={22} color={theme.colors.tint} />

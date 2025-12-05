@@ -21,19 +21,19 @@ interface UserInfoFormData {
 }
 
 const genderOptions = [
-  { label: "Male", value: "male" },
-  { label: "Female", value: "female" },
+  { label: "Masculino", value: "male" },
+  { label: "Femenino", value: "female" },
 ]
 
 const workStatusOptions = [
-  { label: "💼 Full-time job", value: "full-time" },
-  { label: "⏰ Part-time job", value: "part-time" },
-  { label: "🎓 Student", value: "student" },
-  { label: "🏠 Stay at home", value: "stay-at-home" },
-  { label: "🚀 Entrepreneur", value: "entrepreneur" },
-  { label: "🏖️ Lots of free time", value: "free-time" },
-  { label: "🔍 Looking for work", value: "job-seeking" },
-  { label: "🏥 Other", value: "other" },
+  { label: "💼 Trabajo tiempo completo", value: "full-time" },
+  { label: "⏰ Trabajo tiempo parcial", value: "part-time" },
+  { label: "🎓 Estudiante", value: "student" },
+  { label: "🏠 En casa", value: "stay-at-home" },
+  { label: "🚀 Emprendedor", value: "entrepreneur" },
+  { label: "🏖️ Mucho tiempo libre", value: "free-time" },
+  { label: "🔍 Buscando trabajo", value: "job-seeking" },
+  { label: "🏥 Otro", value: "other" },
 ]
 
 export const MoreInfoScreen = observer(function MoreInfoScreen() {
@@ -78,7 +78,7 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
       navigation.navigate("Main", { screen: "PreferencesScreen" })
     } catch (error) {
       console.error("Error saving user info:", error)
-      showToast("Oops!", "Something went wrong. Please try again.")
+      showToast("¡Ups!", "Algo salió mal. Por favor intenta de nuevo.")
     } finally {
       setIsSubmitting(false)
     }
@@ -124,10 +124,10 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
     >
       <View style={$headerContainer}>
         <Text preset="heading" style={themed($titleText)}>
-          Tell us about yourself
+          Contanos sobre vos
         </Text>
         <Text preset="subheading" style={themed($subtitleText)}>
-          Help us personalize your experience
+          Ayudanos a personalizar tu experiencia
         </Text>
       </View>
 
@@ -136,16 +136,16 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
           control={control}
           name="name"
           rules={{
-            required: "We'd love to know your name!",
+            required: "¡Nos encantaría saber tu nombre!",
             minLength: {
               value: 2,
-              message: "Name should be at least 2 characters long",
+              message: "El nombre debe tener al menos 2 letras",
             },
           }}
           render={({ field: { onChange, value } }) => (
             <TextField
-              label="What's your name?"
-              placeholder="Enter your full name"
+              label="¿Cuál es tu nombre?"
+              placeholder="Ingresa tu nombre completo"
               value={value}
               onChangeText={onChange}
               helper={errors.name?.message}
@@ -160,22 +160,22 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
           control={control}
           name="age"
           rules={{
-            required: "Age helps us customize your experience",
+            required: "La edad nos ayuda a personalizar tu experiencia",
             pattern: {
               value: /^[0-9]+$/,
-              message: "Please enter a valid age",
+              message: "Por favor ingresa una edad válida",
             },
             validate: (value) => {
               const age = Number.parseInt(value)
-              if (age < 13) return "You must be at least 13 years old"
-              if (age > 120) return "Please enter a realistic age"
+              if (age < 13) return "Debes tener al menos 13 años"
+              if (age > 120) return "Por favor ingresa una edad realista"
               return true
             },
           }}
           render={({ field: { onChange, value } }) => (
             <TextField
-              label="How old are you?"
-              placeholder="Enter your age"
+              label="¿Cuántos años tenés?"
+              placeholder="Ingresa tu edad"
               value={value}
               onChangeText={onChange}
               keyboardType="numeric"
@@ -188,12 +188,12 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
 
         <View style={$fieldContainer}>
           <Text preset="formLabel" style={themed($labelText)}>
-            Gender
+            Género
           </Text>
           <Controller
             control={control}
             name="gender"
-            rules={{ required: "Please select your gender" }}
+            rules={{ required: "Por favor selecciona tu género" }}
             render={({ field: { onChange, value } }) =>
               renderOptionButton(genderOptions, value, onChange)
             }
@@ -209,16 +209,16 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
           control={control}
           name="city"
           rules={{
-            required: "Where are you located?",
+            required: "¿Dónde estás?",
             minLength: {
               value: 2,
-              message: "Please enter a valid location",
+              message: "Por favor ingresa una ubicación válida",
             },
           }}
           render={({ field: { onChange, value } }) => (
             <TextField
-              label="Where do you live?"
-              placeholder="City, Country"
+              label="¿Dónde vivís?"
+              placeholder="Ciudad, País"
               value={value}
               onChangeText={onChange}
               helper={errors.city?.message}
@@ -231,12 +231,12 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
 
         <View style={$fieldContainer}>
           <Text preset="formLabel" style={themed($labelText)}>
-            What's your current situation?
+            ¿Cuál es tu situación actual?
           </Text>
           <Controller
             control={control}
             name="current_situation"
-            rules={{ required: "Tell us about your current status" }}
+            rules={{ required: "Cuéntanos sobre tu estado actual" }}
             render={({ field: { onChange, value } }) =>
               renderOptionButton(workStatusOptions, value, onChange)
             }
@@ -249,7 +249,7 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
         </View>
 
         <Button
-          text={isSubmitting ? "Saving your info..." : "Continue"}
+          text={isSubmitting ? "Guardando tu información..." : "Continuar"}
           onPress={handleSubmit(onSubmit)}
           style={themed($submitButton)}
           textStyle={themed($submitButtonText)}
@@ -260,7 +260,7 @@ export const MoreInfoScreen = observer(function MoreInfoScreen() {
         <TouchableOpacity
           style={$continueContainer}
           onPress={() => {
-            showToast("Skipped", "You can always update this later in settings")
+            showToast("Omitido", "Siempre podés actualizar esto más tarde en configuración")
             navigation.navigate("Welcome")
           }}
           activeOpacity={0.7}

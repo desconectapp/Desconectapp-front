@@ -23,7 +23,7 @@
       "package": "com.desconectapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
-        "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
+        "backgroundColor": "#FFFFFF"
       },
       "allowBackup": false
     },
