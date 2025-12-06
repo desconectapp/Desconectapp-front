@@ -328,18 +328,14 @@ export const ProfileScreen = observer(function ProfileScreen() {
     )
   }
 
-  // RENDER FUNCTION FOR PROFILE SCREEN PREFERENCES LIST (Only shows first 4)
   const renderProfilePreferences = () => {
-    // We get the preferences from the hook result
     const allPreferences = userPreferencesData?.preferences || []
     
-    // Limits display to the first 4 preferences (2 rows of 2)
     const preferences = allPreferences.slice(0, 4); 
 
     if (preferences.length === 0) {
       return (
         <View style={$preferencesSection}>
-          {/* Title removed for fixed header */}
           <Text style={themed($noPreferencesText)}>
             Aún no has agregado preferencias. ¡Edítalas para empezar a conectar!
           </Text>
