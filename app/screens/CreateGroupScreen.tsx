@@ -434,7 +434,7 @@ export const CreateGroupScreen = observer(function CreateGroupScreen() {
                             </TouchableOpacity>
 
                             <TouchableOpacity
-                                style={styles.modalPrimaryButton}
+                                style={[styles.modalPrimaryButton, { backgroundColor: theme.colors.tint }]}
                                 onPress={handleSaveSingleActivity}
                                 disabled={tempSelectedActivityId === null}
                             >
@@ -537,7 +537,6 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   modalPrimaryButton: {
     flex: 1,
-    backgroundColor: 'blue',
     borderRadius: spacing.md,
     paddingVertical: spacing.md,
     alignItems: "center",
@@ -553,8 +552,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   } as ViewStyle,
+  
   modalPrimaryButtonText: {
-    color: 'white',
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: "600",
   } as TextStyle,

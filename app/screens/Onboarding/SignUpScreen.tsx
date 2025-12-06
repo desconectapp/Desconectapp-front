@@ -99,9 +99,7 @@ export const SignUpScreen = observer(() => {
         <Text preset="heading" style={themed($welcomeText)}>
           Únete a DesconectApp
         </Text>
-        <Text preset="subheading" style={themed($subtitleText)}>
-          Crea tu Cuenta
-        </Text>
+
       </View>
       <AuthForm
         form={form}
@@ -149,22 +147,33 @@ export const SignUpScreen = observer(() => {
         forgotPassword={false}
         isSubmitting={loading}
       />
-      <View style={$logoContainer}>
+      <View style={{ marginTop: spacing.md }}>
         <Text
           preset="subheading"
           style={themed({
             color: "gray",
+            fontSize: 18,
             textAlign: "center",
             opacity: 0.9,
           })}
-          onPress={() => navigation.navigate("LoginScreen")}
         >
-          ¿Ya tienes una cuenta? Iniciar Sesión
+          ¿Ya eres usuario?{" "}
+          <Text
+            style={themed((theme) => ({
+              color: theme.colors.tint,
+              textDecorationLine: "underline",
+            }))}
+            onPress={() => navigation.navigate("LoginScreen")}
+          >
+            Iniciar Sesión
+          </Text>
         </Text>
       </View>
     </Screen>
   )
 })
+
+
 
 const $container: ViewStyle = {
   paddingHorizontal: spacing.lg,
