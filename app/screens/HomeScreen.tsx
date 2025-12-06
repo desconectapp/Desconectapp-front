@@ -167,7 +167,6 @@ export const HomeScreen = observer(function HomeScreen() {
       if (allGroups.length === 0)
         return (
           <View style={themed(themedStylesGroup.emptyContainer)}>
-            <Text style={themed(themedStylesGroup.emptyIcon)}>👥</Text>
             <Text style={themed(themedStylesGroup.emptyTitle)}>Aún No Hay Grupos</Text>
             <Text style={themed(themedStylesGroup.emptySubtitle)}>¡Haz tu primera búsqueda!</Text>
           </View>

@@ -42,7 +42,7 @@ interface ActivityRequestsListProps {
 
 export const ActivityRequestsList = observer(function ActivityRequestsList({
   onItemPress,
-  title = "Solicitudes de actividades",
+  title = "Búsquedas de actividades",
 }: ActivityRequestsListProps) {
   const { themed, theme } = useAppTheme()
   const { data, isLoading, isError, error, refetch } = useActivityRequests()
@@ -157,7 +157,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
       return (
         <View style={$loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.tint} />
-          <Text style={themed($loadingText)}>Cargando solicitudes de actividad...</Text>
+          <Text style={themed($loadingText)}>Cargando búsquedas...</Text>
         </View>
       )
     }
@@ -167,7 +167,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
         <View style={$errorContainer}>
           <Text style={themed($errorTitle)}>Algo salió mal</Text>
           <Text style={themed($errorMessage)}>
-            {error?.message || "No se pudieron cargar las solicitudes de actividad"}
+            {error?.message || "No se pudieron cargar las búsquedas"}
           </Text>
           <TouchableOpacity
             style={themed($retryButton)}
@@ -183,9 +183,7 @@ export const ActivityRequestsList = observer(function ActivityRequestsList({
     if (!data || data.length === 0) {
       return (
         <View style={$emptyContainer}>
-          <Text style={themed($emptyIcon)}>🔍</Text>
-          <Text style={themed($emptyTitle)}>No Hay Solicitudes de Actividad</Text>
-          <Text style={themed($emptyMessage)}>No hay solicitudes de actividad en este momento.</Text>
+          <Text style={themed($emptyTitle)}>¡Todavía no hiciste ninguna búsqueda!</Text>
         </View>
       )
     }
@@ -411,6 +409,7 @@ const $emptyTitle = (theme: any): TextStyle => ({
   fontWeight: "600",
   color: theme.colors.text,
   marginBottom: spacing.sm,
+  textAlign: "center",
 })
 
 const $emptyMessage = (theme: any): TextStyle => ({

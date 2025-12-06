@@ -119,9 +119,8 @@ export const CommunitiesScreen = observer(function CommunitiesScreen() {
       if (!isLoading && allCommunities.length === 0)
         return (
           <View style={themed(themedStylesGroup.emptyContainer)}>
-            <Text style={themed(themedStylesGroup.emptyIcon)}>🫂</Text> 
             <Text style={themed(themedStylesGroup.emptyTitle)}>Aún No Hay Comunidades</Text> 
-            <Text style={themed(themedStylesGroup.emptySubtitle)}>¡Comienza creando una o revisando tus recomendaciones!</Text> 
+            <Text style={themed(themedStylesGroup.emptySubtitle)}>¡Empezá creando una o revisando tus recomendaciones!</Text> 
           </View>
         )
 

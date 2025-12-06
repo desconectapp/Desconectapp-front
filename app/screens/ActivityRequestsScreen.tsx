@@ -45,7 +45,7 @@ export const ActivityRequestsScreen = observer(function ActivityRequestsScreen()
     >
       {/* Header */}
       <Text preset="heading" style={[themed(texts.heading), $title]}>
-        Mis Búsquedas 📋
+        Mis Búsquedas
       </Text>
 
       {/* Activity Requests List: darle un wrapper con flex:1 para que FlatList tenga altura */}
