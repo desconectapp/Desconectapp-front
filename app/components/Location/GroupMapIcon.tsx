@@ -1,3 +1,4 @@
+import React, { useState } from "react"
 import { Image, View } from "react-native"
 import { MapGroup } from "@/services/groups/Groups.types"
 import { Text } from "../Text"
@@ -22,6 +23,7 @@ const getMarkerStyle = (marker: MapGroup) => ({
   borderColor: "white",
 })
 export const GroupMapIcon = ({ group }: { group: MapGroup }) => {
+  const [imageError, setImageError] = useState(false)
   return (
     <View
       style={{
@@ -36,10 +38,10 @@ export const GroupMapIcon = ({ group }: { group: MapGroup }) => {
         overflow: "hidden",
       }}
     >
-      {group.avatar_url ? (
+      {group.avatar_url && !imageError ? (
         <>
           <Image
-            source={{ uri: group.avatar_url }}
+            source={{ uri: group.avatar_url, cache: "force-cache" }}
             style={{
               width: 50,
               height: 50,
@@ -47,6 +49,10 @@ export const GroupMapIcon = ({ group }: { group: MapGroup }) => {
               position: "absolute",
             }}
             resizeMode="cover"
+            onError={(e) => {
+              console.warn(`GroupMapIcon failed to load image ${group.avatar_url}`, e.nativeEvent?.error || e)
+              setImageError(true)
+            }}
           />
           <View
             style={{

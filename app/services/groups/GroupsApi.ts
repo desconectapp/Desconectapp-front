@@ -102,39 +102,100 @@ export const groupsService = {
   //   }
   //   return true;
   // },
-  getNearbyGroups: async (latitude: number, longitude: number, radius_km: number): Promise<MapGroup[]> => {
-    const response = await api.apisauce.get<{groups: OpenGroup[]}>(`/groups/open`, {
+  getNearbyGroups: async (
+    latitude: number, 
+    longitude: number, 
+    radius_km: number,
+    options?: {
+      myPreferences?: boolean;
+      activities?: number[];
+    }
+  ): Promise<MapGroup[]> => {
+    const params: any = {
       latitude,
       longitude,
       radius: radius_km
-    });
+    };
+    
+    // Add optional filter parameters
+    if (options?.myPreferences) {
+      params.myPreferences = true;
+    }
+    if (options?.activities && options.activities.length > 0) {
+      params.activities = options.activities.join(',');
+    }
+    
+    const response = await api.apisauce.get<{groups: OpenGroup[]}>(`/groups/open`, params);
     if (!response.ok) {
       console.log("Error fetching nearby groups:", response.problem);
       throw new Error("Error al cargar los grupos cercanos");
     }
     console.log("res:", response.data)
-    const modifiedResponse: MapGroup[] = (response.data?.groups || []).map((group) => {
-      // Parse location string which should be in format "latitude,longitude"
-      const locationParts = group.location.split(",");
-      const latitude = parseFloat(locationParts[1]?.trim() || "0");
-      const longitude = parseFloat(locationParts[0]?.trim() || "0");
-      
-      return {
-        id: group.id.toString(),
-        name: group.name,
-        icon: group.photo || "👥",
-        coords: [longitude, latitude] as [number, number], // MapLibre expects [lng, lat]
-        location: group.location,
-        location_name: group.location_name,
-        description: group.description,
-        membersCount: group.member_count,
-        radius: 1, // Default radius, adjust as needed
-        avatar_url: group.avatar_url || "👤",
-        week_timeslots: group.week_timeslots || [],
-        created_at: group.created_at,
-        activity_name: group.activity_name,
-      };
-    });
-    return modifiedResponse??[];
+    const modifiedResponse: MapGroup[] = (response.data?.groups || [])
+      .filter((group) => {
+        // Filter out groups without valid coordinate data
+        const hasValidCoords = group.coords && (
+          (typeof group.coords === 'string' && group.coords.includes(',')) ||
+          Array.isArray(group.coords)
+        );
+        const hasValidLocation = group.location && typeof group.location === 'string';
+        
+        if (!hasValidCoords && !hasValidLocation) {
+          console.warn(`Group ${group.id} has no valid coordinates:`, { coords: group.coords, location: group.location })
+          return false
+        }
+        return true
+      })
+      .map((group) => {
+        // Parse location string which should be in format "latitude,longitude" or array
+        let latitude = 0;
+        let longitude = 0;
+        
+        try {
+          // Use group.coords for coordinates, not group.location
+          const coordsSource = group.coords || group.location;
+          
+          if (Array.isArray(coordsSource)) {
+            // Handle array format [lng, lat]
+            longitude = parseFloat(coordsSource[0]?.toString() || "0");
+            latitude = parseFloat(coordsSource[1]?.toString() || "0");
+          } else if (typeof coordsSource === 'string' && coordsSource.includes(',')) {
+            // Handle string format "lng,lat" - backend sends longitude first, then latitude
+            const locationParts = coordsSource.split(",");
+            longitude = parseFloat(locationParts[0]?.trim() || "0");
+            latitude = parseFloat(locationParts[1]?.trim() || "0");
+          } else {
+            console.warn(`Group ${group.id} has no valid coords field:`, { coords: group.coords, location: group.location })
+          }
+          
+          // Validate parsed coordinates
+          if (isNaN(latitude) || isNaN(longitude)) {
+            console.warn(`Group ${group.id} has invalid coordinates:`, { latitude, longitude, original: group.location })
+            latitude = 0;
+            longitude = 0;
+          }
+        } catch (error) {
+          console.warn(`Error parsing coordinates for group ${group.id}:`, error, group.location)
+          latitude = 0;
+          longitude = 0;
+        }
+        
+        return {
+          id: group.id.toString(),
+          name: group.name,
+          icon: group.photo || "👥",
+          coords: [longitude, latitude] as [number, number], // MapLibre expects [lng, lat]
+          location: Array.isArray(group.location) ? group.location.join(',') : group.location,
+          location_name: group.location_name,
+          description: group.description,
+          membersCount: group.member_count,
+          radius: 1, // Default radius, adjust as needed
+          avatar_url: group.avatar_url || "👤",
+          week_timeslots: group.week_timeslots || [],
+          created_at: group.created_at,
+          activity_name: group.activity_name,
+        };
+      });
+    return modifiedResponse;
   }
 }
