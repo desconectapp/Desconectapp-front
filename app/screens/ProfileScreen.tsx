@@ -63,13 +63,14 @@ export const ProfileScreen = observer(function ProfileScreen() {
   const addPreferences = useAddPreferencesBatch()
   const { sessionStore } = useStores()
 
-  const [selectedPreferences, setSelectedPreferences] = useState<number[]>([])
+  const [selectedPreferences, setSelectedPreferences] = useState<(number | string)[]>([])
   const [allPreferences, setAllPreferences] = useState<any[]>([])
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const limit = 10
   const [query, setQuery] = useState("")
   const prevQuery = useRef("")
+  const [allCustomPreferences, setAllCustomPreferences] = useState<{ id: string, name: string, icon: string }[]>([])
 
   const { data: prefsData, isFetching } = useActivities(limit, offset, query)
   const { data: userPreferencesData } = useUserPreferences()
@@ -86,6 +87,8 @@ export const ProfileScreen = observer(function ProfileScreen() {
         ...userPreferencesData.preferences,
         ...prev.filter((p) => !ids.includes(p.id)),
       ])
+      setAllCustomPreferences([])
+      setQuery("")
     }
   }, [userPreferencesData, showPreferencesModal])
 
@@ -119,21 +122,132 @@ export const ProfileScreen = observer(function ProfileScreen() {
     }
   }, [isFetching, hasMore, limit])
 
-  const togglePreference = useCallback((id: number) => {
+  const togglePreference = useCallback((id: number | string) => {
     setSelectedPreferences((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
     )
   }, [])
 
+  const handleSelectCustomPreference = () => {
+    const activityName = query.trim()
+    if (!activityName) return
+
+    const customPrefObj = {
+      id: activityName, // Use the name as the unique string ID
+      name: activityName,
+      icon: "✨",
+    }
+    
+    setAllCustomPreferences(prev => {
+        if (!prev.find(p => p.id === activityName)) {
+            return [...prev, customPrefObj]
+        }
+        return prev
+    })
+    
+    setSelectedPreferences((prev) => {
+        if (!prev.includes(activityName)) {
+            return [...prev, activityName]
+        }
+        return prev
+    })
+    
+    setQuery("")
+  }
+
   const handleSavePreferences = async () => {
     try {
-      await addPreferences.mutateAsync({activity_ids: selectedPreferences})
+      const existingActivityIds = selectedPreferences.filter(id => typeof id === 'number') as number[]
+      const customActivityNames = selectedPreferences.filter(id => typeof id === 'string') as string[]
+      
+      const payload: {
+        activity_ids: number[]
+        custom_activities: string[]
+      } = {
+        activity_ids: existingActivityIds,
+        custom_activities: customActivityNames.length > 0 ? customActivityNames : [],
+      }
+
+      await addPreferences.mutateAsync(payload)
+      
       showToast("Preferencias Actualizadas", "Tus preferencias se guardaron exitosamente")
       setShowPreferencesModal(false)
+      
+      setAllCustomPreferences([])
+      setQuery("") 
+
     } catch (err) {
       console.error(err)
       showToast("Error", "No se pudieron guardar las preferencias")
     }
+  }
+
+  // This function renders a horizontal list of selected custom activities
+  const renderSelectedCustomActivities = () => {
+    // Filter selectedPreferences for custom activities (string IDs)
+    const selectedCustomNames = selectedPreferences.filter((id) => typeof id === 'string') as string[]
+    
+    // Get the details from allCustomPreferences
+    const selectedCustomActivities = allCustomPreferences.filter(p => selectedCustomNames.includes(p.id))
+
+    if (selectedCustomActivities.length === 0) return null
+
+    return (
+        <View style={{ marginBottom: spacing.md, paddingHorizontal: spacing.xs }}>
+            <Text style={createModalStyles(theme).modalSectionTitle}>Preferencias Personalizadas</Text>
+            <FlatList
+                data={selectedCustomActivities}
+                renderItem={({ item }) => {
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        onPress={() => togglePreference(item.id)}
+                        style={[$chip, themed($chipSelected), { flex: 0, marginRight: spacing.md, minWidth: 100 }]}
+                      >
+                        <Text style={$emoji}>{item.icon}</Text>
+                        <Text style={themed($chipTextSelected)}>{item.name}</Text>
+                        <Text style={themed($chipTextSelected)}> (x)</Text>
+                      </TouchableOpacity>
+                    )
+                }}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: spacing.xs / 2 }}
+            />
+        </View>
+    )
+  }
+
+  const renderCustomPreferenceSuggestion = () => {
+    const activityName = query.trim()
+    if (
+      !activityName || 
+      isFetching || 
+      allPreferences.length > 0 || 
+      (prefsData && prefsData.length > 0)
+    ) {
+      return null
+    }
+
+    const isCustomSelected = selectedPreferences.includes(activityName)
+    
+    return (
+      <TouchableOpacity
+        onPress={handleSelectCustomPreference}
+        style={[
+          $chip,
+          themed(isCustomSelected ? $chipSelected : $chipUnselected),
+          // Use full width for suggestion chip
+          { flex: 0, width: width * 0.9 - spacing.lg * 2, marginVertical: spacing.md, alignSelf: "center" } 
+        ]}
+      >
+        <Text style={$emoji}>✨</Text>
+        <Text style={themed(isCustomSelected ? $chipTextSelected : $chipTextUnselected)}>
+          ✨ Agregar "{activityName}" como preferencia
+        </Text>
+      </TouchableOpacity>
+    )
   }
 
   const renderItem = ({ item }: any) => {
@@ -387,6 +501,12 @@ export const ProfileScreen = observer(function ProfileScreen() {
               placeholder="Buscar preferencias..."
               autoCapitalize="none"
             />
+
+            {/* Render the horizontal list of selected custom activities */}
+            {renderSelectedCustomActivities()}
+
+            {/* Render the suggestion to add a new custom preference */}
+            {renderCustomPreferenceSuggestion()}
 
             <FlatList
               data={allPreferences}

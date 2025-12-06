@@ -23,12 +23,6 @@ import { PostCard, PostCardType } from "@/components/Custom/PostCard"
 import { useCommunityById } from "@/hooks/Communities"
 
 import { useStores } from "@/models"
-// import {
-//   useCreateCommunityPost,
-//   useInfiniteCommunityPosts,
-//   usePostSubscription,
-//   useUploadCommunityImage,
-// } from "@/hooks/Chats"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { MainStackParamList } from "@/navigators/MainNavigator"

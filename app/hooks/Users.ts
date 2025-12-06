@@ -63,8 +63,9 @@ export const useEditProfile = () => {
 export const useAddPreferencesBatch = () => {
   const queryClient = useQueryClient()
 
-  return useMutation<any, Error, any>({
-    mutationFn: (activity_ids) => userService.addPreferencesBatch(activity_ids),
+  return useMutation<any, Error, { activity_ids: number[]; custom_activities: string[] }>({
+    mutationFn: (variables: { activity_ids: number[]; custom_activities: string[] }) =>
+      userService.addPreferencesBatch(variables.activity_ids, variables.custom_activities),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile"] })
       queryClient.invalidateQueries({ queryKey: ["user-preferences"] })

@@ -288,16 +288,6 @@ const styles = StyleSheet.create({
     marginVertical: 60,
   },
 
-  suggestionsSection: {
-    marginTop: 26,
-  },
-
-  suggestionsTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
-
   suggestionRow: {
     flexDirection: "row",
     flexWrap: "wrap",

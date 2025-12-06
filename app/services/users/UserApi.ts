@@ -71,8 +71,9 @@ export const userService = {
     return response.data
   },
 
-  addPreferencesBatch: async (activity_ids: number[]): Promise<void> => {
-    const response = await api.apisauce.post<void>("/preferences/batch", activity_ids)
+  addPreferencesBatch: async (activity_ids: number[], custom_activities: string[]): Promise<void> => {
+    const payload = { activity_ids, custom_activities }
+    const response = await api.apisauce.post<void>("/preferences/batch", payload)
     if (!response.ok) {
       throw new Error("Error al editar perfil")
     }
