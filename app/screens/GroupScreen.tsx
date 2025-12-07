@@ -69,6 +69,14 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
   const { isPending: isSendingMessage, mutateAsync: createMessageAsync } = useCreateMessage()
   const { isPending: isUploadingImage, mutateAsync: uploadMutateAsync } = useUploadGroupImage()
+  
+  // Track if we've added the local system message for empty groups
+  const hasAddedSystemMessageRef = useRef(false)
+  
+  // Reset the ref when groupId changes
+  useEffect(() => {
+    hasAddedSystemMessageRef.current = false
+  }, [groupId])
 
   // Memoize the members map for better performance
   const membersMap = useMemo(() => {
@@ -84,29 +92,32 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
   const handleNewMessage = useCallback(
     (newMessage: any) => {
-      const member = membersMap.get(newMessage.user_id)
-      const formattedMessage: MessageBubbleType = {
-        id: newMessage.id.toString(),
-        text: newMessage.content,
-        sender: {
-          id: newMessage.user_id,
-          name: member?.name || newMessage.user_id,
-          picture: member?.picture,
-        },
-        timestamp: new Date(newMessage.sent_at),
-        isOwn: newMessage.user_id === sessionStore.user_uuid,
-        imageUrl: newMessage.image_url || undefined,
-      }
+      // If a real message arrives, remove the local system message if it exists
+      setMessages((prev) => {
+        const withoutSystem = prev.filter((msg) => !msg.isSystem)
+        const member = membersMap.get(newMessage.user_id)
+        const formattedMessage: MessageBubbleType = {
+          id: newMessage.id.toString(),
+          text: newMessage.content || "",
+          sender: {
+            id: newMessage.user_id,
+            name: member?.name || newMessage.user_id,
+            picture: member?.picture,
+          },
+          timestamp: new Date(newMessage.sent_at),
+          isOwn: newMessage.user_id === sessionStore.user_uuid,
+          imageUrl: newMessage.image_url || undefined,
+          isSystem: false,
+        }
+        
+        const exists = withoutSystem.some((msg) => msg.id === formattedMessage.id)
+        if (exists) return withoutSystem
+        return [...withoutSystem, formattedMessage]
+      })
 
       markAsSeenAsync(groupId)
-
-      setMessages((prev) => {
-        const exists = prev.some((msg) => msg.id === formattedMessage.id)
-        if (exists) return prev
-        return [...prev, formattedMessage]
-      })
     },
-    [sessionStore.user_uuid, membersMap],
+    [sessionStore.user_uuid, membersMap, groupId, markAsSeenAsync],
   )
 
   useMessageSubscription(groupId, handleNewMessage, { enabled: isFocused })
@@ -120,7 +131,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
       const member = membersMap.get(message.user_id)
       return {
         id: message.id.toString(),
-        text: message.content,
+        text: message.content || "",
         sender: {
           id: message.user_id,
           name: member?.name || message.user_id,
@@ -129,15 +140,39 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
         timestamp: new Date(message.sent_at),
         isOwn: message.user_id === sessionStore.user_uuid,
         imageUrl: message.image_url || undefined,
+        isSystem: false,
       }
     })
   }, [infiniteData?.pages, membersMap, sessionStore.user_uuid])
 
   useEffect(() => {
-    if (formattedMessages.length > 0) {
-      setMessages(formattedMessages)
+    if (
+      !isLoadingMessages &&
+      formattedMessages.length === 0 &&
+      !hasAddedSystemMessageRef.current &&
+      isFocused &&
+      groupId
+    ) {
+      hasAddedSystemMessageRef.current = true
+      const systemMessage: MessageBubbleType = {
+        id: `system-${groupId}-${Date.now()}`,
+        text: "¡Bienvenidos a su nuevo grupo! Acá empieza su conversación.",
+        sender: {
+          id: "system",
+          name: "Sistema",
+          picture: undefined,
+        },
+        timestamp: new Date(),
+        isOwn: false,
+        isSystem: true,
+      }
+      setMessages([systemMessage])
+    } else if (formattedMessages.length > 0) {
+      // If there are real messages, remove any system message and set real messages
+      setMessages(formattedMessages.filter((msg) => !msg.isSystem))
+      hasAddedSystemMessageRef.current = false
     }
-  }, [formattedMessages])
+  }, [isLoadingMessages, formattedMessages, isFocused, groupId])
 
   const sendMessage = async () => {
     let url = null

@@ -16,6 +16,7 @@ export interface MessageBubbleType {
   timestamp: Date
   isOwn: boolean
   imageUrl?: string
+  isSystem?: boolean
 }
 
 export const MessageBubble = ({ item }: { item: MessageBubbleType }) => {
@@ -62,6 +63,19 @@ export const MessageBubble = ({ item }: { item: MessageBubbleType }) => {
         minute: "2-digit" 
       })
     }
+  }
+
+  // System message rendering
+  if (item.isSystem) {
+    return (
+      <View style={$systemMessageContainer}>
+        <View style={themed($systemMessageBubble)}>
+          <Text style={themed($systemMessageText)}>
+            {item.text}
+          </Text>
+        </View>
+      </View>
+    )
   }
 
   return (
@@ -170,4 +184,27 @@ const $image = (_: any): ImageStyle => ({
   width: 250,
   borderRadius: spacing.md,
   marginBottom: spacing.sm,
+})
+
+const $systemMessageContainer: ViewStyle = {
+  alignItems: "center",
+  marginVertical: spacing.md,
+}
+
+const $systemMessageBubble = (theme: any): ViewStyle => ({
+  backgroundColor: theme.colors.palette.primary200, // Light green highlight color
+  paddingHorizontal: spacing.md,
+  paddingVertical: spacing.sm,
+  borderRadius: spacing.md,
+  maxWidth: width * 0.85,
+  borderWidth: 1,
+  borderColor: theme.colors.palette.primary300,
+})
+
+const $systemMessageText = (theme: any): TextStyle => ({
+  fontSize: 14,
+  color: theme.colors.palette.primary600, // Darker green for text
+  textAlign: "center",
+  fontStyle: "italic",
+  fontWeight: "500",
 })
