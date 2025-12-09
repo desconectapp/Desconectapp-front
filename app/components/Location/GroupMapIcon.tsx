@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Image, View } from "react-native"
 import { MapGroup } from "@/services/groups/Groups.types"
 import { Text } from "../Text"
@@ -22,92 +22,110 @@ const getMarkerStyle = (marker: MapGroup) => ({
   borderWidth: 2,
   borderColor: "white",
 })
-export const GroupMapIcon = ({ group }: { group: MapGroup }) => {
+export const GroupMapIcon = ({ group, isCached, onImageCached }: { group: MapGroup, isCached?: boolean, onImageCached?: (url: string) => void }) => {
   const [imageError, setImageError] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  
+  const iconSize = 60
+  const imageSize = iconSize - 4
+  const borderRadius = iconSize / 2
+  
+  // If parent told us the image is cached, show it immediately
+  useEffect(() => {
+    if (isCached && group.avatar_url) {
+      setImageLoaded(true)
+      console.log(`[MARKER] Image already cached for ${group.id}`)
+    }
+  }, [])
+
+  // If not cached, attempt local prefetch with retries and notify parent on success
+  useEffect(() => {
+    let mounted = true
+    const attemptPrefetch = async () => {
+      if (!group.avatar_url || isCached || imageError) return
+      const maxRetries = 3
+      for (let attempt = 0; attempt < maxRetries && mounted; attempt++) {
+        try {
+          await Image.prefetch(group.avatar_url)
+          if (!mounted) return
+          console.log(`[MARKER] Prefetch succeeded for ${group.id}`)
+          setImageLoaded(true)
+          onImageCached?.(group.avatar_url)
+          return
+        } catch (err) {
+          if (attempt < maxRetries - 1) {
+            await new Promise((res) => setTimeout(res, 500 * (attempt + 1)))
+          }
+        }
+      }
+      if (mounted) setImageError(true)
+    }
+    attemptPrefetch()
+    return () => { mounted = false }
+  }, [])
+
   return (
     <View
       style={{
-        width: 54,
-        height: 54,
-        borderRadius: 27,
+        width: iconSize,
+        height: iconSize,
+        borderRadius: borderRadius,
         opacity: 1,
         justifyContent: "center",
         alignItems: "center",
-        borderWidth: 2,
+        borderWidth: 3,
         borderColor: "white",
         overflow: "hidden",
+        backgroundColor: "white",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
       }}
     >
-      {group.avatar_url && !imageError ? (
-        <>
-          <Image
-            source={{ uri: group.avatar_url, cache: "force-cache" }}
-            style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              position: "absolute",
-            }}
-            resizeMode="cover"
-            onError={(e) => {
-              console.warn(`GroupMapIcon failed to load image ${group.avatar_url}`, e.nativeEvent?.error || e)
-              setImageError(true)
-            }}
-          />
-          <View
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              borderRadius: 25,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontWeight: "bold",
-                fontSize: 9,
-                textAlign: "center",
-              }}
-              numberOfLines={2}
-              ellipsizeMode="tail"
-            >
-              {group.name}
-            </Text>
-          </View>
-        </>
+      {group.avatar_url && !imageError && imageLoaded ? (
+        <Image
+          source={{ uri: group.avatar_url, cache: "force-cache" }}
+          style={{
+            width: imageSize,
+            height: imageSize,
+            borderRadius: borderRadius - 2,
+          }}
+          resizeMode="cover"
+          onError={() => {
+            console.error(`[MARKER] Image render failed for group ${group.id}: ${group.avatar_url}`)
+            setImageLoaded(false)
+            // Try local prefetch again if the parent didn't cache it yet
+            setTimeout(async () => {
+              if (!group.avatar_url) return
+              try {
+                await Image.prefetch(group.avatar_url)
+                console.log(`[MARKER] Re-prefetch succeeded for ${group.id}`)
+                setImageLoaded(true)
+                onImageCached?.(group.avatar_url)
+              } catch (err) {
+                setImageError(true)
+              }
+            }, 400)
+          }}
+          onLoad={() => {
+            console.log(`[MARKER] Image loaded in element for ${group.id}`)
+            setImageLoaded(true)
+          }}
+        />
       ) : (
         <View
           style={[
             getMarkerStyle(group),
             {
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-              position: "absolute",
+              width: imageSize,
+              height: imageSize,
+              borderRadius: borderRadius - 2,
             },
           ]}
         >
-          <Text style={{ fontSize: 16 }}>{group.icon ?? "G"}</Text>
-          <Text
-            style={{
-              color: "white",
-              fontWeight: "bold",
-              fontSize: 10,
-              textAlign: "center",
-              marginTop: 2,
-              maxWidth: 44,
-            }}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {group.name}
-          </Text>
+          <Text style={{ fontSize: 24 }}>{group.icon ?? "📍"}</Text>
         </View>
       )}
     </View>
