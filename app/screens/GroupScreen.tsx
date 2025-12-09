@@ -91,33 +91,16 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
   }, [infiniteData, groupId, markAsSeenAsync])
 
   const handleNewMessage = useCallback(
-    (newMessage: any) => {
-      // If a real message arrives, remove the local system message if it exists
-      setMessages((prev) => {
-        const withoutSystem = prev.filter((msg) => !msg.isSystem)
-        const member = membersMap.get(newMessage.user_id)
-        const formattedMessage: MessageBubbleType = {
-          id: newMessage.id.toString(),
-          text: newMessage.content || "",
-          sender: {
-            id: newMessage.user_id,
-            name: member?.name || newMessage.user_id,
-            picture: member?.picture,
-          },
-          timestamp: new Date(newMessage.sent_at),
-          isOwn: newMessage.user_id === sessionStore.user_uuid,
-          imageUrl: newMessage.image_url || undefined,
-          isSystem: false,
-        }
-        
-        const exists = withoutSystem.some((msg) => msg.id === formattedMessage.id)
-        if (exists) return withoutSystem
-        return [...withoutSystem, formattedMessage]
-      })
-
+    (_newMessage: any) => {
+      // The subscription hook now updates the infinite query cache,
+      // which will trigger a re-render and update formattedMessages.
+      // We just need to mark as seen and remove system message if needed.
+      if (hasAddedSystemMessageRef.current) {
+        hasAddedSystemMessageRef.current = false
+      }
       markAsSeenAsync(groupId)
     },
-    [sessionStore.user_uuid, membersMap, groupId, markAsSeenAsync],
+    [groupId, markAsSeenAsync],
   )
 
   useMessageSubscription(groupId, handleNewMessage, { enabled: isFocused })
