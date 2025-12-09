@@ -55,10 +55,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/desconectapp_icon.png",
+          "image": "./assets/images/desconectapp_transparent_icon.png",
           "imageWidth": 300,
-          "resizeMode": "contain",
-          "backgroundColor": "#BBCF97"
+          "resizeMode": "native",
+          "backgroundColor": "#FFFFFF"
         }
       ],
       [

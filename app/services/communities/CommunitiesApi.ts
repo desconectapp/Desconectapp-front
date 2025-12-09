@@ -59,6 +59,14 @@ export const communityService = {
       }
       return true;
     },
+
+    updateCommunityAvatar: async (id: string, avatar_url: string): Promise<boolean> => {
+      const response = await api.apisauce.put(`/community/avatar/${id}`, { avatar_url });
+      if (!response.ok) {
+        throw new Error("Error al cambiar el avatar de la community");
+      }
+      return true;
+    },
     
 
 }

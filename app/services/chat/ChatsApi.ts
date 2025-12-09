@@ -203,4 +203,50 @@ export const chatsService = {
 
     return { url, path: filePath }
   },
+
+  uploadCommunityImage: async (
+    communityId: number,
+    fileUri: string,
+  ): Promise<{ url: string; path: string }> => {
+    console.log("uploading community image")
+    const supabase = await getSupabaseClientWithToken()
+    console.log(supabase)
+
+    const id = uuid.v1()
+
+    // Build a unique path inside the bucket per community
+    const fileExt = fileUri.split(".").pop()?.toLowerCase() || "jpg"
+    const fileName = `${id}.${fileExt}`
+    const filePath = `${communityId}/${fileName}`
+
+    // Convert the local URI to an ArrayBuffer (RN-friendly)
+    const base64 = await FileSystem.readAsStringAsync(fileUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    })
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const arrayBuffer = bytes.buffer
+
+    const { error: uploadError } = await supabase.storage
+      .from("group-imgs")
+      .upload(filePath, arrayBuffer, {
+        contentType: `image/${fileExt}`,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError)
+      throw new Error(`Error al subir la imagen: ${uploadError.message}`)
+    }
+
+    const { data: publicUrlData } = supabase.storage.from("group-imgs").getPublicUrl(filePath)
+
+    const url = publicUrlData?.publicUrl
+    if (!url) {
+      throw new Error("No se pudo obtener la URL pública de la imagen")
+    }
+
+    return { url, path: filePath }
+  },
 }

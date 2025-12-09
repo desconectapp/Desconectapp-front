@@ -40,7 +40,7 @@ import { useQueryClient } from "@tanstack/react-query"
 
 import { AutoImage } from "@/components"
 import useImagePicker from "@/hooks/Image"
-import { useUploadGroupImage } from "@/hooks/Chats"
+import { useUploadCommunityImage, updateCommunityAvatar } from "@/hooks/Communities"
 import { SchedulePreview } from "@/components/Custom/SchedulePreview"
 
 type FullNavigationProp = NativeStackNavigationProp<AppStackParamList>
@@ -73,6 +73,7 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const { mutate: updateDescription } = updateCommunityDescription()
   const { mutate: updateLocation } = updateCommunityLocation()
   const { mutate: updateName } = updateCommunityName()
+  const { mutate: updateAvatar } = updateCommunityAvatar()
 
   const [isEditing, setIsEditing] = useState(false)
   const [tempName, setTempName] = useState("")
@@ -81,8 +82,8 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
   const [tempDisplayLocation, setTempDisplayLocation] = useState("")
   const [tempEventTime, setTempEventTime] = useState("")
 
-  const { imageUri, handleImagePicker } = useImagePicker()
-  const { isPending: isUploadingImage, mutateAsync: uploadGroupImageAsync } = useUploadGroupImage()
+  const { imageUri, handleImagePicker, setImage } = useImagePicker()
+  const { isPending: isUploadingImage, mutateAsync: uploadCommunityImageAsync } = useUploadCommunityImage()
 
   const isAdmin = communityData?.is_current_user_admin ?? false
 
@@ -177,6 +178,13 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
 
   const handleSave = async () => {
     try {
+      let newAvatarUrl = communityData.avatar_url
+      
+      if (imageUri) {
+        newAvatarUrl = await uploadCommunityImageAsync({ communityId: parseInt(communityData.id), uri: imageUri })
+        updateAvatar({ id: communityData.id, avatar_url: newAvatarUrl })
+      }
+
       if (tempName !== communityData.name) {
         updateName({ id: communityData.id, name: tempName })
       }
@@ -196,18 +204,27 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
         })
       }
 
-
       setIsEditing(false)
+      
+      // Clear the local image URI so it doesn't override the server URL
+      setImage(null)
 
-      queryClient.setQueryData(["community", communityId], (oldData: GroupData) => ({
+      // Update the query cache with the correct key (matching useCommunityById)
+      queryClient.setQueryData(["groups", communityId], (oldData: any) => ({
         ...oldData,
         name: tempName,
         description: tempDescription,
         location: tempDisplayLocation,
-        locationName: tempDisplayLocation,
+        location_name: tempDisplayLocation,
+        avatar_url: newAvatarUrl,
       }))
+      
+      // Invalidate queries to ensure fresh data
+      await queryClient.invalidateQueries({ queryKey: ["groups", communityId] })
+      await queryClient.invalidateQueries({ queryKey: ["community"] })
     } catch (error) {
       console.error("Failed to save changes:", error)
+      showToast("Error", "No se pudieron guardar los cambios. Por favor intenta de nuevo.")
     }
   }
 
@@ -216,13 +233,14 @@ export const CommunityInfoScreen = observer(function CommunityInfoScreen({ route
     setTempDescription(communityData.description ?? "")
     setTempLocation("")
     setTempDisplayLocation(communityData.location_name ?? "")
+    setImage(null) // Clear the selected image
     setIsEditing(false)
   }
 
 
   const currentLocationDisplay = isEditing
     ? (tempDisplayLocation || "Tocá para establecer ubicación...")
-    : (communityData.locationName || communityData.location || "Sin Ubicación")
+    : (communityData.location_name || communityData.location || "Sin Ubicación")
 
   const locationTextStyle = isEditing && !tempDisplayLocation
     ? themedStyles.locationPlaceholderText

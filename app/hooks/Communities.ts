@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { communityService } from "../services/communities"
 import { CreateCommunityParams, CommunityData } from "@/services/communities/Communities.types"
+import { chatsService } from "../services/chat"
 
 
 export const useCreateCommunity = () => {
@@ -79,6 +80,27 @@ export const updateCommunityName = () => {
     mutationFn: ({ id, name }) => communityService.updateCommunityName(id, name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["groups"] })
+    },
+  })
+}
+
+export const useUploadCommunityImage = () => {
+  return useMutation({
+    mutationFn: async ({ communityId, uri }: { communityId: number; uri: string }) => {
+      const { url } = await chatsService.uploadCommunityImage(communityId, uri)
+      return url
+    },
+  })
+}
+
+export const updateCommunityAvatar = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<boolean, Error, { id: string; avatar_url: string }>({
+    mutationFn: ({ id, avatar_url }) => communityService.updateCommunityAvatar(id, avatar_url),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["groups"] })
+      queryClient.invalidateQueries({ queryKey: ["community"] })
     },
   })
 }
