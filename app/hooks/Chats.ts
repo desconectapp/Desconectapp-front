@@ -238,6 +238,8 @@ export const useInfiniteChatMessages = (groupId: string, options?: { pageSize?: 
     enabled: !!tokenData?.token && !!groupId,
     retry: 2,
     initialPageParam: undefined,
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -341,16 +343,19 @@ export const useMessageSubscription = (
   const handleNewMessage = useCallback(
     (message: Message) => {
       // Update the infinite query cache (used by useInfiniteChatMessages)
-      queryClient.setQueryData(
-        (queryKey) => {
-          // Match any infinite query for this groupId
-          return (
-            Array.isArray(queryKey) &&
-            queryKey[0] === "chat" &&
-            queryKey[1] === "messages" &&
-            queryKey[2] === groupId &&
-            queryKey[3] === "infinite"
-          )
+      queryClient.setQueriesData(
+        {
+          predicate: (query) => {
+            const queryKey = query.queryKey
+            // Match any infinite query for this groupId
+            return (
+              Array.isArray(queryKey) &&
+              queryKey[0] === "chat" &&
+              queryKey[1] === "messages" &&
+              queryKey[2] === groupId &&
+              queryKey[3] === "infinite"
+            )
+          }
         },
         (oldData: any) => {
           if (!oldData?.pages || oldData.pages.length === 0) {

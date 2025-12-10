@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import {
   View,
   TouchableOpacity,
@@ -11,6 +11,7 @@ import {
   type TextStyle,
   type ImageStyle,
   Dimensions,
+  Keyboard,
   // eslint-disable-next-line no-restricted-imports
   TextInput,
 } from "react-native"
@@ -27,13 +28,13 @@ import {
   useCreateMessage,
   useInfiniteChatMessages,
   useMarkAsSeen,
-  useMessageSubscription,
   useUploadGroupImage,
 } from "@/hooks/Chats"
 import { useIsFocused, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { MainStackParamList } from "@/navigators/MainNavigator"
 import useImagePicker from "@/hooks/Image"
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 
 const ClipIcon = require("../../assets/images/clip.png")
 
@@ -90,20 +91,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     markAsSeenAsync(groupId)
   }, [infiniteData, groupId, markAsSeenAsync])
 
-  const handleNewMessage = useCallback(
-    (_newMessage: any) => {
-      // The subscription hook now updates the infinite query cache,
-      // which will trigger a re-render and update formattedMessages.
-      // We just need to mark as seen and remove system message if needed.
-      if (hasAddedSystemMessageRef.current) {
-        hasAddedSystemMessageRef.current = false
-      }
-      markAsSeenAsync(groupId)
-    },
-    [groupId, markAsSeenAsync],
-  )
-
-  useMessageSubscription(groupId, handleNewMessage, { enabled: isFocused })
+  // Subscription disabled in favor of polling every 2 seconds via useInfiniteChatMessages
 
   const formattedMessages = useMemo(() => {
     if (!infiniteData?.pages) return []
@@ -157,6 +145,20 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
     }
   }, [isLoadingMessages, formattedMessages, isFocused, groupId])
 
+  // Auto-scroll to bottom when new messages are received
+  const previousMessageCount = useRef(0)
+  useEffect(() => {
+    if (messages.length > previousMessageCount.current && previousMessageCount.current > 0) {
+      // New message detected, scroll to bottom
+      requestAnimationFrame(() => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
+      })
+    }
+    previousMessageCount.current = messages.length
+  }, [messages.length])
+
+
+
   const sendMessage = async () => {
     let url = null
     if (imageUri) {
@@ -178,44 +180,46 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
 
   return (
     <View style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        {/* Header */}
-        <View style={[styles.header, $topInsets, themed(themedStyles.headerBackground)]}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.7}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
-          >
-            <Text style={themed(themedStyles.backButtonText)}>←</Text>
-          </TouchableOpacity>
+      {/* Header */}
+      <View style={[styles.header, $topInsets, themed(themedStyles.headerBackground)]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 10 }}
+        >
+          <Text style={themed(themedStyles.backButtonText)}>←</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.headerInfo}
-            onPress={() => navigation.navigate("GroupInfoScreen", { groupId })}
-            activeOpacity={0.7}
-          >
-            {groupData?.avatar_url ? (
-              <AutoImage source={{ uri: groupData?.avatar_url }} style={styles.groupAvatar} />
-            ) : (
-              <Text style={styles.groupIcon}>{groupData?.icon}</Text>
-            )}
+        <TouchableOpacity
+          style={styles.headerInfo}
+          onPress={() => navigation.navigate("GroupInfoScreen", { groupId })}
+          activeOpacity={0.7}
+        >
+          {groupData?.avatar_url ? (
+            <AutoImage source={{ uri: groupData?.avatar_url }} style={styles.groupAvatar} />
+          ) : (
+            <Text style={styles.groupIcon}>{groupData?.icon}</Text>
+          )}
 
-            <View style={styles.headerTextContainer}>
-              <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
-              <Text style={themed(themedStyles.memberCount)}>
-                {groupData?.members?.length} miembros
-              </Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
+            <Text style={themed(themedStyles.groupName)}>{groupData?.name}</Text>
+            <Text style={themed(themedStyles.memberCount)}>
+              {groupData?.members?.length} miembros
+            </Text>
+          </View>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.headerAction} activeOpacity={0.7}>
-            <Text style={themed(themedStyles.headerActionText)}>⋮</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.headerAction} activeOpacity={0.7}>
+          <Text style={themed(themedStyles.headerActionText)}>⋮</Text>
+        </TouchableOpacity>
+      </View>
+
+     <KeyboardAwareScrollView
+  contentContainerStyle={{ flex: 1 }}
+  extraScrollHeight={80}
+  keyboardShouldPersistTaps="handled"
+>
 
         <FlatList
           ref={flatListRef}
@@ -231,6 +235,8 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) fetchNextPage()
           }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         />
 
         {imageUri && (
@@ -248,6 +254,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             styles.inputContainer,
             $bottomInsets,
             themed(themedStyles.inputContainerBackground),
+            { paddingBottom: 10 },
           ]}
         >
           <TouchableOpacity
@@ -266,6 +273,13 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             placeholderTextColor={theme.colors.textDim}
             multiline
             maxLength={500}
+            blurOnSubmit={false}
+            returnKeyType="send"
+            onSubmitEditing={() => {
+              if (inputText.trim() || imageUri) {
+                sendMessage()
+              }
+            }}
           />
           <TouchableOpacity
             style={[
@@ -281,7 +295,7 @@ export const GroupScreen = observer(function GroupScreen({ route }: any) {
             <Text style={themed(themedStyles.sendButtonText)}>→</Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </View>
   )
 })
@@ -304,6 +318,8 @@ export const styles = StyleSheet.create({
   backButton: { paddingRight: spacing.md } as ViewStyle,
 
   container: { flex: 1 } as ViewStyle,
+  
+  flex1: { flex: 1 } as ViewStyle,
 
   groupAvatar: {
     width: 40,
@@ -358,13 +374,16 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
     borderTopWidth: 1,
+    minHeight: 60,
   } as ViewStyle,
 
   messagesContent: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    paddingBottom: spacing.xl, // Extra padding to prevent input from covering messages
   } as ViewStyle,
 
   messagesList: { flex: 1 } as ViewStyle,
@@ -378,6 +397,12 @@ export const styles = StyleSheet.create({
     top: 8,
     zIndex: 10,
   },
+
+  removeImageText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  } as TextStyle,
 })
 
 export const themedStyles = {
