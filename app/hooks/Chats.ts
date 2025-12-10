@@ -238,6 +238,8 @@ export const useInfiniteChatMessages = (groupId: string, options?: { pageSize?: 
     enabled: !!tokenData?.token && !!groupId,
     retry: 2,
     initialPageParam: undefined,
+    refetchInterval: 2000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -340,15 +342,60 @@ export const useMessageSubscription = (
 
   const handleNewMessage = useCallback(
     (message: Message) => {
+      // Update the infinite query cache (used by useInfiniteChatMessages)
+      queryClient.setQueriesData(
+        {
+          predicate: (query) => {
+            const queryKey = query.queryKey
+            // Match any infinite query for this groupId
+            return (
+              Array.isArray(queryKey) &&
+              queryKey[0] === "chat" &&
+              queryKey[1] === "messages" &&
+              queryKey[2] === groupId &&
+              queryKey[3] === "infinite"
+            )
+          }
+        },
+        (oldData: any) => {
+          if (!oldData?.pages || oldData.pages.length === 0) {
+            return {
+              pages: [{ items: [message], nextCursor: null }],
+              pageParams: [undefined],
+            }
+          }
+
+          // Check if message already exists in any page
+          const messageExists = oldData.pages.some((page: any) =>
+            page.items.some((msg: Message) => msg.id === message.id),
+          )
+          if (messageExists) return oldData
+
+          // Add the new message to the first page (newest messages)
+          // Since messages are sorted descending (newest first), prepend to first page
+          const firstPage = oldData.pages[0]
+          const updatedFirstPage = {
+            ...firstPage,
+            items: [message, ...firstPage.items],
+          }
+
+          return {
+            ...oldData,
+            pages: [updatedFirstPage, ...oldData.pages.slice(1)],
+          }
+        },
+      )
+
+      // Also update the simple query cache (for backward compatibility)
       queryClient.setQueryData(["chat", "messages", groupId], (oldData: any) => {
         if (!oldData) return { messages: [message] }
 
-        const messageExists = oldData.messages.some((msg: Message) => msg.id === message.id)
+        const messageExists = oldData.messages?.some((msg: Message) => msg.id === message.id)
         if (messageExists) return oldData
 
         return {
           ...oldData,
-          messages: [...oldData.messages, message],
+          messages: [...(oldData.messages || []), message],
         }
       })
 
@@ -381,6 +428,7 @@ export const useMessageSubscription = (
               filter: `group_id=eq.${groupId}`,
             },
             (payload) => {
+              console.log("New message received via subscription:", payload.new)
               handleNewMessage(payload.new as Message)
             },
           )
@@ -393,10 +441,18 @@ export const useMessageSubscription = (
               filter: `group_id=eq.${groupId}`,
             },
             (payload) => {
+              console.log("Message updated via subscription:", payload.new)
               handleNewMessage(payload.new as Message)
             },
           )
-          .subscribe()
+          .subscribe((status) => {
+            console.log("Subscription status:", status)
+            if (status === "SUBSCRIBED") {
+              console.log("Successfully subscribed to messages for group:", groupId)
+            } else if (status === "CHANNEL_ERROR") {
+              console.error("Channel error for group:", groupId)
+            }
+          })
 
         subscriptionRef.current = subscription
       } catch (error) {
