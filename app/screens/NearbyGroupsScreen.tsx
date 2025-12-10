@@ -52,22 +52,11 @@ export const NearbyGroupsScreen = observer(function NearbyGroupsScreen() {
         Object.keys(options).length > 0 ? options : undefined
       )
       console.log('groups: fetched', fetchedGroups)
-      // Always update groups immediately for better responsiveness
+      
+      // Prefetching is handled within MapView for robust caching; keep fetch quick
+      
+      // Now set groups - images are in cache
       setGroups(fetchedGroups)
-      // Prefetch all avatar images so they will be cached when rendered in the map
-      try {
-        const urls = fetchedGroups
-          .map((g) => g.avatar_url)
-          .filter((u) => !!u) as string[]
-        urls.forEach((url) => {
-          // Fire & forget prefetch; don't block the UI
-          Image.prefetch(url).catch(() => {
-            // Prefetch failures are non-fatal; keep moving
-          })
-        })
-      } catch (err) {
-        // no-op
-      }
       console.log("Updated groups:", fetchedGroups.length)
     } catch (error) {
       console.error("Error fetching nearby groups:", error)

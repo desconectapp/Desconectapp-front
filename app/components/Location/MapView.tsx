@@ -3,17 +3,13 @@ import { Text, View, StyleSheet, Alert, Platform, PermissionsAndroid, Image } fr
 import MapLibreGL from "@maplibre/maplibre-react-native"
 import { useEffect } from "react"
 import Radar from "react-native-radar"
-import {
-  TouchableOpacity,
-} from "react-native-gesture-handler"
+import { TouchableOpacity } from "react-native-gesture-handler"
 import { selectedLocation } from "types"
 import { LocationInfo } from "./LocationInfo"
 import { CustomSlider } from "../Custom/CustomSlider"
 import { MapGroup } from "@/services/groups/Groups.types"
-import { GroupMapIcon } from "./GroupMapIcon"
 import { GroupMapInfoCard } from "./GroupMapInfoCard"
 import { useGetLocationName } from "@/hooks/Map"
-
 
 const apiKey = process.env.EXPO_PUBLIC_RADAR_API_KEY || ""
 if (!apiKey) {
@@ -24,6 +20,13 @@ MapLibreGL.setAccessToken(apiKey) // No token needed for OpenStreetMap
 
 const BSASCOORDS = [-58.4173, -34.6118] // Buenos Aires coords
 
+const getColorFromCoords = ([lng, lat]: [number, number]) => {
+  const hash = Math.abs(Math.sin(lng * 1000 + lat * 1000) * 10000)
+  const r = Math.floor((hash % 128) + 127)
+  const g = Math.floor(((hash / 2) % 128) + 127)
+  const b = Math.floor(((hash / 3) % 128) + 127)
+  return `rgb(${r},${g},${b})`
+}
 
 export interface MapViewProps {
   // Para busqueda de grupo
@@ -32,13 +35,13 @@ export interface MapViewProps {
   searchRadiusKm?: number
   setSearchRadiusKm?: (radiusKm: number) => void
   allowSelectLocation?: boolean // whether to allow adding markers via long press
-  
+
   // Para ver grupos cercanos
-  groups?: MapGroup[] 
+  groups?: MapGroup[]
   onGroupPress?: (group: MapGroup) => void // callback when marker is pressed
   onRegionChange?: (center: [number, number], radiusKm: number) => void // callback for region changes
   enableDynamicFetch?: boolean // enable dynamic fetching based on map region
-  
+
   // Otras props
   style?: any
 }
@@ -49,7 +52,7 @@ export const MapViewComponent = ({
   searchRadiusKm = 0.01,
   setSearchRadiusKm,
   allowSelectLocation = false,
-  
+
   groups = [],
   onGroupPress,
   onRegionChange,
@@ -58,21 +61,83 @@ export const MapViewComponent = ({
   style,
 }: MapViewProps) => {
   const cameraRef = useRef<any>(null)
+  const mapRef = useRef<any>(null)
   const [cameraCenter, setCameraCenter] = useState<[number, number]>([BSASCOORDS[0], BSASCOORDS[1]]) // Default to Buenos Aires
   const [zoom, setZoom] = useState(13)
-  
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
+
   console.log("MapView render - Camera center:", cameraCenter, "Zoom:", zoom)
 
   const [selectedMarker, setSelectedMarker] = useState<MapGroup | null>(null)
   const [isSettingFromSearch, setIsSettingFromSearch] = useState(false)
-  const [pendingLocationCoords, setPendingLocationCoords] = useState<{lat: number, lng: number} | null>(null)
-  
+  const [pendingLocationCoords, setPendingLocationCoords] = useState<{
+    lat: number
+    lng: number
+  } | null>(null)
+
   // Use LocationIQ hook to get location name when coordinates are set
   const { data: locationName, isLoading: isLoadingLocationName } = useGetLocationName(
     pendingLocationCoords?.lat || 0,
     pendingLocationCoords?.lng || 0,
-    !!pendingLocationCoords
+    !!pendingLocationCoords,
   )
+
+  // Track which images have been successfully loaded; prefetch in background with limited concurrency
+  useEffect(() => {
+    if (groups.length === 0) {
+      setLoadedImages(new Set())
+      return
+    }
+
+    // Helper to prefetch one url with retries
+    const prefetchWithRetry = async (url: string, maxRetries = 3) => {
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          await Image.prefetch(url)
+          // Add to loadedImages incrementally to trigger markers to re-render
+          setLoadedImages((prev) => new Set(prev).add(url))
+          console.log(`[MAP PREFETCH] ✓ ${url.substring(url.length - 30)}`)
+          return true
+        } catch (err) {
+          if (attempt < maxRetries - 1) {
+            await new Promise((res) => setTimeout(res, 300 * (attempt + 1)))
+          }
+        }
+      }
+      return false
+    }
+
+    // Limit concurrency to avoid overflooding connections
+    const concurrency = 5
+    const urls = Array.from(new Set(groups.map((g) => g.avatar_url).filter(Boolean))) as string[]
+    const queue = [...urls]
+
+    const runner = async () => {
+      while (queue.length > 0) {
+        const batch = queue.splice(0, concurrency)
+        await Promise.all(batch.map((u) => prefetchWithRetry(u)))
+      }
+    }
+
+    runner().catch((err) => console.warn("Image prefetch runner error", err))
+  }, [])
+
+  // Try to add images directly to the native map style if API available (best-effort)
+  useEffect(() => {
+    if (!mapRef.current || !groups || groups.length === 0) return
+    groups.forEach((g) => {
+      if (!g.avatar_url) return
+      try {
+        // Some MapLibre RN versions expose addImage on the map instance
+        if (typeof mapRef.current.addImage === "function") {
+          mapRef.current.addImage(`group-${g.id}`, g.avatar_url)
+          console.log(`[MAP] addImage called for group-${g.id}`)
+        }
+      } catch (err) {
+        // ignore if method not available
+      }
+    })
+  }, [])
 
   // Effect to handle location name response
   useEffect(() => {
@@ -96,15 +161,15 @@ export const MapViewComponent = ({
     const setupLocation = async () => {
       try {
         let granted = false
-        
-        if (Platform.OS === 'android') {
+
+        if (Platform.OS === "android") {
           const result = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
             {
-              title: 'Location Permission',
-              message: 'This app needs access to your location to show nearby groups',
-              buttonPositive: 'OK',
-            }
+              title: "Location Permission",
+              message: "This app needs access to your location to show nearby groups",
+              buttonPositive: "OK",
+            },
           )
           granted = result === PermissionsAndroid.RESULTS.GRANTED
         } else {
@@ -117,7 +182,7 @@ export const MapViewComponent = ({
             if (result.location) {
               const coords: [number, number] = [result.location.longitude, result.location.latitude]
               console.log("Got user location:", coords)
-              
+
               if (enableDynamicFetch && cameraRef.current) {
                 // Uncontrolled mode: set camera directly
                 cameraRef.current.setCamera({
@@ -159,24 +224,24 @@ export const MapViewComponent = ({
   // Handle map region changes for dynamic fetching
   const handleRegionDidChange = (region: any) => {
     if (!enableDynamicFetch || !onRegionChange) return
-    
+
     console.log("Region changed:", region)
-    
+
     // Validate region object - it's a GeoJSON Feature
     if (!region || !region.geometry || !region.properties) {
       console.warn("Invalid region object structure:", region)
       return
     }
-    
+
     // Extract coordinates and zoom level from GeoJSON structure
     const coordinates = region.geometry.coordinates
     const zoomLevel = region.properties.zoomLevel
-    
-    if (!Array.isArray(coordinates) || coordinates.length < 2 || typeof zoomLevel !== 'number') {
+
+    if (!Array.isArray(coordinates) || coordinates.length < 2 || typeof zoomLevel !== "number") {
       console.warn("Invalid coordinates or zoom level:", { coordinates, zoomLevel })
       return
     }
-    
+
     const minZoomForFetch = 11 // Don't fetch if zoom is too low (too much area)
     if (zoomLevel < minZoomForFetch) {
       console.log(`Zoom level ${zoomLevel} too low, skipping fetch`)
@@ -185,12 +250,14 @@ export const MapViewComponent = ({
 
     const center: [number, number] = [
       parseFloat(coordinates[0]) || 0, // longitude
-      parseFloat(coordinates[1]) || 0  // latitude
+      parseFloat(coordinates[1]) || 0, // latitude
     ]
     const radiusKm = zoomToRadiusKm(zoomLevel)
-    
-    console.log(`Region change - Center: [${center[0]}, ${center[1]}], Zoom: ${zoomLevel}, Radius: ${radiusKm}km`)
-    
+
+    console.log(
+      `Region change - Center: [${center[0]}, ${center[1]}], Zoom: ${zoomLevel}, Radius: ${radiusKm}km`,
+    )
+
     // Trigger callback for fetching groups
     // Note: We don't update internal camera state here to avoid interfering with user navigation
     onRegionChange(center, radiusKm)
@@ -238,7 +305,7 @@ export const MapViewComponent = ({
     // event.geometry.coordinates is [lng, lat]
     const lng = coordinates[0]
     const lat = coordinates[1]
-    
+
     // Set pending coordinates to trigger the LocationIQ hook
     setPendingLocationCoords({ lat, lng })
   }
@@ -285,6 +352,7 @@ export const MapViewComponent = ({
   return (
     <View style={[styles.container, style]}>
       <MapLibreGL.MapView
+        ref={mapRef}
         style={styles.map}
         onLongPress={handleMapLongPress}
         onRegionDidChange={enableDynamicFetch ? handleRegionDidChange : undefined}
@@ -314,10 +382,10 @@ export const MapViewComponent = ({
             <MapLibreGL.ShapeSource
               id="search-radius-source"
               // createCircleGeoJSON expects center as [lng, lat]
-              shape={createCircleGeoJSON([
-                selectedLocation.longitude,
-                selectedLocation.latitude,
-              ], searchRadiusKm)}
+              shape={createCircleGeoJSON(
+                [selectedLocation.longitude, selectedLocation.latitude],
+                searchRadiusKm,
+              )}
             >
               <MapLibreGL.FillLayer
                 id="search-radius-fill"
@@ -360,18 +428,62 @@ export const MapViewComponent = ({
           </>
         )}
 
-        {/* GRUPOS: Muestra los grupos cercanos con transición suave */}
+        {/* GRUPOS: Muestra los grupos cercanos como símbolos nativos */}
         {groups?.map((group) => (
-          <MapLibreGL.PointAnnotation
-            key={`group-${group.id}`}
-            id={`group-${group.id}`}
-            coordinate={group.coords}
-            onSelected={() => handleGroupPress(group)}
-          >
-              <GroupMapIcon group={group} />
-            <MapLibreGL.Callout title={group.name} />
-          </MapLibreGL.PointAnnotation>
+            <MapLibreGL.PointAnnotation
+              key={`group-marker-${group.id}`}
+              id={`group-marker-${group.id}`}
+              coordinate={group.coords}
+              onSelected={() => handleGroupPress(group)}
+            >
+             
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24, // radio circular
+                  overflow: "hidden", // recorta la imagen
+                  borderWidth: 2,
+                  borderColor: "#fff", // borde blanco
+                  shadowColor: "#000", // sombra (iOS)
+                  shadowOpacity: 0.25,
+                  shadowRadius: 2,
+                  elevation: 3, // sombra Android
+                  backgroundColor: getColorFromCoords(group.coords),
+                }}
+              >
+                 <>
+              {
+                group.avatar_url?.startsWith("http") ? (
+                  <Image
+                  source={{
+                    uri:
+                      group.avatar_url,
+                  }}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
+                />
+                ) :
+                (
+                  <Text
+                  style={{
+                    fontSize: 24,
+                    textAlign: "center",
+                    lineHeight: 48,
+                  }}
+                  > {group.icon}</Text>                  
+                )
+              }
+              </>
+                
+              </View>
+            </MapLibreGL.PointAnnotation>
+          
+
         ))}
+        
+          
+          
       </MapLibreGL.MapView>
 
       {/* BUSQUEDA: Para cuando selecciono ubicacion en la search */}
@@ -404,7 +516,7 @@ export const MapViewComponent = ({
       {/* Para el grupo, poner boton de entrar al grupo y eso */}
       {selectedMarker && (
         // <LocationInfo height={150}>
-          <GroupMapInfoCard group={selectedMarker} />
+        <GroupMapInfoCard group={selectedMarker} />
         // </LocationInfo>
       )}
     </View>
