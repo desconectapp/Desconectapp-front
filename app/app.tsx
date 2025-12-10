@@ -30,6 +30,37 @@ import { useEffect, useState } from "react"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 import * as Linking from "expo-linking"
 import * as SplashScreen from "expo-splash-screen"
+
+// Disable warnings for demo
+if (__DEV__) {
+  const ignoreWarns = [
+    'VirtualizedList: missing keys',
+    'VirtualizedList',
+    'componentWillReceiveProps',
+    'componentWillMount',
+  ]
+  
+  const warn = console.warn
+  console.warn = (...arg) => {
+    for (const warning of ignoreWarns) {
+      if (arg[0]?.includes?.(warning)) {
+        return
+      }
+    }
+    warn(...arg)
+  }
+  
+  const error = console.error
+  console.error = (...arg) => {
+    for (const warning of ignoreWarns) {
+      if (arg[0]?.includes?.(warning)) {
+        return
+      }
+    }
+    error(...arg)
+  }
+}
+
 import { RootStoreProvider, UserSession, useInitialRootStore, useStores } from "./models"
 import { AppNavigator, AppStackScreenProps, useNavigationPersistence } from "./navigators"
 import { resetRoot } from "./navigators/navigationUtilities"
