@@ -38,6 +38,7 @@ if (__DEV__) {
     'VirtualizedList',
     'componentWillReceiveProps',
     'componentWillMount',
+    'Encountered two children with the same key',
   ]
   
   const warn = console.warn

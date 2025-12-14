@@ -710,6 +710,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
 })
 
 const $chip: ViewStyle = {
+  flex: 1,
   borderRadius: 25,
   paddingVertical: spacing.sm,
   paddingHorizontal: spacing.md,
