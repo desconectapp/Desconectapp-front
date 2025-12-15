@@ -303,7 +303,7 @@ export function SearchScreen() {
       />
 
       <Button
-        text="Asistente De Búsquedas ✨ aaaaaaaaa"
+        text="Asistente De Búsquedas ✨"
         style={[themed(buttons.primary), styles.searchButton]}
         textStyle={[themed(buttonTexts.primary)]}
         onPress={() => {
