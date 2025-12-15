@@ -229,13 +229,13 @@ export function SearchScreen() {
                   )
                 }
               />
-              {filteredActivities.length > 3 && (
+              {/* {filteredActivities.length > 3 && (
                 <View style={styles.scrollHintContainer}>
                   <Text style={[themed(texts.caption), styles.scrollHint]}>
                     ➡️ Desliza para ver más
                   </Text>
                 </View>
-              )}
+              )} */}
             </View>
           )}
         </View>
@@ -303,7 +303,7 @@ export function SearchScreen() {
       />
 
       <Button
-        text="Asistente De Búsquedas ✨"
+        text="Asistente De Búsquedas ✨ aaaaaaaaa"
         style={[themed(buttons.primary), styles.searchButton]}
         textStyle={[themed(buttonTexts.primary)]}
         onPress={() => {

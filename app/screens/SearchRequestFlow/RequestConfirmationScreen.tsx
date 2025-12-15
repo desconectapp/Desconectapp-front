@@ -71,7 +71,7 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
           "¡Búsqueda creada! 🎉",
           "Pronto te notificaremos cuando encontremos coincidencias",
         )
-        // requestStore.clearRequest()
+        requestStore.clearRequest()
         navigation.navigate("Tabs")
       },
       onError: (error) => {
