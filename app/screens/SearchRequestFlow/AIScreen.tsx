@@ -87,17 +87,29 @@ export function AIScreen() {
       await new Promise((resolve) => setTimeout(resolve, delay))
 
       requestStore.setLocation({
-        id: "loc_123",
-        name: "Palermo, plaza italia",
-        latitude: -34.5883,
-        longitude: -58.4173,
-        address: "Palermo, Buenos Aires, Argentina",
+        id: "1234",
+        name: "Caballito, Parque Centenario",
+        latitude: -34.606729,
+        longitude: -58.435690,
+        address: "Av. Díaz Vélez 5064, C1406 Caballito, Ciudad Autónoma de Buenos Aires",
       })
-      requestStore.setRadiusKm(5)
+      requestStore.setRadiusKm(2)
+      requestStore.setMinParticipants(3)
+      requestStore.setMaxParticipants(6)
+      requestStore.setSchedules([
+        {
+          day: "Saturday",
+          timeSlots: [{ start: "13:00", end: "17:00" }],
+        },
+        {
+          day: "Sunday",
+          timeSlots: [{ start: "13:00", end: "17:00" }],
+        },
+      ])
       requestStore.setActivity({
-        id: 2,
-        name: "Basket",
-        icon: "basket_icon",
+        id: 36,
+        name: "Paseo / Caminata",
+        icon: "🚶",
       });
 
       navigation.navigate("RequestConfirmationScreen", { isAiGenerated: true })

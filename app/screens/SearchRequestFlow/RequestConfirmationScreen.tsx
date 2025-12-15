@@ -11,6 +11,7 @@ import { containers, buttons, buttonTexts, texts } from "@/theme/commonStyles"
 import { useAppToast } from "@/components/useToast"
 
 import { FontAwesome } from "@expo/vector-icons"
+import React from "react"
 
 type RequestConfirmationScreenProps = NativeStackScreenProps<
   MainStackParamList,
@@ -54,6 +55,11 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
   }
 
   const handleSearch = () => {
+    // Prevent double submissions
+    if (search.isPending) {
+      return
+    }
+
     const requestData = requestStore.getRequestData()
 
     const requestDataWithUser = {
@@ -205,11 +211,16 @@ export const RequestConfirmationScreen = observer(function RequestConfirmationSc
 
       {/* Search Button */}
       <Button
-        text="Confirmar Busqueda 🔍"
-        style={[themed(buttons.primary), themed($searchButton)]}
+        text={search.isPending ? "Buscando..." : "Confirmar Busqueda 🔍"}
+        style={[
+          themed(buttons.primary), 
+          themed($searchButton),
+          search.isPending && themed($searchButtonDisabled)
+        ]}
         pressedStyle={themed(buttons.primaryPressed)}
         textStyle={themed(buttonTexts.primary)}
         onPress={handleSearch}
+        disabled={search.isPending}
       />
     </Screen>
   )
@@ -246,4 +257,8 @@ const $scheduleText = (theme: any) => ({
 
 const $searchButton = (theme: any) => ({
   marginTop: theme.spacing.lg,
+})
+
+const $searchButtonDisabled = (theme: any) => ({
+  opacity: 0.6,
 })
