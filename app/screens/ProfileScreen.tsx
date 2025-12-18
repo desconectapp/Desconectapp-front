@@ -412,7 +412,9 @@ export const ProfileScreen = observer(function ProfileScreen() {
 
   const logOut = async () => {
     try {
+
       await userService.logout()
+
     } catch (error) {
       console.error("Logout error:", error)
     } finally {
@@ -579,7 +581,7 @@ export const ProfileScreen = observer(function ProfileScreen() {
                         },
                     ]}
                 >
-                    <Text style={themed($settingsButtonText)}>{"Editar Preferencias"}</Text>
+                    <Text style={[themed($settingsButtonText), { color: "#fff", fontWeight: "600" }]}>{"Editar Preferencias"}</Text>
                 </Pressable>
 
                 <Pressable

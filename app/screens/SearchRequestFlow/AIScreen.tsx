@@ -98,11 +98,11 @@ export function AIScreen() {
       requestStore.setMaxParticipants(6)
       requestStore.setSchedules([
         {
-          day: "Saturday",
+          day: "Sabado",
           timeSlots: [{ start: "13:00", end: "17:00" }],
         },
         {
-          day: "Sunday",
+          day: "Domingo",
           timeSlots: [{ start: "13:00", end: "17:00" }],
         },
       ])

@@ -9,6 +9,7 @@ export const useSearch = () => {
     mutationFn: (data) => searchService.search(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["search"] })
+      queryClient.invalidateQueries({ queryKey: ["activity-requests"] })
     },
   })
 }
